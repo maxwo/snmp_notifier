@@ -57,7 +57,7 @@ groups:
       oid: "1.3.6.1.4.1.123.0.10.1.1.1.5.1"
       environment: "production"
     annotations:
-      description: "Service {{`{{ $labels.job }}`}} on {{`{{ $labels.instance }}`}} is down"
+      description: "Service {{ $labels.job }} on {{ $labels.instance }} is down"
       summary: "A service is down."
 ```
 
