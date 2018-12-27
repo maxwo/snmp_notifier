@@ -1,0 +1,42 @@
+{
+  "TestAlert1": [
+    {
+      "status": "firing",
+      "labels": {
+        "severity": "warning",
+        "alertname": "TestAlert1",
+        "oid": "1.3.6.1.4.1.666.0.10.1.1.1.2.1"
+      },
+      "annotations": {
+        "summary": "this is the random summary",
+        "description": "this is the description of alert 1"
+      }
+    },
+    {
+      "status": "firing",
+      "labels": {
+        "severity": "critical",
+        "alertname": "TestAlert1",
+        "oid": "1.3.6.1.4.1.666.0.10.1.1.1.2.1"
+      },
+      "annotations": {
+        "summary": "this is the summary",
+        "description": "this is the description on job1"
+      }
+    }
+  ],
+  "TestAlert2": [
+    {
+      "status": "resolved",
+      "labels": {
+        "severity": "warning",
+        "alertname": "TestAlert2",
+        "oid": "1.3.6.1.4.1.666.0.10.1.1.1.1.1"
+      },
+      "annotations": {
+        "summary": "this is the random summary",
+        "description": "this is the description of ActiveMQ alert"
+      }
+    }
+  ]
+}

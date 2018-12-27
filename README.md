@@ -108,7 +108,7 @@ Flags:
                                  Trap OID to send if none is found in the alert labels
       --snmp.trap-id-template="{{ .Labels.alertname }}"
                                  SNMP ID template, to group several alerts in a single trap.
-      --snmp.trap-description-template="\n{{- if (len .Alerts) gt 0 -}}Status: {{ .Severity -}}\n{{ range $key, $value := .Alerts }}\n\n- Alert name: {{ $value.Labels.alertname }}\n{{\"  \"}}Severity: {{ $value.Labels.severity }}\n{{\"  \"}}Summary: {{ $value.Annotations.summary }}\n{{\"  \"}}Description: {{ $value.Annotations.description }}{{- end -}}\n{{- else -}}\nStatus: OK\n{{- end }}"
+      --snmp.trap-description-template="\n{{- if (len .Alerts) gt 0 -}}\n{{- range $severity, $alerts := (groupAlertsByLabel .Alerts \"severity\") -}}\nStatus: {{ $severity }}\n{{- range $index, $alert := $alerts }}\n- Alert: {{ $alert.Labels.alertname }}\n  Summary: {{ $alert.Annotations.summary }}\n  Description: {{ $alert.Annotations.description }}\n{{ end }}\n{{ end }}\n{{ else -}}\nStatus: OK\n{{- end -}}"
                                  SNMP description template.
       --log.level="info"         Only log messages with the given severity or above. Valid levels: [debug, info, warn, error, fatal]
       --log.format="logger:stderr"
@@ -145,21 +145,11 @@ NET-SNMP version 5.6.2.1
  Uptime: 0
  Description: Cold Start
  PDU Attribute/Value Pair Array:
-.iso.org.dod.internet.mgmt.mib-2.system.sysUpTime.sysUpTimeInstance = Timeticks: (751844) 2:05:18.44
-.iso.org.dod.internet.snmpV2.snmpModules.snmpMIB.snmpMIBObjects.snmpTrap.snmpTrapOID.0 = OID: .iso.org.dod.internet.private.enterprises.123.0.10.1.1.1.5.1
-.iso.org.dod.internet.private.enterprises.123.0.10.1.1.1.5.1.1 = STRING: "1.3.6.1.4.1.123.0.10.1.1.1.5.1[ServiceIsDown]"
-.iso.org.dod.internet.private.enterprises.123.0.10.1.1.1.5.1.2 = STRING: "critical"
-.iso.org.dod.internet.private.enterprises.123.0.10.1.1.1.5.1.3 = STRING: "Status: critical
-
-- Alert name: ServiceIsDown
-  Severity: warning
-  Summary: A service is down.
-  Description: Service my_app on 192.168.1.1:9000 is down
-
-- Alert name: ServiceIsDown
-  Severity: critical
-  Summary: A service is down.
-  Description: Service my_app on 192.168.1.2:9000 is down"
+.iso.org.dod.internet.mgmt.mib-2.system.sysUpTime.sysUpTimeInstance = Timeticks: (78947300) 9 days, 3:17:53.00
+.iso.org.dod.internet.snmpV2.snmpModules.snmpMIB.snmpMIBObjects.snmpTrap.snmpTrapOID.0 = OID: .iso.org.dod.internet.private.enterprises.666.0.10.1.1.1.1.1
+.iso.org.dod.internet.private.enterprises.666.0.10.1.1.1.1.1.1 = STRING: "1.3.6.1.4.1.666.0.10.1.1.1.1.1[TestAlert]"
+.iso.org.dod.internet.private.enterprises.666.0.10.1.1.1.1.1.2 = STRING: "info"
+.iso.org.dod.internet.private.enterprises.666.0.10.1.1.1.1.1.3 = STRING: "Status: OK"
  --------------
  Agent Address: 0.0.0.0
  Agent Hostname: localhost
@@ -171,13 +161,20 @@ NET-SNMP version 5.6.2.1
  Uptime: 0
  Description: Cold Start
  PDU Attribute/Value Pair Array:
-.iso.org.dod.internet.mgmt.mib-2.system.sysUpTime.sysUpTimeInstance = Timeticks: (751844) 2:05:18.44
-.iso.org.dod.internet.snmpV2.snmpModules.snmpMIB.snmpMIBObjects.snmpTrap.snmpTrapOID.0 = OID: .iso.org.dod.internet.private.enterprises.123.0.10.1.1.1.1.1
-.iso.org.dod.internet.private.enterprises.123.0.10.1.1.1.1.1.1 = STRING: "1.3.6.1.4.1.123.0.10.1.1.1.1.1[TestAlert]"
-.iso.org.dod.internet.private.enterprises.123.0.10.1.1.1.1.1.2 = STRING: "info"
-.iso.org.dod.internet.private.enterprises.123.0.10.1.1.1.1.1.3 = STRING: "Status: OK"
- --------------
-```
+.iso.org.dod.internet.mgmt.mib-2.system.sysUpTime.sysUpTimeInstance = Timeticks: (78947300) 9 days, 3:17:53.00
+.iso.org.dod.internet.snmpV2.snmpModules.snmpMIB.snmpMIBObjects.snmpTrap.snmpTrapOID.0 = OID: .iso.org.dod.internet.private.enterprises.666.0.10.1.1.1.2.1
+.iso.org.dod.internet.private.enterprises.666.0.10.1.1.1.2.1.1 = STRING: "1.3.6.1.4.1.666.0.10.1.1.1.2.1[TestAlert]"
+.iso.org.dod.internet.private.enterprises.666.0.10.1.1.1.2.1.2 = STRING: "critical"
+.iso.org.dod.internet.private.enterprises.666.0.10.1.1.1.2.1.3 = STRING: "Status: critical
+- Alert: TestAlert
+  Summary: this is the summary
+  Description: this is the description on job1
+
+Status: warning
+- Alert: TestAlert
+  Summary: this is the random summary
+  Description: this is the description of alert 1"
+ ```
 
 ## Contributing
 

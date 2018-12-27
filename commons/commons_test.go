@@ -55,6 +55,120 @@ func TestFillTemplate(t *testing.T) {
 	}
 }
 
+func TestGroupAlertsByName(t *testing.T) {
+	var tests = []struct {
+		AlertsFileName string
+		GroupsFileName string
+		ExpectError    bool
+	}{
+		{
+			"test_alerts.json",
+			"test_groups_alertname.json",
+			false,
+		},
+	}
+
+	for _, test := range tests {
+		alertsByteData, err := ioutil.ReadFile(test.AlertsFileName)
+		if err != nil {
+			t.Fatal("Error while reading alert file", err)
+		}
+		alertsReader := bytes.NewReader(alertsByteData)
+		alertsData := []alertmanagertemplate.Alert{}
+		err = json.NewDecoder(alertsReader).Decode(&alertsData)
+		if err != nil {
+			t.Fatal("Error while parsing alert file", err)
+		}
+
+		groupsByteData, err := ioutil.ReadFile(test.GroupsFileName)
+		if err != nil {
+			t.Fatal("Error while reading group file", err)
+		}
+		groupsReader := bytes.NewReader(groupsByteData)
+		groupsData := map[string][]alertmanagertemplate.Alert{}
+		err = json.NewDecoder(groupsReader).Decode(&groupsData)
+		if err != nil {
+			t.Fatal("Error while parsing group file", err)
+		}
+
+		groups, err := GroupAlertsByName(alertsData)
+
+		if test.ExpectError && err == nil {
+			t.Error("An error was expected")
+			continue
+		}
+
+		if !test.ExpectError && err != nil {
+			t.Error("Unexpected error", err)
+			continue
+		}
+
+		if err == nil {
+			if diff := deep.Equal(groupsData, *groups); diff != nil {
+				t.Error(diff)
+			}
+		}
+	}
+}
+
+func TestGroupAlertsByLabel(t *testing.T) {
+	var tests = []struct {
+		AlertsFileName string
+		Label          string
+		GroupsFileName string
+		ExpectError    bool
+	}{
+		{
+			"test_alerts.json",
+			"alertname",
+			"test_groups_alertname.json",
+			false,
+		},
+	}
+
+	for _, test := range tests {
+		alertsByteData, err := ioutil.ReadFile(test.AlertsFileName)
+		if err != nil {
+			t.Fatal("Error while reading alert file", err)
+		}
+		alertsReader := bytes.NewReader(alertsByteData)
+		alertsData := []alertmanagertemplate.Alert{}
+		err = json.NewDecoder(alertsReader).Decode(&alertsData)
+		if err != nil {
+			t.Fatal("Error while parsing alert file", err)
+		}
+
+		groupsByteData, err := ioutil.ReadFile(test.GroupsFileName)
+		if err != nil {
+			t.Fatal("Error while reading group file", err)
+		}
+		groupsReader := bytes.NewReader(groupsByteData)
+		groupsData := map[string][]alertmanagertemplate.Alert{}
+		err = json.NewDecoder(groupsReader).Decode(&groupsData)
+		if err != nil {
+			t.Fatal("Error while parsing group file", err)
+		}
+
+		groups, err := GroupAlertsByLabel(alertsData, test.Label)
+
+		if test.ExpectError && err == nil {
+			t.Error("An error was expected")
+			continue
+		}
+
+		if !test.ExpectError && err != nil {
+			t.Error("Unexpected error", err)
+			continue
+		}
+
+		if err == nil {
+			if diff := deep.Equal(groupsData, *groups); diff != nil {
+				t.Error(diff)
+			}
+		}
+	}
+}
+
 func TestGroupAlertsBy(t *testing.T) {
 	var tests = []struct {
 		AlertsFileName string
@@ -63,20 +177,20 @@ func TestGroupAlertsBy(t *testing.T) {
 		ExpectError    bool
 	}{
 		{
-			"alerts.json",
+			"test_alerts.json",
 			func(alert alertmanagertemplate.Alert) (*string, error) {
 				oid := alert.Labels["oid"]
 				return &oid, nil
 			},
-			"groups.json",
+			"test_groups.json",
 			false,
 		},
 		{
-			"alerts.json",
+			"test_alerts.json",
 			func(alert alertmanagertemplate.Alert) (*string, error) {
 				return nil, fmt.Errorf("Ohlala")
 			},
-			"groups.json",
+			"test_groups.json",
 			true,
 		},
 	}

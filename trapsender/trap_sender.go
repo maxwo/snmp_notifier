@@ -93,13 +93,13 @@ func (trapSender TrapSender) generateVarBinds(alertGroup commons.AlertGroup) (sn
 
 func addUpTime(varBinds snmpgo.VarBinds) snmpgo.VarBinds {
 	uptime, _ := host.Uptime()
-	return append(varBinds, snmpgo.NewVarBind(snmpgo.OidSysUpTime, snmpgo.NewTimeTicks(uint32(uptime))))
+	return append(varBinds, snmpgo.NewVarBind(snmpgo.OidSysUpTime, snmpgo.NewTimeTicks(uint32(uptime*100))))
 }
 
 func addStringSubOid(varBinds snmpgo.VarBinds, alertOid string, subOid string, value string) snmpgo.VarBinds {
 	oidString := strings.Join([]string{alertOid, subOid}, ".")
 	oid, _ := snmpgo.NewOid(oidString)
-	return append(varBinds, snmpgo.NewVarBind(oid, snmpgo.NewOctetString([]byte(value))))
+	return append(varBinds, snmpgo.NewVarBind(oid, snmpgo.NewOctetString([]byte(strings.TrimSpace(value)))))
 }
 
 // Connect initiates a connection to a SNMP destination sever
