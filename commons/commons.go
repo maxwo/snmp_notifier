@@ -51,6 +51,26 @@ func FillTemplate(object interface{}, tmpl template.Template) (*string, error) {
 	return &result, err
 }
 
+// GroupAlertsByLabel groups several alerts by a given label. If the label does not exists, then a "<none>" key is created
+func GroupAlertsByLabel(alerts []alertmanagertemplate.Alert, label string) (*map[string][]alertmanagertemplate.Alert, error) {
+	return GroupAlertsBy(alerts, getAlertLabel(label))
+}
+
+// GroupAlertsByName groups several alerts by their names
+func GroupAlertsByName(alerts []alertmanagertemplate.Alert) (*map[string][]alertmanagertemplate.Alert, error) {
+	return GroupAlertsBy(alerts, getAlertLabel("alertname"))
+}
+
+func getAlertLabel(label string) GetAlertGroupName {
+	return func(alert alertmanagertemplate.Alert) (*string, error) {
+		value := "<none>"
+		if _, found := alert.Labels[label]; found {
+			value = alert.Labels[label]
+		}
+		return &value, nil
+	}
+}
+
 // GroupAlertsBy groups given alerts according to an ID
 func GroupAlertsBy(alerts []alertmanagertemplate.Alert, groupNameFunction GetAlertGroupName) (*map[string][]alertmanagertemplate.Alert, error) {
 	var groups = make(map[string][]alertmanagertemplate.Alert)

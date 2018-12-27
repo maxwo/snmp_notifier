@@ -18,6 +18,7 @@ import (
 	"text/template"
 
 	"github.com/maxwo/snmp_notifier/alertparser"
+	"github.com/maxwo/snmp_notifier/commons"
 	"github.com/maxwo/snmp_notifier/httpserver"
 	"github.com/maxwo/snmp_notifier/telemetry"
 	"github.com/maxwo/snmp_notifier/trapsender"
@@ -29,16 +30,18 @@ import (
 
 var (
 	snmpTrapDescriptionTemplateDefault = `
-{{- if (len .Alerts) gt 0 -}}Status: {{ .Severity -}}
-{{ range $key, $value := .Alerts }}
-
-- Alert name: {{ $value.Labels.alertname }}
-{{"  "}}Severity: {{ $value.Labels.severity }}
-{{"  "}}Summary: {{ $value.Annotations.summary }}
-{{"  "}}Description: {{ $value.Annotations.description }}{{- end -}}
-{{- else -}}
+{{- if (len .Alerts) gt 0 -}}
+{{- range $severity, $alerts := (groupAlertsByLabel .Alerts "severity") -}}
+Status: {{ $severity }}
+{{- range $index, $alert := $alerts }}
+- Alert: {{ $alert.Labels.alertname }}
+  Summary: {{ $alert.Annotations.summary }}
+  Description: {{ $alert.Annotations.description }}
+{{ end }}
+{{ end }}
+{{ else -}}
 Status: OK
-{{- end }}`
+{{- end -}}`
 	snmpTrapIDTemplateDefault = `{{ .Labels.alertname }}`
 )
 
@@ -69,7 +72,10 @@ func CreateSNMPNotifier(args []string) (*httpserver.HTTPServer, error) {
 		return nil, err
 	}
 
-	descriptionTemplate, err := template.New("description").Parse(*snmpTrapDescriptionTemplate)
+	descriptionTemplate, err := template.New("description").Funcs(template.FuncMap{
+		"groupAlertsByLabel": commons.GroupAlertsByLabel,
+		"groupAlertsByName":  commons.GroupAlertsByName,
+	}).Parse(*snmpTrapDescriptionTemplate)
 	if err != nil {
 		return nil, err
 	}

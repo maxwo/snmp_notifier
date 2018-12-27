@@ -4,7 +4,7 @@
       "status": "firing",
       "labels": {
         "severity": "warning",
-        "alertname": "TestAlert",
+        "alertname": "TestAlert1",
         "oid": "1.3.6.1.4.1.666.0.10.1.1.1.2.1"
       },
       "annotations": {
@@ -16,7 +16,7 @@
       "status": "firing",
       "labels": {
         "severity": "critical",
-        "alertname": "TestAlert",
+        "alertname": "TestAlert1",
         "oid": "1.3.6.1.4.1.666.0.10.1.1.1.2.1"
       },
       "annotations": {
@@ -30,7 +30,7 @@
       "status": "resolved",
       "labels": {
         "severity": "warning",
-        "alertname": "TestAlert",
+        "alertname": "TestAlert2",
         "oid": "1.3.6.1.4.1.666.0.10.1.1.1.1.1"
       },
       "annotations": {
