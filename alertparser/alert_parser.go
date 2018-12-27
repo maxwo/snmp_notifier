@@ -39,7 +39,7 @@ func New(idTemplate template.Template, defaultOID string, oidLabel string, defau
 	return AlertParser{idTemplate, defaultOID, oidLabel, defaultSeverity, severities, severityLabel}
 }
 
-// Parse parses alerts comming from the Prometheus Alert Manager
+// Parse parses alerts coming from the Prometheus Alert Manager
 func (alertParser AlertParser) Parse(alerts alertmanagertemplate.Alerts) (*commons.AlertBucket, error) {
 	var (
 		alertGroups = map[string]*commons.AlertGroup{}
