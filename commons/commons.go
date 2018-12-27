@@ -19,24 +19,8 @@ import (
 
 	"text/template"
 
-	alertmanagertemplate "github.com/prometheus/alertmanager/template"
+	"github.com/maxwo/snmp_notifier/types"
 )
-
-// AlertBucket mutualizes alerts by Trap IDs
-type AlertBucket struct {
-	AlertGroups map[string]*AlertGroup
-}
-
-// AlertGroup type, with OID and group ID
-type AlertGroup struct {
-	OID      string
-	GroupID  string
-	Severity string
-	Alerts   []alertmanagertemplate.Alert
-}
-
-// GetAlertGroupName allows to retrieve a group name from a given alert
-type GetAlertGroupName func(alertmanagertemplate.Alert) (*string, error)
 
 var oidRegexp = regexp.MustCompile("^[0-9]+((\\.[0-9]+)*)$")
 
@@ -52,17 +36,17 @@ func FillTemplate(object interface{}, tmpl template.Template) (*string, error) {
 }
 
 // GroupAlertsByLabel groups several alerts by a given label. If the label does not exists, then a "<none>" key is created
-func GroupAlertsByLabel(alerts []alertmanagertemplate.Alert, label string) (*map[string][]alertmanagertemplate.Alert, error) {
+func GroupAlertsByLabel(alerts []types.Alert, label string) (*map[string][]types.Alert, error) {
 	return GroupAlertsBy(alerts, getAlertLabel(label))
 }
 
 // GroupAlertsByName groups several alerts by their names
-func GroupAlertsByName(alerts []alertmanagertemplate.Alert) (*map[string][]alertmanagertemplate.Alert, error) {
+func GroupAlertsByName(alerts []types.Alert) (*map[string][]types.Alert, error) {
 	return GroupAlertsBy(alerts, getAlertLabel("alertname"))
 }
 
-func getAlertLabel(label string) GetAlertGroupName {
-	return func(alert alertmanagertemplate.Alert) (*string, error) {
+func getAlertLabel(label string) types.GetAlertGroupName {
+	return func(alert types.Alert) (*string, error) {
 		value := "<none>"
 		if _, found := alert.Labels[label]; found {
 			value = alert.Labels[label]
@@ -72,8 +56,8 @@ func getAlertLabel(label string) GetAlertGroupName {
 }
 
 // GroupAlertsBy groups given alerts according to an ID
-func GroupAlertsBy(alerts []alertmanagertemplate.Alert, groupNameFunction GetAlertGroupName) (*map[string][]alertmanagertemplate.Alert, error) {
-	var groups = make(map[string][]alertmanagertemplate.Alert)
+func GroupAlertsBy(alerts []types.Alert, groupNameFunction types.GetAlertGroupName) (*map[string][]types.Alert, error) {
+	var groups = make(map[string][]types.Alert)
 	for _, alert := range alerts {
 		groupName, err := groupNameFunction(alert)
 		if err != nil {

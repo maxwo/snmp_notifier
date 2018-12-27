@@ -1,32 +1,26 @@
-// Copyright 2018 Maxime Wojtczak
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-package launcher
+package configuration
 
 import (
+	"fmt"
 	"strings"
 	"text/template"
 
 	"github.com/maxwo/snmp_notifier/alertparser"
 	"github.com/maxwo/snmp_notifier/commons"
 	"github.com/maxwo/snmp_notifier/httpserver"
-	"github.com/maxwo/snmp_notifier/telemetry"
 	"github.com/maxwo/snmp_notifier/trapsender"
 
 	"github.com/prometheus/common/log"
 	"github.com/prometheus/common/version"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
+
+// SNMPNotifierConfiguration handles the configuration of the whole application
+type SNMPNotifierConfiguration struct {
+	AlertParserConfiguration alertparser.AlertParserConfiguration
+	TrapSenderConfiguration  trapsender.TrapSenderConfiguration
+	HTTPServerConfiguration  httpserver.HTTPServerConfiguration
+}
 
 var (
 	snmpTrapDescriptionTemplateDefault = `
@@ -45,8 +39,8 @@ Status: OK
 	snmpTrapIDTemplateDefault = `{{ .Labels.alertname }}`
 )
 
-// CreateSNMPNotifier creates and configures the SNMP gateway
-func CreateSNMPNotifier(args []string) (*httpserver.HTTPServer, error) {
+// ParseConfiguration parses the command line for configurations
+func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, error) {
 	var (
 		application                 = kingpin.New("snmp_notifier", "A tool to relay Prometheus alerts as SNMP traps")
 		webListenAddress            = application.Flag("web.listen-address", "Address to listen on for web interface and telemetry.").Default(":9464").String()
@@ -57,7 +51,7 @@ func CreateSNMPNotifier(args []string) (*httpserver.HTTPServer, error) {
 		snmpRetries                 = application.Flag("snmp.retries", "SNMP number of retries").Default("1").Uint()
 		snmpCommunity               = application.Flag("snmp.community", "SNMP community").Default("public").String()
 		snmpTrapOidLabel            = application.Flag("snmp.trap-oid-label", "Label where to find the trap OID.").Default("oid").String()
-		snmpDefaultOid              = application.Flag("snmp.trap-default-oid", "Trap OID to send if none is found in the alert labels").Default("1.1.1").String()
+		snmpDefaultOid              = application.Flag("snmp.trap-default-oid", "Trap OID to send if none is found in the alert labels").Default("1.3.6.1.4.1.1664.1").String()
 		snmpTrapIDTemplate          = application.Flag("snmp.trap-id-template", "SNMP ID template, to group several alerts in a single trap.").Default(snmpTrapIDTemplateDefault).String()
 		snmpTrapDescriptionTemplate = application.Flag("snmp.trap-description-template", "SNMP description template.").Default(snmpTrapDescriptionTemplateDefault).String()
 	)
@@ -80,17 +74,37 @@ func CreateSNMPNotifier(args []string) (*httpserver.HTTPServer, error) {
 		return nil, err
 	}
 
-	snmp, err := trapsender.Connect(*snmpDestination, *snmpRetries, *snmpCommunity)
-	if err != nil {
-		return nil, err
+	if !commons.IsOID(*snmpDefaultOid) {
+		return nil, fmt.Errorf("Invalid default OID provided: %s", *snmpDefaultOid)
 	}
 
-	trapSender := trapsender.New(*snmp, *descriptionTemplate)
-
 	severities := strings.Split(*alertSeverities, ",")
-	alertParser := alertparser.New(*idTemplate, *snmpDefaultOid, *snmpTrapOidLabel, *alertDefaultSeverity, severities, *alertSeverityLabel)
 
-	telemetry.Init()
+	alertParserConfiguration := alertparser.AlertParserConfiguration{
+		IDTemplate:      *idTemplate,
+		DefaultOID:      *snmpDefaultOid,
+		OIDLabel:        *snmpTrapOidLabel,
+		DefaultSeverity: *alertDefaultSeverity,
+		Severities:      severities,
+		SeverityLabel:   *alertSeverityLabel,
+	}
 
-	return httpserver.New(alertParser, trapSender, *webListenAddress), nil
+	trapSenderConfiguration := trapsender.TrapSenderConfiguration{
+		SNMPDestination:     *snmpDestination,
+		SNMPRetries:         *snmpRetries,
+		SNMPCommunity:       *snmpCommunity,
+		DescriptionTemplate: *descriptionTemplate,
+	}
+
+	httpServerConfiguration := httpserver.HTTPServerConfiguration{
+		WebListenAddress: *webListenAddress,
+	}
+
+	configuration := SNMPNotifierConfiguration{
+		AlertParserConfiguration: alertParserConfiguration,
+		TrapSenderConfiguration:  trapSenderConfiguration,
+		HTTPServerConfiguration:  httpServerConfiguration,
+	}
+
+	return &configuration, nil
 }

@@ -42,8 +42,8 @@ github.com/prometheus/client_model/go
 # github.com/prometheus/common v0.0.0-20181218105931-67670fe90761
 github.com/prometheus/common/log
 github.com/prometheus/common/version
-github.com/prometheus/common/model
 github.com/prometheus/common/expfmt
+github.com/prometheus/common/model
 github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg
 # github.com/prometheus/procfs v0.0.0-20181204211112-1dc9a6cbc91a
 github.com/prometheus/procfs

@@ -18,33 +18,45 @@ import (
 
 	"github.com/maxwo/snmp_notifier/commons"
 	"github.com/maxwo/snmp_notifier/telemetry"
+	"github.com/maxwo/snmp_notifier/types"
 
 	"text/template"
 
 	"github.com/k-sone/snmpgo"
-	"github.com/prometheus/common/log"
 	"github.com/shirou/gopsutil/host"
 )
 
 // TrapSender sends traps according to given alerts
 type TrapSender struct {
-	snmpConnection  snmpgo.SNMP
-	contentTemplate template.Template
+	configuration TrapSenderConfiguration
+}
+
+// TrapSenderConfiguration describes the configuration for sending traps
+type TrapSenderConfiguration struct {
+	SNMPDestination     string
+	SNMPRetries         uint
+	SNMPCommunity       string
+	DescriptionTemplate template.Template
 }
 
 // New creates a new TrapSender
-func New(snmpConnection snmpgo.SNMP, contentTemplate template.Template) TrapSender {
-	return TrapSender{snmpConnection, contentTemplate}
+func New(configuration TrapSenderConfiguration) TrapSender {
+	return TrapSender{configuration}
 }
 
 // SendAlertTraps sends a bucket of alerts to the given SNMP connection
-func (trapSender TrapSender) SendAlertTraps(alertBucket commons.AlertBucket) error {
+func (trapSender TrapSender) SendAlertTraps(alertBucket types.AlertBucket) error {
 	traps, err := trapSender.generateTraps(alertBucket)
 	if err != nil {
 		return err
 	}
+	connection, err := trapSender.connect()
+	if err != nil {
+		return err
+	}
+	defer connection.Close()
 	for _, trap := range traps {
-		err = trapSender.snmpConnection.V2Trap(trap)
+		err = connection.V2Trap(trap)
 		if err != nil {
 			telemetry.SNMPErrorTotal.WithLabelValues().Inc()
 			return err
@@ -54,7 +66,7 @@ func (trapSender TrapSender) SendAlertTraps(alertBucket commons.AlertBucket) err
 	return nil
 }
 
-func (trapSender TrapSender) generateTraps(alertBucket commons.AlertBucket) ([]snmpgo.VarBinds, error) {
+func (trapSender TrapSender) generateTraps(alertBucket types.AlertBucket) ([]snmpgo.VarBinds, error) {
 	var (
 		traps []snmpgo.VarBinds
 	)
@@ -69,14 +81,14 @@ func (trapSender TrapSender) generateTraps(alertBucket commons.AlertBucket) ([]s
 	return traps, nil
 }
 
-func (trapSender TrapSender) generateVarBinds(alertGroup commons.AlertGroup) (snmpgo.VarBinds, error) {
+func (trapSender TrapSender) generateVarBinds(alertGroup types.AlertGroup) (snmpgo.VarBinds, error) {
 	var (
 		varBinds snmpgo.VarBinds
 	)
 
 	trapUniqueID := strings.Join([]string{alertGroup.OID, "[", alertGroup.GroupID, "]"}, "")
 
-	descriptions, err := commons.FillTemplate(alertGroup, trapSender.contentTemplate)
+	descriptions, err := commons.FillTemplate(alertGroup, trapSender.configuration.DescriptionTemplate)
 	if err != nil {
 		return nil, err
 	}
@@ -102,21 +114,18 @@ func addStringSubOid(varBinds snmpgo.VarBinds, alertOid string, subOid string, v
 	return append(varBinds, snmpgo.NewVarBind(oid, snmpgo.NewOctetString([]byte(strings.TrimSpace(value)))))
 }
 
-// Connect initiates a connection to a SNMP destination sever
-func Connect(snmpDestination string, snmpRetries uint, snmpCommunity string) (*snmpgo.SNMP, error) {
+func (trapSender TrapSender) connect() (*snmpgo.SNMP, error) {
 	snmp, err := snmpgo.NewSNMP(snmpgo.SNMPArguments{
 		Version:   snmpgo.V2c,
-		Address:   snmpDestination,
-		Retries:   snmpRetries,
-		Community: snmpCommunity,
+		Address:   trapSender.configuration.SNMPDestination,
+		Retries:   trapSender.configuration.SNMPRetries,
+		Community: trapSender.configuration.SNMPCommunity,
 	})
 	if err != nil {
-		log.Error(err)
 		return nil, err
 	}
 	err = snmp.Open()
 	if err != nil {
-		log.Error(err)
 		return nil, err
 	}
 	return snmp, nil

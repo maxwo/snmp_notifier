@@ -14,19 +14,35 @@
 package main
 
 import (
-	"log"
 	"os"
 
-	"github.com/maxwo/snmp_notifier/launcher"
+	"github.com/maxwo/snmp_notifier/alertparser"
+	"github.com/maxwo/snmp_notifier/configuration"
+	"github.com/maxwo/snmp_notifier/httpserver"
+	"github.com/maxwo/snmp_notifier/telemetry"
+	"github.com/maxwo/snmp_notifier/trapsender"
+
+	"github.com/prometheus/common/log"
 )
 
 func main() {
-	notifier, err := launcher.CreateSNMPNotifier(os.Args[1:])
+	configuration, err := configuration.ParseConfiguration(os.Args[1:])
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = notifier.Configure().ListenAndServe()
+	snmpNotifier, err := createSNMPNotifier(*configuration)
 	if err != nil {
 		log.Fatal(err)
 	}
+	telemetry.Init()
+	err = snmpNotifier.Configure().ListenAndServe()
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func createSNMPNotifier(snmpNotifierConfiguration configuration.SNMPNotifierConfiguration) (*httpserver.HTTPServer, error) {
+	trapSender := trapsender.New(snmpNotifierConfiguration.TrapSenderConfiguration)
+	alertParser := alertparser.New(snmpNotifierConfiguration.AlertParserConfiguration)
+	return httpserver.New(snmpNotifierConfiguration.HTTPServerConfiguration, alertParser, trapSender), nil
 }
