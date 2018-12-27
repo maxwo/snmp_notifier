@@ -1,6 +1,7 @@
 # SNMP Notifier [![Build Status](https://travis-ci.org/maxwo/snmp_notifier.svg?branch=master)](https://travis-ci.org/maxwo/snmp_notifier)
 
 [![CircleCI](https://circleci.com/gh/maxwo/snmp_notifier/tree/master.svg?style=svg)](https://circleci.com/gh/maxwo/snmp_notifier/tree/master)
+[![Go Report Card](https://goreportcard.com/badge/github.com/maxwo/snmp_notifier)](https://goreportcard.com/report/github.com/maxwo/snmp_notifier)
 ![Docker Pulls](https://img.shields.io/docker/pulls/maxwo/snmp-notifier.svg?maxAge=604800)
 
 `snmp_notifier` receives alerts from the Prometheus' Alertmanager and routes them as SNMP traps.

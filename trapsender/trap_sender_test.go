@@ -36,7 +36,7 @@ Description: {{ $value.Annotations.description }}
 
 var invalidDescriptionTemplate = `{{ range $key, $value := .InvalidAlerts }}{{ end }}`
 
-func TestParse(t *testing.T) {
+func TestSend(t *testing.T) {
 	var tests = []struct {
 		BucketFileName string
 		TrapsFileName  string
@@ -106,7 +106,7 @@ func TestParse(t *testing.T) {
 		}
 
 		if !test.ExpectError && err != nil {
-			t.Error("An unexpected error occured:", err)
+			t.Error("An unexpected error occurred:", err)
 		}
 
 		if err == nil {
