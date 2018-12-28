@@ -31,6 +31,7 @@ type TrapSender struct {
 	configuration TrapSenderConfiguration
 }
 
+// TrapSenderConfiguration describes the configuration for sending traps
 type TrapSenderConfiguration struct {
 	SNMPDestination     string
 	SNMPRetries         uint

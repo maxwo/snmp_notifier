@@ -15,6 +15,7 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
+// SNMPNotifierConfiguration handles the configuration of the whole application
 type SNMPNotifierConfiguration struct {
 	AlertParserConfiguration alertparser.AlertParserConfiguration
 	TrapSenderConfiguration  trapsender.TrapSenderConfiguration
@@ -38,6 +39,7 @@ Status: OK
 	snmpTrapIDTemplateDefault = `{{ .Labels.alertname }}`
 )
 
+// ParseConfiguration parses the command line for configurations
 func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, error) {
 	var (
 		application                 = kingpin.New("snmp_notifier", "A tool to relay Prometheus alerts as SNMP traps")

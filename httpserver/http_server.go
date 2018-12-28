@@ -40,6 +40,7 @@ type HTTPServer struct {
 	trapSender    trapsender.TrapSender
 }
 
+// HTTPServerConfiguration describes the configuration for serving HTTP requests
 type HTTPServerConfiguration struct {
 	WebListenAddress string
 }
