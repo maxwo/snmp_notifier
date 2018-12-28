@@ -146,10 +146,10 @@ NET-SNMP version 5.6.2.1
  Description: Cold Start
  PDU Attribute/Value Pair Array:
 .iso.org.dod.internet.mgmt.mib-2.system.sysUpTime.sysUpTimeInstance = Timeticks: (78947300) 9 days, 3:17:53.00
-.iso.org.dod.internet.snmpV2.snmpModules.snmpMIB.snmpMIBObjects.snmpTrap.snmpTrapOID.0 = OID: .iso.org.dod.internet.private.enterprises.666.0.10.1.1.1.1.1
-.iso.org.dod.internet.private.enterprises.666.0.10.1.1.1.1.1.1 = STRING: "1.3.6.1.4.1.666.0.10.1.1.1.1.1[TestAlert]"
-.iso.org.dod.internet.private.enterprises.666.0.10.1.1.1.1.1.2 = STRING: "info"
-.iso.org.dod.internet.private.enterprises.666.0.10.1.1.1.1.1.3 = STRING: "Status: OK"
+.iso.org.dod.internet.snmpV2.snmpModules.snmpMIB.snmpMIBObjects.snmpTrap.snmpTrapOID.0 = OID: .iso.org.dod.internet.private.enterprises.123.0.10.1.1.1.1.1
+.iso.org.dod.internet.private.enterprises.123.0.10.1.1.1.1.1.1 = STRING: "1.3.6.1.4.1.123.0.10.1.1.1.1.1[TestAlert]"
+.iso.org.dod.internet.private.enterprises.123.0.10.1.1.1.1.1.2 = STRING: "info"
+.iso.org.dod.internet.private.enterprises.123.0.10.1.1.1.1.1.3 = STRING: "Status: OK"
  --------------
  Agent Address: 0.0.0.0
  Agent Hostname: localhost
@@ -162,10 +162,10 @@ NET-SNMP version 5.6.2.1
  Description: Cold Start
  PDU Attribute/Value Pair Array:
 .iso.org.dod.internet.mgmt.mib-2.system.sysUpTime.sysUpTimeInstance = Timeticks: (78947300) 9 days, 3:17:53.00
-.iso.org.dod.internet.snmpV2.snmpModules.snmpMIB.snmpMIBObjects.snmpTrap.snmpTrapOID.0 = OID: .iso.org.dod.internet.private.enterprises.666.0.10.1.1.1.2.1
-.iso.org.dod.internet.private.enterprises.666.0.10.1.1.1.2.1.1 = STRING: "1.3.6.1.4.1.666.0.10.1.1.1.2.1[TestAlert]"
-.iso.org.dod.internet.private.enterprises.666.0.10.1.1.1.2.1.2 = STRING: "critical"
-.iso.org.dod.internet.private.enterprises.666.0.10.1.1.1.2.1.3 = STRING: "Status: critical
+.iso.org.dod.internet.snmpV2.snmpModules.snmpMIB.snmpMIBObjects.snmpTrap.snmpTrapOID.0 = OID: .iso.org.dod.internet.private.enterprises.123.0.10.1.1.1.2.1
+.iso.org.dod.internet.private.enterprises.123.0.10.1.1.1.2.1.1 = STRING: "1.3.6.1.4.1.123.0.10.1.1.1.2.1[TestAlert]"
+.iso.org.dod.internet.private.enterprises.123.0.10.1.1.1.2.1.2 = STRING: "critical"
+.iso.org.dod.internet.private.enterprises.123.0.10.1.1.1.2.1.3 = STRING: "Status: critical
 - Alert: TestAlert
   Summary: this is the summary
   Description: this is the description on job1
