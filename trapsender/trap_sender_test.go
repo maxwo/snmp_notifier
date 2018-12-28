@@ -24,6 +24,7 @@ import (
 	"text/template"
 
 	"github.com/maxwo/snmp_notifier/commons"
+	"github.com/maxwo/snmp_notifier/types"
 
 	testutils "github.com/maxwo/snmp_notifier/test"
 )
@@ -87,7 +88,7 @@ func TestSend(t *testing.T) {
 			t.Fatal("Error while reading bucket file:", err)
 		}
 		bucketReader := bytes.NewReader(bucketByteData)
-		bucketData := commons.AlertBucket{}
+		bucketData := types.AlertBucket{}
 		err = json.NewDecoder(bucketReader).Decode(&bucketData)
 		if err != nil {
 			t.Fatal("Error while parsing bucket file:", err)
@@ -98,9 +99,10 @@ func TestSend(t *testing.T) {
 			t.Fatal("Error while building template")
 		}
 
-		trapsender := New(*snmp, *descriptionTemplate)
+		trapSenderConfiguration := TrapSenderConfiguration{*snmp, *descriptionTemplate}
+		trapSender := New(trapSenderConfiguration)
 
-		err = trapsender.SendAlertTraps(bucketData)
+		err = trapSender.SendAlertTraps(bucketData)
 		if test.ExpectError && err == nil {
 			t.Error("An error was expected")
 		}
