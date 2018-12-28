@@ -75,11 +75,6 @@ func TestSend(t *testing.T) {
 
 	for index, test := range tests {
 		host := fmt.Sprintf("127.0.0.1:%d", test.Port)
-		snmp, err := Connect(host, 1, "public")
-		if err != nil {
-			t.Fatal("Error while opening connection:", err)
-		}
-		defer snmp.Close()
 
 		t.Log("Launching test ", index)
 		bucketByteData, err := ioutil.ReadFile(test.BucketFileName)
@@ -98,7 +93,7 @@ func TestSend(t *testing.T) {
 			t.Fatal("Error while building template")
 		}
 
-		trapSenderConfiguration := TrapSenderConfiguration{*snmp, *descriptionTemplate}
+		trapSenderConfiguration := TrapSenderConfiguration{host, 1, "public", *descriptionTemplate}
 		trapSender := New(trapSenderConfiguration)
 
 		err = trapSender.SendAlertTraps(bucketData)

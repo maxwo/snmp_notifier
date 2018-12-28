@@ -23,7 +23,6 @@ import (
 	"text/template"
 
 	"github.com/k-sone/snmpgo"
-	"github.com/prometheus/common/log"
 	"github.com/shirou/gopsutil/host"
 )
 
@@ -33,8 +32,10 @@ type TrapSender struct {
 }
 
 type TrapSenderConfiguration struct {
-	SNMPConnection  snmpgo.SNMP
-	ContentTemplate template.Template
+	SNMPDestination     string
+	SNMPRetries         uint
+	SNMPCommunity       string
+	DescriptionTemplate template.Template
 }
 
 // New creates a new TrapSender
@@ -48,8 +49,13 @@ func (trapSender TrapSender) SendAlertTraps(alertBucket types.AlertBucket) error
 	if err != nil {
 		return err
 	}
+	connection, err := trapSender.connect()
+	if err != nil {
+		return err
+	}
+	defer connection.Close()
 	for _, trap := range traps {
-		err = trapSender.configuration.SNMPConnection.V2Trap(trap)
+		err = connection.V2Trap(trap)
 		if err != nil {
 			telemetry.SNMPErrorTotal.WithLabelValues().Inc()
 			return err
@@ -81,7 +87,7 @@ func (trapSender TrapSender) generateVarBinds(alertGroup types.AlertGroup) (snmp
 
 	trapUniqueID := strings.Join([]string{alertGroup.OID, "[", alertGroup.GroupID, "]"}, "")
 
-	descriptions, err := commons.FillTemplate(alertGroup, trapSender.configuration.ContentTemplate)
+	descriptions, err := commons.FillTemplate(alertGroup, trapSender.configuration.DescriptionTemplate)
 	if err != nil {
 		return nil, err
 	}
@@ -107,21 +113,18 @@ func addStringSubOid(varBinds snmpgo.VarBinds, alertOid string, subOid string, v
 	return append(varBinds, snmpgo.NewVarBind(oid, snmpgo.NewOctetString([]byte(strings.TrimSpace(value)))))
 }
 
-// Connect initiates a connection to a SNMP destination sever
-func Connect(snmpDestination string, snmpRetries uint, snmpCommunity string) (*snmpgo.SNMP, error) {
+func (trapSender TrapSender) connect() (*snmpgo.SNMP, error) {
 	snmp, err := snmpgo.NewSNMP(snmpgo.SNMPArguments{
 		Version:   snmpgo.V2c,
-		Address:   snmpDestination,
-		Retries:   snmpRetries,
-		Community: snmpCommunity,
+		Address:   trapSender.configuration.SNMPDestination,
+		Retries:   trapSender.configuration.SNMPRetries,
+		Community: trapSender.configuration.SNMPCommunity,
 	})
 	if err != nil {
-		log.Error(err)
 		return nil, err
 	}
 	err = snmp.Open()
 	if err != nil {
-		log.Error(err)
 		return nil, err
 	}
 	return snmp, nil

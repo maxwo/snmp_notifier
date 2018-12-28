@@ -104,7 +104,7 @@ Flags:
       --snmp.community="public"  SNMP community
       --snmp.trap-oid-label="oid"
                                  Label where to find the trap OID.
-      --snmp.trap-default-oid="1.1.1"
+      --snmp.trap-default-oid="1.3.6.1.4.1.1664.1"
                                  Trap OID to send if none is found in the alert labels
       --snmp.trap-id-template="{{ .Labels.alertname }}"
                                  SNMP ID template, to group several alerts in a single trap.

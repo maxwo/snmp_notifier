@@ -30,7 +30,7 @@ type AlertParser struct {
 
 // AlertParserConfiguration stores configuration of an AlertParser
 type AlertParserConfiguration struct {
-	IdTemplate      template.Template
+	IDTemplate      template.Template
 	DefaultOID      string
 	OIDLabel        string
 	DefaultSeverity string
@@ -54,7 +54,7 @@ func (alertParser AlertParser) Parse(alerts types.Alerts) (*types.AlertBucket, e
 		if err != nil {
 			return nil, err
 		}
-		groupID, err := generateGroupID(alert, alertParser.configuration.IdTemplate)
+		groupID, err := generateGroupID(alert, alertParser.configuration.IDTemplate)
 		if err != nil {
 			return nil, err
 		}

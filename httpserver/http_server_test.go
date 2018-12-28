@@ -217,12 +217,7 @@ func TestPostAlerts(t *testing.T) {
 }
 
 func launchHTTPServer(t *testing.T, test Test) *http.Server {
-	snmpConnection := fmt.Sprintf("127.0.0.1:%d", test.SNMPConnectionPort)
-
-	snmp, err := trapsender.Connect(snmpConnection, 1, "public")
-	if err != nil {
-		t.Fatal("Error while opening connection:", err)
-	}
+	snmpDestination := fmt.Sprintf("127.0.0.1:%d", test.SNMPConnectionPort)
 
 	idTemplate, err := template.New("id").Parse(test.IDTemplate)
 	if err != nil {
@@ -236,7 +231,7 @@ func launchHTTPServer(t *testing.T, test Test) *http.Server {
 		t.Fatal("Error while building template")
 	}
 
-	trapSenderConfiguration := trapsender.TrapSenderConfiguration{*snmp, *descriptionTemplate}
+	trapSenderConfiguration := trapsender.TrapSenderConfiguration{snmpDestination, 1, "public", *descriptionTemplate}
 	trapSender := trapsender.New(trapSenderConfiguration)
 
 	httpServerConfiguration := HTTPServerConfiguration{":9465"}
