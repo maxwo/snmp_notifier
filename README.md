@@ -16,7 +16,7 @@ Prometheus' Alertmanager sends the alerts to the SNMP notifier on its HTTP API. 
 
 ## Install
 
-There are various ways to install the SNMP notifier
+There are various ways to install the SNMP notifier:
 
 ### Precompiled binaries
 
