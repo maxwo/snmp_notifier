@@ -23,7 +23,6 @@ import (
 
 	"text/template"
 
-	"github.com/maxwo/snmp_notifier/commons"
 	"github.com/maxwo/snmp_notifier/types"
 
 	testutils "github.com/maxwo/snmp_notifier/test"
