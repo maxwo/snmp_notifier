@@ -18,6 +18,7 @@ import (
 
 	"github.com/maxwo/snmp_notifier/commons"
 	"github.com/maxwo/snmp_notifier/telemetry"
+	"github.com/maxwo/snmp_notifier/types"
 
 	"text/template"
 
@@ -28,23 +29,27 @@ import (
 
 // TrapSender sends traps according to given alerts
 type TrapSender struct {
-	snmpConnection  snmpgo.SNMP
-	contentTemplate template.Template
+	configuration TrapSenderConfiguration
+}
+
+type TrapSenderConfiguration struct {
+	SNMPConnection  snmpgo.SNMP
+	ContentTemplate template.Template
 }
 
 // New creates a new TrapSender
-func New(snmpConnection snmpgo.SNMP, contentTemplate template.Template) TrapSender {
-	return TrapSender{snmpConnection, contentTemplate}
+func New(configuration TrapSenderConfiguration) TrapSender {
+	return TrapSender{configuration}
 }
 
 // SendAlertTraps sends a bucket of alerts to the given SNMP connection
-func (trapSender TrapSender) SendAlertTraps(alertBucket commons.AlertBucket) error {
+func (trapSender TrapSender) SendAlertTraps(alertBucket types.AlertBucket) error {
 	traps, err := trapSender.generateTraps(alertBucket)
 	if err != nil {
 		return err
 	}
 	for _, trap := range traps {
-		err = trapSender.snmpConnection.V2Trap(trap)
+		err = trapSender.configuration.SNMPConnection.V2Trap(trap)
 		if err != nil {
 			telemetry.SNMPErrorTotal.WithLabelValues().Inc()
 			return err
@@ -54,7 +59,7 @@ func (trapSender TrapSender) SendAlertTraps(alertBucket commons.AlertBucket) err
 	return nil
 }
 
-func (trapSender TrapSender) generateTraps(alertBucket commons.AlertBucket) ([]snmpgo.VarBinds, error) {
+func (trapSender TrapSender) generateTraps(alertBucket types.AlertBucket) ([]snmpgo.VarBinds, error) {
 	var (
 		traps []snmpgo.VarBinds
 	)
@@ -69,14 +74,14 @@ func (trapSender TrapSender) generateTraps(alertBucket commons.AlertBucket) ([]s
 	return traps, nil
 }
 
-func (trapSender TrapSender) generateVarBinds(alertGroup commons.AlertGroup) (snmpgo.VarBinds, error) {
+func (trapSender TrapSender) generateVarBinds(alertGroup types.AlertGroup) (snmpgo.VarBinds, error) {
 	var (
 		varBinds snmpgo.VarBinds
 	)
 
 	trapUniqueID := strings.Join([]string{alertGroup.OID, "[", alertGroup.GroupID, "]"}, "")
 
-	descriptions, err := commons.FillTemplate(alertGroup, trapSender.contentTemplate)
+	descriptions, err := commons.FillTemplate(alertGroup, trapSender.configuration.ContentTemplate)
 	if err != nil {
 		return nil, err
 	}

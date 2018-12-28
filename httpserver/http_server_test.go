@@ -41,8 +41,8 @@ Description: {{ $value.Annotations.description }}
 type Test struct {
 	IDTemplate          string
 	DescriptionTemplate string
-	DefaultOid          string
-	OidLabel            string
+	DefaultOID          string
+	OIDLabel            string
 	DefaultSeverity     string
 	Severities          []string
 	SeverityLabel       string
@@ -228,19 +228,23 @@ func launchHTTPServer(t *testing.T, test Test) *http.Server {
 	if err != nil {
 		t.Fatal("Error while parsing bucket file:", err)
 	}
-	parser := alertparser.New(*idTemplate, test.DefaultOid, test.OidLabel, test.DefaultSeverity, test.Severities, test.SeverityLabel)
+	alertParserConfiguration := alertparser.AlertParserConfiguration{*idTemplate, test.DefaultOID, test.OIDLabel, test.DefaultSeverity, test.Severities, test.SeverityLabel}
+	alertParser := alertparser.New(alertParserConfiguration)
 
 	descriptionTemplate, err := template.New("description").Parse(test.DescriptionTemplate)
 	if err != nil {
 		t.Fatal("Error while building template")
 	}
-	trapsender := trapsender.New(*snmp, *descriptionTemplate)
 
-	httpserver := New(parser, trapsender, ":9465").Configure()
+	trapSenderConfiguration := trapsender.TrapSenderConfiguration{*snmp, *descriptionTemplate}
+	trapSender := trapsender.New(trapSenderConfiguration)
+
+	httpServerConfiguration := HTTPServerConfiguration{":9465"}
+	httpServer := New(httpServerConfiguration, alertParser, trapSender).Configure()
 	go func() {
-		httpserver.ListenAndServe()
+		httpServer.ListenAndServe()
 	}()
 	time.Sleep(200 * time.Millisecond)
 
-	return httpserver
+	return httpServer
 }

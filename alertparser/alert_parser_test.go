@@ -21,10 +21,9 @@ import (
 	"testing"
 	"text/template"
 
-	"github.com/maxwo/snmp_notifier/commons"
+	"github.com/maxwo/snmp_notifier/types"
 
 	"github.com/go-test/deep"
-	alertmanagertemplate "github.com/prometheus/alertmanager/template"
 )
 
 func TestParse(t *testing.T) {
@@ -81,7 +80,7 @@ func TestParse(t *testing.T) {
 			t.Fatal("Error while reading alert file:", err)
 		}
 		alertsReader := bytes.NewReader(alertsByteData)
-		alertsData := []alertmanagertemplate.Alert{}
+		alertsData := []types.Alert{}
 		err = json.NewDecoder(alertsReader).Decode(&alertsData)
 		if err != nil {
 			t.Fatal("Error while parsing alert file:", err)
@@ -92,7 +91,8 @@ func TestParse(t *testing.T) {
 			t.Fatal("Error while parsing bucket file:", err)
 		}
 
-		parser := New(*template, test.DefaultOid, test.OidLabel, test.DefaultSeverity, test.Severities, test.SeverityLabel)
+		parserConfiguration := AlertParserConfiguration{*template, test.DefaultOid, test.OidLabel, test.DefaultSeverity, test.Severities, test.SeverityLabel}
+		parser := New(parserConfiguration)
 		bucket, err := parser.Parse(alertsData)
 
 		if test.ExpectError && err == nil {
@@ -112,7 +112,7 @@ func TestParse(t *testing.T) {
 				continue
 			}
 			bucketReader := bytes.NewReader(bucketByteData)
-			bucketData := commons.AlertBucket{}
+			bucketData := types.AlertBucket{}
 			err = json.NewDecoder(bucketReader).Decode(&bucketData)
 			if err != nil {
 				t.Fatal("Error while parsing bucket file:", err)

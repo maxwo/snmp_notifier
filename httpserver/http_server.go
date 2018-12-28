@@ -24,9 +24,9 @@ import (
 	"github.com/maxwo/snmp_notifier/alertparser"
 	"github.com/maxwo/snmp_notifier/telemetry"
 	"github.com/maxwo/snmp_notifier/trapsender"
+	"github.com/maxwo/snmp_notifier/types"
 
 	"github.com/gorilla/handlers"
-	alertmanagertemplate "github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/prometheus/common/log"
@@ -35,21 +35,25 @@ import (
 
 // HTTPServer listens for alerts on /alerts endpoint, and sends them as SNMP traps.
 type HTTPServer struct {
-	alertParser      alertparser.AlertParser
-	trapSender       trapsender.TrapSender
-	webListenAddress string
+	configuration HTTPServerConfiguration
+	alertParser   alertparser.AlertParser
+	trapSender    trapsender.TrapSender
+}
+
+type HTTPServerConfiguration struct {
+	WebListenAddress string
 }
 
 // New creates an HTTPServer instance
-func New(alertParser alertparser.AlertParser, trapSender trapsender.TrapSender, webListenAddress string) *HTTPServer {
-	return &HTTPServer{alertParser, trapSender, webListenAddress}
+func New(configuration HTTPServerConfiguration, alertParser alertparser.AlertParser, trapSender trapsender.TrapSender) *HTTPServer {
+	return &HTTPServer{configuration, alertParser, trapSender}
 }
 
 // Configure creates and configures the HTTP server
 func (httpServer HTTPServer) Configure() *http.Server {
 	mux := http.NewServeMux()
 	server := &http.Server{
-		Addr:    httpServer.webListenAddress,
+		Addr:    httpServer.configuration.WebListenAddress,
 		Handler: handlers.LoggingHandler(os.Stdout, mux),
 	}
 
@@ -71,7 +75,7 @@ func (httpServer HTTPServer) Configure() *http.Server {
 		log.Debugf("Handling /alerts webhook request")
 		defer req.Body.Close()
 
-		data := alertmanagertemplate.Data{}
+		data := types.AlertsData{}
 		err := json.NewDecoder(req.Body).Decode(&data)
 		if err != nil {
 			errorHandler(w, http.StatusUnprocessableEntity, err, &data)
@@ -96,7 +100,7 @@ func (httpServer HTTPServer) Configure() *http.Server {
 	mux.Handle("/metrics", promhttp.Handler())
 	mux.HandleFunc("/health", healthHandler)
 
-	log.Infoln("Preparing to listen on: ", httpServer.webListenAddress)
+	log.Infoln("Preparing to listen on: ", httpServer.configuration.WebListenAddress)
 	return server
 }
 
@@ -104,7 +108,7 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "Health: OK\n")
 }
 
-func errorHandler(w http.ResponseWriter, status int, err error, data *alertmanagertemplate.Data) {
+func errorHandler(w http.ResponseWriter, status int, err error, data *types.AlertsData) {
 	w.WriteHeader(status)
 
 	response := struct {

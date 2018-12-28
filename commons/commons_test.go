@@ -24,7 +24,7 @@ import (
 
 	"github.com/go-test/deep"
 
-	alertmanagertemplate "github.com/prometheus/alertmanager/template"
+	"github.com/maxwo/snmp_notifier/types"
 )
 
 func TestFillTemplate(t *testing.T) {
@@ -74,7 +74,7 @@ func TestGroupAlertsByName(t *testing.T) {
 			t.Fatal("Error while reading alert file", err)
 		}
 		alertsReader := bytes.NewReader(alertsByteData)
-		alertsData := []alertmanagertemplate.Alert{}
+		alertsData := []types.Alert{}
 		err = json.NewDecoder(alertsReader).Decode(&alertsData)
 		if err != nil {
 			t.Fatal("Error while parsing alert file", err)
@@ -85,7 +85,7 @@ func TestGroupAlertsByName(t *testing.T) {
 			t.Fatal("Error while reading group file", err)
 		}
 		groupsReader := bytes.NewReader(groupsByteData)
-		groupsData := map[string][]alertmanagertemplate.Alert{}
+		groupsData := map[string][]types.Alert{}
 		err = json.NewDecoder(groupsReader).Decode(&groupsData)
 		if err != nil {
 			t.Fatal("Error while parsing group file", err)
@@ -132,7 +132,7 @@ func TestGroupAlertsByLabel(t *testing.T) {
 			t.Fatal("Error while reading alert file", err)
 		}
 		alertsReader := bytes.NewReader(alertsByteData)
-		alertsData := []alertmanagertemplate.Alert{}
+		alertsData := []types.Alert{}
 		err = json.NewDecoder(alertsReader).Decode(&alertsData)
 		if err != nil {
 			t.Fatal("Error while parsing alert file", err)
@@ -143,7 +143,7 @@ func TestGroupAlertsByLabel(t *testing.T) {
 			t.Fatal("Error while reading group file", err)
 		}
 		groupsReader := bytes.NewReader(groupsByteData)
-		groupsData := map[string][]alertmanagertemplate.Alert{}
+		groupsData := map[string][]types.Alert{}
 		err = json.NewDecoder(groupsReader).Decode(&groupsData)
 		if err != nil {
 			t.Fatal("Error while parsing group file", err)
@@ -172,13 +172,13 @@ func TestGroupAlertsByLabel(t *testing.T) {
 func TestGroupAlertsBy(t *testing.T) {
 	var tests = []struct {
 		AlertsFileName string
-		Classifier     GetAlertGroupName
+		Classifier     types.GetAlertGroupName
 		GroupsFileName string
 		ExpectError    bool
 	}{
 		{
 			"test_alerts.json",
-			func(alert alertmanagertemplate.Alert) (*string, error) {
+			func(alert types.Alert) (*string, error) {
 				oid := alert.Labels["oid"]
 				return &oid, nil
 			},
@@ -187,7 +187,7 @@ func TestGroupAlertsBy(t *testing.T) {
 		},
 		{
 			"test_alerts.json",
-			func(alert alertmanagertemplate.Alert) (*string, error) {
+			func(alert types.Alert) (*string, error) {
 				return nil, fmt.Errorf("Ohlala")
 			},
 			"test_groups.json",
@@ -201,7 +201,7 @@ func TestGroupAlertsBy(t *testing.T) {
 			t.Fatal("Error while reading alert file", err)
 		}
 		alertsReader := bytes.NewReader(alertsByteData)
-		alertsData := []alertmanagertemplate.Alert{}
+		alertsData := []types.Alert{}
 		err = json.NewDecoder(alertsReader).Decode(&alertsData)
 		if err != nil {
 			t.Fatal("Error while parsing alert file", err)
@@ -212,7 +212,7 @@ func TestGroupAlertsBy(t *testing.T) {
 			t.Fatal("Error while reading group file", err)
 		}
 		groupsReader := bytes.NewReader(groupsByteData)
-		groupsData := map[string][]alertmanagertemplate.Alert{}
+		groupsData := map[string][]types.Alert{}
 		err = json.NewDecoder(groupsReader).Decode(&groupsData)
 		if err != nil {
 			t.Fatal("Error while parsing group file", err)

@@ -18,31 +18,35 @@ import (
 	"strings"
 
 	"github.com/maxwo/snmp_notifier/commons"
+	"github.com/maxwo/snmp_notifier/types"
 
 	"text/template"
-
-	alertmanagertemplate "github.com/prometheus/alertmanager/template"
 )
 
 // AlertParser parses alerts from the Prometheus Alert Manager
 type AlertParser struct {
-	idTemplate      template.Template
-	defaultOID      string
-	oidLabel        string
-	defaultSeverity string
-	severities      []string
-	severityLabel   string
+	configuration AlertParserConfiguration
+}
+
+// AlertParserConfiguration stores configuration of an AlertParser
+type AlertParserConfiguration struct {
+	IdTemplate      template.Template
+	DefaultOID      string
+	OIDLabel        string
+	DefaultSeverity string
+	Severities      []string
+	SeverityLabel   string
 }
 
 // New creates an AlertParser instance
-func New(idTemplate template.Template, defaultOID string, oidLabel string, defaultSeverity string, severities []string, severityLabel string) AlertParser {
-	return AlertParser{idTemplate, defaultOID, oidLabel, defaultSeverity, severities, severityLabel}
+func New(configuration AlertParserConfiguration) AlertParser {
+	return AlertParser{configuration}
 }
 
 // Parse parses alerts coming from the Prometheus Alert Manager
-func (alertParser AlertParser) Parse(alerts alertmanagertemplate.Alerts) (*commons.AlertBucket, error) {
+func (alertParser AlertParser) Parse(alerts types.Alerts) (*types.AlertBucket, error) {
 	var (
-		alertGroups = map[string]*commons.AlertGroup{}
+		alertGroups = map[string]*types.AlertGroup{}
 	)
 
 	for _, alert := range alerts {
@@ -50,13 +54,13 @@ func (alertParser AlertParser) Parse(alerts alertmanagertemplate.Alerts) (*commo
 		if err != nil {
 			return nil, err
 		}
-		groupID, err := generateGroupID(alert, alertParser.idTemplate)
+		groupID, err := generateGroupID(alert, alertParser.configuration.IdTemplate)
 		if err != nil {
 			return nil, err
 		}
 		key := strings.Join([]string{*oid, "[", *groupID, "]"}, "")
 		if _, found := alertGroups[key]; !found {
-			alertGroups[key] = &commons.AlertGroup{OID: *oid, GroupID: *groupID, Severity: alertParser.getLowestSeverity(), Alerts: []alertmanagertemplate.Alert{}}
+			alertGroups[key] = &types.AlertGroup{OID: *oid, GroupID: *groupID, Severity: alertParser.getLowestSeverity(), Alerts: []types.Alert{}}
 		}
 		if alert.Status == "firing" {
 			err = alertParser.addAlertToGroup(alertGroups[key], alert)
@@ -66,17 +70,17 @@ func (alertParser AlertParser) Parse(alerts alertmanagertemplate.Alerts) (*commo
 		}
 	}
 
-	return &commons.AlertBucket{AlertGroups: alertGroups}, nil
+	return &types.AlertBucket{AlertGroups: alertGroups}, nil
 }
 
-func (alertParser AlertParser) addAlertToGroup(alertGroup *commons.AlertGroup, alert alertmanagertemplate.Alert) error {
-	var severity = alertParser.defaultSeverity
-	if _, found := alert.Labels[alertParser.severityLabel]; found {
-		severity = alert.Labels[alertParser.severityLabel]
+func (alertParser AlertParser) addAlertToGroup(alertGroup *types.AlertGroup, alert types.Alert) error {
+	var severity = alertParser.configuration.DefaultSeverity
+	if _, found := alert.Labels[alertParser.configuration.SeverityLabel]; found {
+		severity = alert.Labels[alertParser.configuration.SeverityLabel]
 	}
 
-	var currentGroupSeverityIndex = commons.IndexOf(alertGroup.Severity, alertParser.severities)
-	var alertSeverityIndex = commons.IndexOf(severity, alertParser.severities)
+	var currentGroupSeverityIndex = commons.IndexOf(alertGroup.Severity, alertParser.configuration.Severities)
+	var alertSeverityIndex = commons.IndexOf(severity, alertParser.configuration.Severities)
 	if alertSeverityIndex == -1 {
 		return fmt.Errorf("Incorrect severity: %s", severity)
 	}
@@ -88,23 +92,25 @@ func (alertParser AlertParser) addAlertToGroup(alertGroup *commons.AlertGroup, a
 	return nil
 }
 
-func (alertParser AlertParser) getAlertOID(alert alertmanagertemplate.Alert) (*string, error) {
+func (alertParser AlertParser) getAlertOID(alert types.Alert) (*string, error) {
 	var (
-		oid = alertParser.defaultOID
+		oid string
 	)
-	if _, found := alert.Labels[alertParser.oidLabel]; found {
-		oid = alert.Labels[alertParser.oidLabel]
-		if !commons.IsOID(oid) {
-			return nil, fmt.Errorf("Invalid OID provided: \"%s\"", alert.Labels[alertParser.oidLabel])
-		}
+	if _, found := alert.Labels[alertParser.configuration.OIDLabel]; found {
+		oid = alert.Labels[alertParser.configuration.OIDLabel]
+	} else {
+		oid = alertParser.configuration.DefaultOID
+	}
+	if !commons.IsOID(oid) {
+		return nil, fmt.Errorf("Invalid OID provided: \"%s\"", oid)
 	}
 	return &oid, nil
 }
 
 func (alertParser AlertParser) getLowestSeverity() string {
-	return alertParser.severities[len(alertParser.severities)-1]
+	return alertParser.configuration.Severities[len(alertParser.configuration.Severities)-1]
 }
 
-func generateGroupID(alert alertmanagertemplate.Alert, idTemplate template.Template) (*string, error) {
+func generateGroupID(alert types.Alert, idTemplate template.Template) (*string, error) {
 	return commons.FillTemplate(alert, idTemplate)
 }
