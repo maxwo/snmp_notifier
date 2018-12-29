@@ -30,19 +30,15 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	snmpNotifier, err := createSNMPNotifier(*configuration)
-	if err != nil {
-		log.Fatal(err)
-	}
-	telemetry.Init()
-	err = snmpNotifier.Configure().ListenAndServe()
-	if err != nil {
-		log.Fatal(err)
-	}
-}
 
-func createSNMPNotifier(snmpNotifierConfiguration configuration.SNMPNotifierConfiguration) (*httpserver.HTTPServer, error) {
-	trapSender := trapsender.New(snmpNotifierConfiguration.TrapSenderConfiguration)
-	alertParser := alertparser.New(snmpNotifierConfiguration.AlertParserConfiguration)
-	return httpserver.New(snmpNotifierConfiguration.HTTPServerConfiguration, alertParser, trapSender), nil
+	trapSender := trapsender.New(configuration.TrapSenderConfiguration)
+	alertParser := alertparser.New(configuration.AlertParserConfiguration)
+	httpServer := httpserver.New(configuration.HTTPServerConfiguration, alertParser, trapSender)
+
+	telemetry.Init()
+
+	err = httpServer.Configure().ListenAndServe()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
