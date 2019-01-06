@@ -28,11 +28,11 @@ import (
 
 // TrapSender sends traps according to given alerts
 type TrapSender struct {
-	configuration TrapSenderConfiguration
+	configuration Configuration
 }
 
-// TrapSenderConfiguration describes the configuration for sending traps
-type TrapSenderConfiguration struct {
+// Configuration describes the configuration for sending traps
+type Configuration struct {
 	SNMPDestination     string
 	SNMPRetries         uint
 	SNMPCommunity       string
@@ -40,7 +40,7 @@ type TrapSenderConfiguration struct {
 }
 
 // New creates a new TrapSender
-func New(configuration TrapSenderConfiguration) TrapSender {
+func New(configuration Configuration) TrapSender {
 	return TrapSender{configuration}
 }
 

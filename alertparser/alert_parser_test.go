@@ -19,7 +19,6 @@ import (
 	"io/ioutil"
 	"strings"
 	"testing"
-	"text/template"
 
 	"github.com/maxwo/snmp_notifier/types"
 
@@ -28,7 +27,6 @@ import (
 
 func TestParse(t *testing.T) {
 	var tests = []struct {
-		Template        string
 		DefaultOid      string
 		OidLabel        string
 		DefaultSeverity string
@@ -39,7 +37,6 @@ func TestParse(t *testing.T) {
 		ExpectError     bool
 	}{
 		{
-			"{{ .Labels.alertname }}",
 			"1.1",
 			"oid",
 			"critical",
@@ -50,7 +47,6 @@ func TestParse(t *testing.T) {
 			false,
 		},
 		{
-			"{{ .Labels.alertname }}",
 			"1.1",
 			"oid",
 			"critical",
@@ -61,7 +57,6 @@ func TestParse(t *testing.T) {
 			true,
 		},
 		{
-			"{{ .Labels.alertname }}",
 			"1.1",
 			"oid",
 			"critical",
@@ -80,18 +75,13 @@ func TestParse(t *testing.T) {
 			t.Fatal("Error while reading alert file:", err)
 		}
 		alertsReader := bytes.NewReader(alertsByteData)
-		alertsData := []types.Alert{}
+		alertsData := types.AlertsData{}
 		err = json.NewDecoder(alertsReader).Decode(&alertsData)
 		if err != nil {
 			t.Fatal("Error while parsing alert file:", err)
 		}
 
-		template, err := template.New("id").Parse(test.Template)
-		if err != nil {
-			t.Fatal("Error while parsing bucket file:", err)
-		}
-
-		parserConfiguration := AlertParserConfiguration{*template, test.DefaultOid, test.OidLabel, test.DefaultSeverity, test.Severities, test.SeverityLabel}
+		parserConfiguration := Configuration{test.DefaultOid, test.OidLabel, test.DefaultSeverity, test.Severities, test.SeverityLabel}
 		parser := New(parserConfiguration)
 		bucket, err := parser.Parse(alertsData)
 

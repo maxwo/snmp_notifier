@@ -39,7 +39,6 @@ Description: {{ $value.Annotations.description }}
 {{ end -}}`
 
 type Test struct {
-	IDTemplate          string
 	DescriptionTemplate string
 	DefaultOID          string
 	OIDLabel            string
@@ -56,7 +55,6 @@ type Test struct {
 
 var tests = []Test{
 	{
-		"{{ .Labels.alertname }}",
 		dummyDescriptionTemplate,
 		"1.1",
 		"oid",
@@ -71,7 +69,6 @@ var tests = []Test{
 		200,
 	},
 	{
-		"{{ .Labels.alertname }}",
 		dummyDescriptionTemplate,
 		"1.1",
 		"oid",
@@ -86,7 +83,6 @@ var tests = []Test{
 		422,
 	},
 	{
-		"{{ .Labels.alertname }}",
 		dummyDescriptionTemplate,
 		"1.1",
 		"oid",
@@ -101,7 +97,6 @@ var tests = []Test{
 		400,
 	},
 	{
-		"{{ .Labels.alertname }}",
 		dummyDescriptionTemplate,
 		"1.1",
 		"oid",
@@ -116,7 +111,6 @@ var tests = []Test{
 		502,
 	},
 	{
-		"{{ .Labels.alertname }}",
 		dummyDescriptionTemplate,
 		"1.1",
 		"oid",
@@ -131,7 +125,6 @@ var tests = []Test{
 		200,
 	},
 	{
-		"{{ .Labels.alertname }}",
 		dummyDescriptionTemplate,
 		"1.1",
 		"oid",
@@ -219,11 +212,7 @@ func TestPostAlerts(t *testing.T) {
 func launchHTTPServer(t *testing.T, test Test) *http.Server {
 	snmpDestination := fmt.Sprintf("127.0.0.1:%d", test.SNMPConnectionPort)
 
-	idTemplate, err := template.New("id").Parse(test.IDTemplate)
-	if err != nil {
-		t.Fatal("Error while parsing bucket file:", err)
-	}
-	alertParserConfiguration := alertparser.AlertParserConfiguration{*idTemplate, test.DefaultOID, test.OIDLabel, test.DefaultSeverity, test.Severities, test.SeverityLabel}
+	alertParserConfiguration := alertparser.Configuration{test.DefaultOID, test.OIDLabel, test.DefaultSeverity, test.Severities, test.SeverityLabel}
 	alertParser := alertparser.New(alertParserConfiguration)
 
 	descriptionTemplate, err := template.New("description").Parse(test.DescriptionTemplate)
@@ -231,10 +220,10 @@ func launchHTTPServer(t *testing.T, test Test) *http.Server {
 		t.Fatal("Error while building template")
 	}
 
-	trapSenderConfiguration := trapsender.TrapSenderConfiguration{snmpDestination, 1, "public", *descriptionTemplate}
+	trapSenderConfiguration := trapsender.Configuration{snmpDestination, 1, "public", *descriptionTemplate}
 	trapSender := trapsender.New(trapSenderConfiguration)
 
-	httpServerConfiguration := HTTPServerConfiguration{":9465"}
+	httpServerConfiguration := Configuration{":9465"}
 	httpServer := New(httpServerConfiguration, alertParser, trapSender).Configure()
 	go func() {
 		httpServer.ListenAndServe()

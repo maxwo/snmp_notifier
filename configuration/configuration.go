@@ -2,6 +2,7 @@ package configuration
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"text/template"
 
@@ -17,9 +18,9 @@ import (
 
 // SNMPNotifierConfiguration handles the configuration of the whole application
 type SNMPNotifierConfiguration struct {
-	AlertParserConfiguration alertparser.AlertParserConfiguration
-	TrapSenderConfiguration  trapsender.TrapSenderConfiguration
-	HTTPServerConfiguration  httpserver.HTTPServerConfiguration
+	AlertParserConfiguration alertparser.Configuration
+	TrapSenderConfiguration  trapsender.Configuration
+	HTTPServerConfiguration  httpserver.Configuration
 }
 
 var (
@@ -36,7 +37,8 @@ Status: {{ $severity }}
 {{ else -}}
 Status: OK
 {{- end -}}`
-	snmpTrapIDTemplateDefault = `{{ .Labels.alertname }}`
+	snmpDefaultCommunity             = "public"
+	snmpCommunityEnvironmentVariable = "SNMP_NOTIFIER_COMMUNITY"
 )
 
 // ParseConfiguration parses the command line for configurations
@@ -49,10 +51,8 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, error) {
 		alertDefaultSeverity        = application.Flag("alert.default-severity", "The alert severity if none is provided via labels.").Default("critical").String()
 		snmpDestination             = application.Flag("snmp.destination", "SNMP trap server destination.").Default("127.0.0.1:162").String()
 		snmpRetries                 = application.Flag("snmp.retries", "SNMP number of retries").Default("1").Uint()
-		snmpCommunity               = application.Flag("snmp.community", "SNMP community").Default("public").String()
 		snmpTrapOidLabel            = application.Flag("snmp.trap-oid-label", "Label where to find the trap OID.").Default("oid").String()
 		snmpDefaultOid              = application.Flag("snmp.trap-default-oid", "Trap OID to send if none is found in the alert labels").Default("1.3.6.1.4.1.1664.1").String()
-		snmpTrapIDTemplate          = application.Flag("snmp.trap-id-template", "SNMP ID template, to group several alerts in a single trap.").Default(snmpTrapIDTemplateDefault).String()
 		snmpTrapDescriptionTemplate = application.Flag("snmp.trap-description-template", "SNMP description template.").Default(snmpTrapDescriptionTemplateDefault).String()
 	)
 
@@ -60,11 +60,6 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, error) {
 	application.Version(version.Print("snmp_notifier"))
 	application.HelpFlag.Short('h')
 	kingpin.MustParse(application.Parse(args))
-
-	idTemplate, err := template.New("id").Parse(*snmpTrapIDTemplate)
-	if err != nil {
-		return nil, err
-	}
 
 	descriptionTemplate, err := template.New("description").Funcs(template.FuncMap{
 		"groupAlertsByLabel": commons.GroupAlertsByLabel,
@@ -74,14 +69,18 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, error) {
 		return nil, err
 	}
 
+	snmpCommunity := snmpDefaultCommunity
+	if len(strings.TrimSpace(os.Getenv(snmpCommunityEnvironmentVariable))) > 0 {
+		snmpCommunity = os.Getenv(snmpCommunityEnvironmentVariable)
+	}
+
 	if !commons.IsOID(*snmpDefaultOid) {
 		return nil, fmt.Errorf("Invalid default OID provided: %s", *snmpDefaultOid)
 	}
 
 	severities := strings.Split(*alertSeverities, ",")
 
-	alertParserConfiguration := alertparser.AlertParserConfiguration{
-		IDTemplate:      *idTemplate,
+	alertParserConfiguration := alertparser.Configuration{
 		DefaultOID:      *snmpDefaultOid,
 		OIDLabel:        *snmpTrapOidLabel,
 		DefaultSeverity: *alertDefaultSeverity,
@@ -89,14 +88,14 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, error) {
 		SeverityLabel:   *alertSeverityLabel,
 	}
 
-	trapSenderConfiguration := trapsender.TrapSenderConfiguration{
+	trapSenderConfiguration := trapsender.Configuration{
 		SNMPDestination:     *snmpDestination,
 		SNMPRetries:         *snmpRetries,
-		SNMPCommunity:       *snmpCommunity,
+		SNMPCommunity:       snmpCommunity,
 		DescriptionTemplate: *descriptionTemplate,
 	}
 
-	httpServerConfiguration := httpserver.HTTPServerConfiguration{
+	httpServerConfiguration := httpserver.Configuration{
 		WebListenAddress: *webListenAddress,
 	}
 

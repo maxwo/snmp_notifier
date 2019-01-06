@@ -1,6 +1,10 @@
 {
   "receiver": "snmp-notifier",
   "status": "firing",
+  "groupLabels": {
+    "environment": "production",
+    "label": "test"
+  },
   "alerts": [
     {
       "status": "firing",
