@@ -19,18 +19,15 @@ import (
 
 	"github.com/maxwo/snmp_notifier/commons"
 	"github.com/maxwo/snmp_notifier/types"
-
-	"text/template"
 )
 
 // AlertParser parses alerts from the Prometheus Alert Manager
 type AlertParser struct {
-	configuration AlertParserConfiguration
+	configuration Configuration
 }
 
-// AlertParserConfiguration stores configuration of an AlertParser
-type AlertParserConfiguration struct {
-	IDTemplate      template.Template
+// Configuration stores configuration of an AlertParser
+type Configuration struct {
 	DefaultOID      string
 	OIDLabel        string
 	DefaultSeverity string
@@ -39,28 +36,25 @@ type AlertParserConfiguration struct {
 }
 
 // New creates an AlertParser instance
-func New(configuration AlertParserConfiguration) AlertParser {
+func New(configuration Configuration) AlertParser {
 	return AlertParser{configuration}
 }
 
 // Parse parses alerts coming from the Prometheus Alert Manager
-func (alertParser AlertParser) Parse(alerts types.Alerts) (*types.AlertBucket, error) {
+func (alertParser AlertParser) Parse(alertsData types.AlertsData) (*types.AlertBucket, error) {
 	var (
 		alertGroups = map[string]*types.AlertGroup{}
+		groupID     string
 	)
-
-	for _, alert := range alerts {
+	groupID = generateGroupID(alertsData)
+	for _, alert := range alertsData.Alerts {
 		oid, err := alertParser.getAlertOID(alert)
 		if err != nil {
 			return nil, err
 		}
-		groupID, err := generateGroupID(alert, alertParser.configuration.IDTemplate)
-		if err != nil {
-			return nil, err
-		}
-		key := strings.Join([]string{*oid, "[", *groupID, "]"}, "")
+		key := strings.Join([]string{*oid, "[", groupID, "]"}, "")
 		if _, found := alertGroups[key]; !found {
-			alertGroups[key] = &types.AlertGroup{OID: *oid, GroupID: *groupID, Severity: alertParser.getLowestSeverity(), Alerts: []types.Alert{}}
+			alertGroups[key] = &types.AlertGroup{OID: *oid, GroupID: groupID, Severity: alertParser.getLowestSeverity(), Alerts: []types.Alert{}}
 		}
 		if alert.Status == "firing" {
 			err = alertParser.addAlertToGroup(alertGroups[key], alert)
@@ -111,6 +105,12 @@ func (alertParser AlertParser) getLowestSeverity() string {
 	return alertParser.configuration.Severities[len(alertParser.configuration.Severities)-1]
 }
 
-func generateGroupID(alert types.Alert, idTemplate template.Template) (*string, error) {
-	return commons.FillTemplate(alert, idTemplate)
+func generateGroupID(alertsData types.AlertsData) string {
+	var (
+		pairs []string
+	)
+	for _, pair := range alertsData.GroupLabels.SortedPairs() {
+		pairs = append(pairs, fmt.Sprintf("%s=%s", pair.Name, pair.Value))
+	}
+	return strings.Join(pairs, ",")
 }

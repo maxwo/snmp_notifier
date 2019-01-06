@@ -35,18 +35,18 @@ import (
 
 // HTTPServer listens for alerts on /alerts endpoint, and sends them as SNMP traps.
 type HTTPServer struct {
-	configuration HTTPServerConfiguration
+	configuration Configuration
 	alertParser   alertparser.AlertParser
 	trapSender    trapsender.TrapSender
 }
 
-// HTTPServerConfiguration describes the configuration for serving HTTP requests
-type HTTPServerConfiguration struct {
+// Configuration describes the configuration for serving HTTP requests
+type Configuration struct {
 	WebListenAddress string
 }
 
 // New creates an HTTPServer instance
-func New(configuration HTTPServerConfiguration, alertParser alertparser.AlertParser, trapSender trapsender.TrapSender) *HTTPServer {
+func New(configuration Configuration, alertParser alertparser.AlertParser, trapSender trapsender.TrapSender) *HTTPServer {
 	return &HTTPServer{configuration, alertParser, trapSender}
 }
 
@@ -83,7 +83,7 @@ func (httpServer HTTPServer) Configure() *http.Server {
 			return
 		}
 
-		alertBucket, err := httpServer.alertParser.Parse(data.Alerts)
+		alertBucket, err := httpServer.alertParser.Parse(data)
 		if err != nil {
 			errorHandler(w, http.StatusBadRequest, err, &data)
 			return

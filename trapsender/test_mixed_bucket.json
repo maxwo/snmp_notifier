@@ -1,8 +1,8 @@
 {
   "AlertGroups": {
-    "1.3.6.1.4.1.666.0.10.1.1.1.2.1[TestAlert]": {
+    "1.3.6.1.4.1.666.0.10.1.1.1.2.1[environment=production,label=test]": {
       "OID": "1.3.6.1.4.1.666.0.10.1.1.1.2.1",
-      "GroupID": "TestAlert",
+      "GroupID": "environment=production,label=test",
       "Severity": "critical",
       "Alerts": [
         {
@@ -31,9 +31,9 @@
         }
       ]
     },
-    "1.3.6.1.4.1.666.0.10.1.1.1.1.1[TestAlert]": {
+    "1.3.6.1.4.1.666.0.10.1.1.1.1.1[environment=production,label=test]": {
       "OID": "1.3.6.1.4.1.666.0.10.1.1.1.1.1",
-      "GroupID": "TestAlert",
+      "GroupID": "environment=production,label=test",
       "Severity": "info",
       "Alerts": []
     }

@@ -15,6 +15,7 @@ package configuration
 
 import (
 	"log"
+	"os"
 	"strings"
 	"testing"
 	"text/template"
@@ -28,66 +29,66 @@ import (
 )
 
 type Test struct {
-	CommandLine   string
-	Configuration SNMPNotifierConfiguration
-	ExpectError   bool
+	CommandLine                      string
+	SNMPCommunityEnvironmentVariable string
+	Configuration                    SNMPNotifierConfiguration
+	ExpectError                      bool
 }
 
 var tests = []Test{
 	{
 		"--web.listen-address=:1234",
+		"",
 		SNMPNotifierConfiguration{
-			alertparser.AlertParserConfiguration{
+			alertparser.Configuration{
 				DefaultOID:      "1.3.6.1.4.1.1664.1",
 				OIDLabel:        "oid",
 				DefaultSeverity: "critical",
 				SeverityLabel:   "severity",
 				Severities:      []string{"critical", "warning", "info"},
 			},
-			trapsender.TrapSenderConfiguration{
+			trapsender.Configuration{
 				SNMPDestination: "127.0.0.1:162",
 				SNMPRetries:     1,
 				SNMPCommunity:   "public",
 			},
-			httpserver.HTTPServerConfiguration{
+			httpserver.Configuration{
 				WebListenAddress: ":1234",
 			},
 		},
 		false,
 	},
 	{
-		"--web.listen-address=:1234 --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.community=private --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=criticity --alert.severities=critical,error,warning,info",
+		"--web.listen-address=:1234 --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=criticity --alert.severities=critical,error,warning,info",
+		"private",
 		SNMPNotifierConfiguration{
-			alertparser.AlertParserConfiguration{
+			alertparser.Configuration{
 				DefaultOID:      "4.4.4",
 				OIDLabel:        "other-oid",
 				DefaultSeverity: "warning",
 				SeverityLabel:   "criticity",
 				Severities:      []string{"critical", "error", "warning", "info"},
 			},
-			trapsender.TrapSenderConfiguration{
+			trapsender.Configuration{
 				SNMPDestination: "127.0.0.2:163",
 				SNMPRetries:     4,
 				SNMPCommunity:   "private",
 			},
-			httpserver.HTTPServerConfiguration{
+			httpserver.Configuration{
 				WebListenAddress: ":1234",
 			},
 		},
 		false,
 	},
 	{
-		"--snmp.trap-id-template=\"{{.lkdfjskl\"",
-		SNMPNotifierConfiguration{},
-		true,
-	},
-	{
 		"--snmp.trap-description-template=\"{{.lkdfjskl\"",
+		"",
 		SNMPNotifierConfiguration{},
 		true,
 	},
 	{
 		"--snmp.trap-default-oid=A.1.1.1",
+		"",
 		SNMPNotifierConfiguration{},
 		true,
 	},
@@ -95,6 +96,8 @@ var tests = []Test{
 
 func TestParseConfiguration(t *testing.T) {
 	for _, test := range tests {
+		os.Clearenv()
+		os.Setenv("SNMP_NOTIFIER_COMMUNITY", test.SNMPCommunityEnvironmentVariable)
 		elements := strings.Split(test.CommandLine, " ")
 		log.Print(elements)
 		configuration, err := ParseConfiguration(elements)
@@ -109,11 +112,6 @@ func TestParseConfiguration(t *testing.T) {
 		}
 
 		if err == nil {
-
-			idTemplate, err := template.New("id").Parse(snmpTrapIDTemplateDefault)
-			if err != nil {
-				t.Fatal("Error while generating default ID template")
-			}
 			descriptionTemplate, err := template.New("description").Funcs(template.FuncMap{
 				"groupAlertsByLabel": commons.GroupAlertsByLabel,
 				"groupAlertsByName":  commons.GroupAlertsByName,
@@ -122,7 +120,6 @@ func TestParseConfiguration(t *testing.T) {
 				t.Fatal("Error while generating default description template")
 			}
 
-			test.Configuration.AlertParserConfiguration.IDTemplate = *idTemplate
 			test.Configuration.TrapSenderConfiguration.DescriptionTemplate = *descriptionTemplate
 
 			if diff := deep.Equal(*configuration, test.Configuration); diff != nil {

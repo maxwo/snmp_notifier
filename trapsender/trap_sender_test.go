@@ -93,7 +93,7 @@ func TestSend(t *testing.T) {
 			t.Fatal("Error while building template")
 		}
 
-		trapSenderConfiguration := TrapSenderConfiguration{host, 1, "public", *descriptionTemplate}
+		trapSenderConfiguration := Configuration{host, 1, "public", *descriptionTemplate}
 		trapSender := New(trapSenderConfiguration)
 
 		err = trapSender.SendAlertTraps(bucketData)
