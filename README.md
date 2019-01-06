@@ -107,7 +107,6 @@ Flags:
       --snmp.destination="127.0.0.1:162"
                                  SNMP trap server destination.
       --snmp.retries=1           SNMP number of retries
-      --snmp.community="public"  SNMP community
       --snmp.trap-oid-label="oid"
                                  Label where to find the trap OID.
       --snmp.trap-default-oid="1.3.6.1.4.1.1664.1"
@@ -144,10 +143,10 @@ NET-SNMP version 5.6.2.1
  Description: Cold Start
  PDU Attribute/Value Pair Array:
 .iso.org.dod.internet.mgmt.mib-2.system.sysUpTime.sysUpTimeInstance = Timeticks: (163624400) 18 days, 22:30:44.00
-.iso.org.dod.internet.snmpV2.snmpModules.snmpMIB.snmpMIBObjects.snmpTrap.snmpTrapOID.0 = OID: .iso.org.dod.internet.private.enterprises.666.0.10.1.1.1.2.1
-.iso.org.dod.internet.private.enterprises.666.0.10.1.1.1.2.1.1 = STRING: "1.3.6.1.4.1.666.0.10.1.1.1.2.1[environment=production,label=test]"
-.iso.org.dod.internet.private.enterprises.666.0.10.1.1.1.2.1.2 = STRING: "critical"
-.iso.org.dod.internet.private.enterprises.666.0.10.1.1.1.2.1.3 = STRING: "Status: critical
+.iso.org.dod.internet.snmpV2.snmpModules.snmpMIB.snmpMIBObjects.snmpTrap.snmpTrapOID.0 = OID: .iso.org.dod.internet.private.enterprises.1234.0.10.1.1.1.2.1
+.iso.org.dod.internet.private.enterprises.1234.0.10.1.1.1.2.1.1 = STRING: "1.3.6.1.4.1.1234.0.10.1.1.1.2.1[environment=production,label=test]"
+.iso.org.dod.internet.private.enterprises.1234.0.10.1.1.1.2.1.2 = STRING: "critical"
+.iso.org.dod.internet.private.enterprises.1234.0.10.1.1.1.2.1.3 = STRING: "Status: critical
 - Alert: TestAlert
   Summary: this is the summary
   Description: this is the description on job1
@@ -168,10 +167,10 @@ Status: warning
  Description: Cold Start
  PDU Attribute/Value Pair Array:
 .iso.org.dod.internet.mgmt.mib-2.system.sysUpTime.sysUpTimeInstance = Timeticks: (163624400) 18 days, 22:30:44.00
-.iso.org.dod.internet.snmpV2.snmpModules.snmpMIB.snmpMIBObjects.snmpTrap.snmpTrapOID.0 = OID: .iso.org.dod.internet.private.enterprises.666.0.10.1.1.1.1.1
-.iso.org.dod.internet.private.enterprises.666.0.10.1.1.1.1.1.1 = STRING: "1.3.6.1.4.1.666.0.10.1.1.1.1.1[environment=production,label=test]"
-.iso.org.dod.internet.private.enterprises.666.0.10.1.1.1.1.1.2 = STRING: "info"
-.iso.org.dod.internet.private.enterprises.666.0.10.1.1.1.1.1.3 = STRING: "Status: OK"
+.iso.org.dod.internet.snmpV2.snmpModules.snmpMIB.snmpMIBObjects.snmpTrap.snmpTrapOID.0 = OID: .iso.org.dod.internet.private.enterprises.1234.0.10.1.1.1.1.1
+.iso.org.dod.internet.private.enterprises.1234.0.10.1.1.1.1.1.1 = STRING: "1.3.6.1.4.1.1234.0.10.1.1.1.1.1[environment=production,label=test]"
+.iso.org.dod.internet.private.enterprises.1234.0.10.1.1.1.1.1.2 = STRING: "info"
+.iso.org.dod.internet.private.enterprises.1234.0.10.1.1.1.1.1.3 = STRING: "Status: OK"
  --------------
  ```
 
