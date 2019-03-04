@@ -27,6 +27,11 @@
 insert command line here
 ```
 
+* SNMP notifier command line:
+```
+insert command line here
+```
+
 * Prometheus alert file:
 ```
 insert configuration here (if relevant to the issue)
