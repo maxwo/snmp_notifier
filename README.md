@@ -95,31 +95,31 @@ usage: snmp_notifier [<flags>]
 A tool to relay Prometheus alerts as SNMP traps
 
 Flags:
-  -h, --help                     Show context-sensitive help (also try --help-long and --help-man).
-      --web.listen-address=":9464"
-                                 Address to listen on for web interface and telemetry.
+  -h, --help              Show context-sensitive help (also try --help-long and --help-man).
+      --web.listen-address=:9464
+                          Address to listen on for web interface and telemetry.
       --alert.severity-label="severity"
-                                 Label where to find the alert severity.
+                          Label where to find the alert severity.
       --alert.severities="critical,warning,info"
-                                 The ordered list of alert severities, from more prioritary to less prioritary.
+                          The ordered list of alert severities, from more prioritary to less prioritary.
       --alert.default-severity="critical"
-                                 The alert severity if none is provided via labels.
-      --snmp.destination="127.0.0.1:162"
-                                 SNMP trap server destination.
-      --snmp.retries=1           SNMP number of retries
+                          The alert severity if none is provided via labels.
+      --snmp.destination=127.0.0.1:162
+                          SNMP trap server destination.
+      --snmp.retries=1    SNMP number of retries
       --snmp.trap-oid-label="oid"
-                                 Label where to find the trap OID.
+                          Label where to find the trap OID.
       --snmp.trap-default-oid="1.3.6.1.4.1.1664.1"
-                                 Trap OID to send if none is found in the alert labels
-      --snmp.trap-description-template="\n{{- if (len .Alerts) gt 0 -}}\n{{- range $severity, $alerts := (groupAlertsByLabel .Alerts \"severity\") -}}\nStatus: {{ $severity }}\n{{- range $index, $alert := $alerts }}\n- Alert: {{ $alert.Labels.alertname }}\n  Summary: {{ $alert.Annotations.summary }}\n  Description: {{ $alert.Annotations.description }}\n{{ end }}\n{{ end }}\n{{ else -}}\nStatus: OK\n{{- end -}}"
-                                 SNMP description template.
-      --log.level="info"         Only log messages with the given severity or above. Valid levels: [debug, info, warn, error, fatal]
+                          Trap OID to send if none is found in the alert labels
+      --snmp.trap-description-template=description-template.tpl
+                          SNMP description template.
+      --log.level="info"  Only log messages with the given severity or above. Valid levels: [debug, info, warn, error, fatal]
       --log.format="logger:stderr"
-                                 Set the log target and format. Example: "logger:syslog?appname=bob&local=7" or "logger:stdout?json=true"
-      --version                  Show application version.
+                          Set the log target and format. Example: "logger:syslog?appname=bob&local=7" or "logger:stdout?json=true"
+      --version           Show application version.
 ```
 
-Any Go template directive may be used in the `snmp.trap-description-template` option.
+Any Go template directive may be used in the `snmp.trap-description-template` file.
 
 ## Examples
 
