@@ -16,6 +16,7 @@ package configuration
 import (
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"text/template"
@@ -37,7 +38,7 @@ type Test struct {
 
 var tests = []Test{
 	{
-		"--web.listen-address=:1234",
+		"--web.listen-address=:1234 --snmp.trap-description-template=../description-template.tpl",
 		"",
 		SNMPNotifierConfiguration{
 			alertparser.Configuration{
@@ -59,7 +60,7 @@ var tests = []Test{
 		false,
 	},
 	{
-		"--web.listen-address=:1234 --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=criticity --alert.severities=critical,error,warning,info",
+		"--web.listen-address=:1234 --snmp.trap-description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=criticity --alert.severities=critical,error,warning,info",
 		"private",
 		SNMPNotifierConfiguration{
 			alertparser.Configuration{
@@ -81,13 +82,7 @@ var tests = []Test{
 		false,
 	},
 	{
-		"--snmp.trap-description-template=\"{{.lkdfjskl\"",
-		"",
-		SNMPNotifierConfiguration{},
-		true,
-	},
-	{
-		"--snmp.trap-default-oid=A.1.1.1",
+		"--snmp.trap-default-oid=A.1.1.1 --snmp.trap-description-template=../description-template.tpl",
 		"",
 		SNMPNotifierConfiguration{},
 		true,
@@ -112,10 +107,10 @@ func TestParseConfiguration(t *testing.T) {
 		}
 
 		if err == nil {
-			descriptionTemplate, err := template.New("description").Funcs(template.FuncMap{
+			descriptionTemplate, err := template.New(filepath.Base("description-template.tpl")).Funcs(template.FuncMap{
 				"groupAlertsByLabel": commons.GroupAlertsByLabel,
 				"groupAlertsByName":  commons.GroupAlertsByName,
-			}).Parse(snmpTrapDescriptionTemplateDefault)
+			}).ParseFiles("../description-template.tpl")
 			if err != nil {
 				t.Fatal("Error while generating default description template")
 			}
