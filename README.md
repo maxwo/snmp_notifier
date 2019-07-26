@@ -23,7 +23,7 @@ Precompiled binaries are available in the [*release* section](https://github.com
 
 ### Docker Images
 
-Docker images are available on the [Docker Hub](https://cloud.docker.com/u/maxwo/repository/docker/maxwo/snmp-notifier).
+Docker images are available on the [Docker Hub](https://hub.docker.com/r/maxwo/snmp-notifier).
 
 ### Compiling the binary
 
