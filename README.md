@@ -45,7 +45,7 @@ OID may be added to the alert labels to identify the kind of trap to be sent:
 ---
 **NOTE**
 
-A default OID is specified in the SNMP notifier if none is found in the alert. This can by used if you want all the alerts to share the same OID as well.
+A default OID is specified in the SNMP notifier if none is found in the alert. This can be used if you want all the alerts to share the same OID as well.
 
 ---
 
