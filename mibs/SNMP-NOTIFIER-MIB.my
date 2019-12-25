@@ -1,0 +1,36 @@
+SNMP-NOTIFIER-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, enterprises FROM SNMPv2-SMI;
+
+snmpNotifier MODULE-IDENTITY
+     LAST-UPDATED "201912260000Z"
+     ORGANIZATION "SNMP Notifier"
+     CONTACT-INFO
+        "SNMP Notifier
+
+        https://github.com/maxwo/snmp_notifier/
+
+        "
+
+     DESCRIPTION
+        "This MIB contains definition of the SNMP Traps
+        associated to alerts sent by the SNMP Notifier"
+
+     REVISION
+        "201912260000Z"
+
+     DESCRIPTION
+        "First revision that includes only the alerts subtree"
+
+  ::= { enterprises 98789 }
+
+ prometheusAlerts OBJECT IDENTIFIER ::= { snmpNotifier 0 }
+
+ defaultAlert NOTIFICATION-TYPE
+       OBJECTS { sysLocation }
+       STATUS current
+       DESCRIPTION "The default SNMP notifier notification"
+       ::= { prometheusAlerts 1 }
+
+ END

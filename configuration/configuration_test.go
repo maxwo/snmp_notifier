@@ -30,25 +30,26 @@ import (
 )
 
 type Test struct {
-	CommandLine                      string
-	SNMPCommunityEnvironmentVariable string
-	Configuration                    SNMPNotifierConfiguration
-	ExpectError                      bool
+	CommandLine          string
+	EnvironmentVariables map[string]string
+	Configuration        SNMPNotifierConfiguration
+	ExpectError          bool
 }
 
 var tests = []Test{
 	{
 		"--web.listen-address=:1234 --snmp.trap-description-template=../description-template.tpl",
-		"",
+		map[string]string{},
 		SNMPNotifierConfiguration{
 			alertparser.Configuration{
-				DefaultOID:      "1.3.6.1.4.1.1664.1",
+				DefaultOID:      "1.3.6.1.4.1.98789.0.1",
 				OIDLabel:        "oid",
 				DefaultSeverity: "critical",
 				SeverityLabel:   "severity",
 				Severities:      []string{"critical", "warning", "info"},
 			},
 			trapsender.Configuration{
+				SNMPVersion:     "V2c",
 				SNMPDestination: "127.0.0.1:162",
 				SNMPRetries:     1,
 				SNMPCommunity:   "public",
@@ -61,7 +62,9 @@ var tests = []Test{
 	},
 	{
 		"--web.listen-address=:1234 --snmp.trap-description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=criticity --alert.severities=critical,error,warning,info",
-		"private",
+		map[string]string{
+			"SNMP_NOTIFIER_COMMUNITY": "private",
+		},
 		SNMPNotifierConfiguration{
 			alertparser.Configuration{
 				DefaultOID:      "4.4.4",
@@ -71,6 +74,7 @@ var tests = []Test{
 				Severities:      []string{"critical", "error", "warning", "info"},
 			},
 			trapsender.Configuration{
+				SNMPVersion:     "V2c",
 				SNMPDestination: "127.0.0.2:163",
 				SNMPRetries:     4,
 				SNMPCommunity:   "private",
@@ -82,8 +86,139 @@ var tests = []Test{
 		false,
 	},
 	{
+		"--web.listen-address=:1234 --snmp.version=V3 --snmp.trap-description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=criticity --alert.severities=critical,error,warning,info",
+		map[string]string{
+			"SNMP_NOTIFIER_COMMUNITY": "private",
+		},
+		SNMPNotifierConfiguration{
+			alertparser.Configuration{
+				DefaultOID:      "4.4.4",
+				OIDLabel:        "other-oid",
+				DefaultSeverity: "warning",
+				SeverityLabel:   "criticity",
+				Severities:      []string{"critical", "error", "warning", "info"},
+			},
+			trapsender.Configuration{
+				SNMPVersion:     "V3",
+				SNMPDestination: "127.0.0.2:163",
+				SNMPRetries:     4,
+			},
+			httpserver.Configuration{
+				WebListenAddress: ":1234",
+			},
+		},
+		false,
+	},
+	{
+		"--web.listen-address=:1234 --snmp.version=V3 --snmp.authentication-enabled --snmp.trap-description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=criticity --alert.severities=critical,error,warning,info",
+		map[string]string{
+			"SNMP_NOTIFIER_AUTH_USERNAME": "username_v3",
+			"SNMP_NOTIFIER_AUTH_PASSWORD": "password_v3",
+		},
+		SNMPNotifierConfiguration{
+			alertparser.Configuration{
+				DefaultOID:      "4.4.4",
+				OIDLabel:        "other-oid",
+				DefaultSeverity: "warning",
+				SeverityLabel:   "criticity",
+				Severities:      []string{"critical", "error", "warning", "info"},
+			},
+			trapsender.Configuration{
+				SNMPVersion:                "V3",
+				SNMPDestination:            "127.0.0.2:163",
+				SNMPRetries:                4,
+				SNMPAuthenticationEnabled:  true,
+				SNMPAuthenticationProtocol: "MD5",
+				SNMPAuthenticationUsername: "username_v3",
+				SNMPAuthenticationPassword: "password_v3",
+			},
+			httpserver.Configuration{
+				WebListenAddress: ":1234",
+			},
+		},
+		false,
+	},
+	{
+		"--web.listen-address=:1234 --snmp.version=V3 --snmp.trap-description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=criticity --alert.severities=critical,error,warning,info",
+		map[string]string{
+			"SNMP_NOTIFIER_AUTH_USERNAME": "username_v3",
+			"SNMP_NOTIFIER_AUTH_PASSWORD": "password_v3",
+		},
+		SNMPNotifierConfiguration{
+			alertparser.Configuration{
+				DefaultOID:      "4.4.4",
+				OIDLabel:        "other-oid",
+				DefaultSeverity: "warning",
+				SeverityLabel:   "criticity",
+				Severities:      []string{"critical", "error", "warning", "info"},
+			},
+			trapsender.Configuration{
+				SNMPVersion:     "V3",
+				SNMPDestination: "127.0.0.2:163",
+				SNMPRetries:     4,
+			},
+			httpserver.Configuration{
+				WebListenAddress: ":1234",
+			},
+		},
+		false,
+	},
+	{
+		"--web.listen-address=:1234 --snmp.version=V3 --snmp.private-enabled --snmp.authentication-enabled --snmp.trap-description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=criticity --alert.severities=critical,error,warning,info",
+		map[string]string{
+			"SNMP_NOTIFIER_AUTH_USERNAME": "username_v3",
+			"SNMP_NOTIFIER_AUTH_PASSWORD": "password_v3",
+			"SNMP_NOTIFIER_PRIV_PASSWORD": "priv_password_v3",
+		},
+		SNMPNotifierConfiguration{
+			alertparser.Configuration{
+				DefaultOID:      "4.4.4",
+				OIDLabel:        "other-oid",
+				DefaultSeverity: "warning",
+				SeverityLabel:   "criticity",
+				Severities:      []string{"critical", "error", "warning", "info"},
+			},
+			trapsender.Configuration{
+				SNMPVersion:                "V3",
+				SNMPDestination:            "127.0.0.2:163",
+				SNMPRetries:                4,
+				SNMPPrivateEnabled:         true,
+				SNMPPrivateProtocol:        "DES",
+				SNMPPrivatePassword:        "priv_password_v3",
+				SNMPAuthenticationEnabled:  true,
+				SNMPAuthenticationProtocol: "MD5",
+				SNMPAuthenticationUsername: "username_v3",
+				SNMPAuthenticationPassword: "password_v3",
+			},
+			httpserver.Configuration{
+				WebListenAddress: ":1234",
+			},
+		},
+		false,
+	},
+	{
+		"--web.listen-address=:1234 --snmp.version=V2c --snmp.private-enabled --snmp.authentication-enabled --snmp.trap-description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=criticity --alert.severities=critical,error,warning,info",
+		map[string]string{
+			"SNMP_NOTIFIER_AUTH_USERNAME": "username_v3",
+			"SNMP_NOTIFIER_AUTH_PASSWORD": "password_v3",
+			"SNMP_NOTIFIER_PRIV_PASSWORD": "priv_password_v3",
+		},
+		SNMPNotifierConfiguration{},
+		true,
+	},
+	{
+		"--web.listen-address=:1234 --snmp.version=V3 --snmp.private-enabled --snmp.trap-description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=criticity --alert.severities=critical,error,warning,info",
+		map[string]string{
+			"SNMP_NOTIFIER_AUTH_USERNAME": "username_v3",
+			"SNMP_NOTIFIER_AUTH_PASSWORD": "password_v3",
+			"SNMP_NOTIFIER_PRIV_PASSWORD": "priv_password_v3",
+		},
+		SNMPNotifierConfiguration{},
+		true,
+	},
+	{
 		"--snmp.trap-default-oid=A.1.1.1 --snmp.trap-description-template=../description-template.tpl",
-		"",
+		map[string]string{},
 		SNMPNotifierConfiguration{},
 		true,
 	},
@@ -92,7 +227,9 @@ var tests = []Test{
 func TestParseConfiguration(t *testing.T) {
 	for _, test := range tests {
 		os.Clearenv()
-		os.Setenv("SNMP_NOTIFIER_COMMUNITY", test.SNMPCommunityEnvironmentVariable)
+		for variable, value := range test.EnvironmentVariables {
+			os.Setenv(variable, value)
+		}
 		elements := strings.Split(test.CommandLine, " ")
 		log.Print(elements)
 		configuration, err := ParseConfiguration(elements)

@@ -33,9 +33,23 @@ type TrapSender struct {
 
 // Configuration describes the configuration for sending traps
 type Configuration struct {
-	SNMPDestination     string
-	SNMPRetries         uint
-	SNMPCommunity       string
+	SNMPDestination string
+	SNMPRetries     uint
+	SNMPVersion     string
+
+	SNMPCommunity string
+
+	SNMPAuthenticationEnabled  bool
+	SNMPAuthenticationProtocol string
+	SNMPAuthenticationUsername string
+	SNMPAuthenticationPassword string
+	SNMPPrivateEnabled         bool
+	SNMPPrivateProtocol        string
+	SNMPPrivatePassword        string
+	SNMPSecurityEngineID       string
+	SNMPContextEngineID        string
+	SNMPContextName            string
+
 	DescriptionTemplate template.Template
 }
 
@@ -115,12 +129,44 @@ func addStringSubOid(varBinds snmpgo.VarBinds, alertOid string, subOid string, v
 }
 
 func (trapSender TrapSender) connect() (*snmpgo.SNMP, error) {
-	snmp, err := snmpgo.NewSNMP(snmpgo.SNMPArguments{
-		Version:   snmpgo.V2c,
-		Address:   trapSender.configuration.SNMPDestination,
-		Retries:   trapSender.configuration.SNMPRetries,
-		Community: trapSender.configuration.SNMPCommunity,
-	})
+	snmpArguments := snmpgo.SNMPArguments{
+		Address: trapSender.configuration.SNMPDestination,
+		Retries: trapSender.configuration.SNMPRetries,
+	}
+
+	if trapSender.configuration.SNMPVersion == "V2c" {
+		snmpArguments.Version = snmpgo.V2c
+		snmpArguments.Community = trapSender.configuration.SNMPCommunity
+	}
+
+	if trapSender.configuration.SNMPVersion == "V3" {
+		snmpArguments.Version = snmpgo.V3
+
+		if trapSender.configuration.SNMPAuthenticationEnabled && trapSender.configuration.SNMPPrivateEnabled {
+			snmpArguments.SecurityLevel = snmpgo.AuthPriv
+		} else if trapSender.configuration.SNMPAuthenticationEnabled {
+			snmpArguments.SecurityLevel = snmpgo.AuthNoPriv
+		} else {
+			snmpArguments.SecurityLevel = snmpgo.NoAuthNoPriv
+		}
+
+		if trapSender.configuration.SNMPPrivateEnabled {
+			snmpArguments.PrivProtocol = snmpgo.PrivProtocol(trapSender.configuration.SNMPPrivateProtocol)
+			snmpArguments.PrivPassword = trapSender.configuration.SNMPPrivatePassword
+		}
+
+		if trapSender.configuration.SNMPAuthenticationEnabled {
+			snmpArguments.AuthProtocol = snmpgo.AuthProtocol(trapSender.configuration.SNMPAuthenticationProtocol)
+			snmpArguments.UserName = trapSender.configuration.SNMPAuthenticationUsername
+			snmpArguments.AuthPassword = trapSender.configuration.SNMPAuthenticationPassword
+		}
+
+		snmpArguments.SecurityEngineId = trapSender.configuration.SNMPSecurityEngineID
+		snmpArguments.ContextEngineId = trapSender.configuration.SNMPContextEngineID
+		snmpArguments.ContextName = trapSender.configuration.SNMPContextName
+	}
+
+	snmp, err := snmpgo.NewSNMP(snmpArguments)
 	if err != nil {
 		return nil, err
 	}

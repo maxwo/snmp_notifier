@@ -23,3 +23,9 @@ DOCKER_IMAGE_NAME ?= snmp-notifier
 ifdef DEBUG
 	bindata_flags = -debug
 endif
+
+mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
+mkfile_dir := $(dir $(mkfile_path))
+
+listen:
+	snmptrapd -m ALL -m +SNMP-NOTIFIER-MIB -M +$(mkfile_dir)/mibs/ -f -Of -Lo -c scripts/snmptrapd.conf
