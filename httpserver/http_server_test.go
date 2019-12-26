@@ -220,7 +220,22 @@ func launchHTTPServer(t *testing.T, test Test) *http.Server {
 		t.Fatal("Error while building template")
 	}
 
-	trapSenderConfiguration := trapsender.Configuration{snmpDestination, 1, "public", *descriptionTemplate}
+	trapSenderConfiguration := trapsender.Configuration{
+		snmpDestination,
+		1,
+		"V2c",
+		"public",
+		false,
+		"",
+		"",
+		"",
+		false,
+		"",
+		"",
+		"",
+		"",
+		"",
+		*descriptionTemplate}
 	trapSender := trapsender.New(trapSenderConfiguration)
 
 	httpServerConfiguration := Configuration{":9465"}

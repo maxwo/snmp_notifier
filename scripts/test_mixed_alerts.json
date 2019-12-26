@@ -1,0 +1,43 @@
+{
+  "receiver": "snmp-notifier",
+  "status": "firing",
+  "groupLabels": {
+    "environment": "production",
+    "label": "test"
+  },
+  "alerts": [
+    {
+      "status": "firing",
+      "labels": {
+        "severity": "warning",
+        "alertname": "TestAlert"
+      },
+      "annotations": {
+        "summary": "this is the random summary",
+        "description": "this is the description of alert 1"
+      }
+    },
+    {
+      "status": "resolved",
+      "labels": {
+        "severity": "warning",
+        "alertname": "TestAlert"
+      },
+      "annotations": {
+        "summary": "this is the random summary",
+        "description": "this is the description of ActiveMQ alert"
+      }
+    },
+    {
+      "status": "firing",
+      "labels": {
+        "severity": "critical",
+        "alertname": "TestAlert"
+      },
+      "annotations": {
+        "summary": "this is the summary",
+        "description": "this is the description on job1"
+      }
+    }
+  ]
+}

@@ -16,7 +16,6 @@ package trapsender
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"testing"
@@ -42,6 +41,7 @@ func TestSend(t *testing.T) {
 		TrapsFileName  string
 		Template       string
 		Port           uint
+		Configuration  *Configuration
 		ExpectError    bool
 	}{
 		{
@@ -49,6 +49,23 @@ func TestSend(t *testing.T) {
 			"test_mixed_traps.json",
 			dummyDescriptionTemplate,
 			1163,
+			&Configuration{
+				"127.0.0.1:1163",
+				1,
+				"V2c",
+				"public",
+				false,
+				"",
+				"",
+				"",
+				false,
+				"",
+				"",
+				"",
+				"",
+				"",
+				*template.Must(template.New("dummyDescriptionTemplate").Parse(dummyDescriptionTemplate)),
+			},
 			false,
 		},
 		{
@@ -56,6 +73,23 @@ func TestSend(t *testing.T) {
 			"test_mixed_traps.json",
 			invalidDescriptionTemplate,
 			1163,
+			&Configuration{
+				"127.0.0.1:1163",
+				1,
+				"V2c",
+				"public",
+				false,
+				"",
+				"",
+				"",
+				false,
+				"",
+				"",
+				"",
+				"",
+				"",
+				*template.Must(template.New("invalidDescriptionTemplate").Parse(invalidDescriptionTemplate)),
+			},
 			true,
 		},
 		{
@@ -63,6 +97,23 @@ func TestSend(t *testing.T) {
 			"test_mixed_traps.json",
 			dummyDescriptionTemplate,
 			1166,
+			&Configuration{
+				"127.0.0.1:1166",
+				1,
+				"V3",
+				"",
+				true,
+				"SHA",
+				"v3_username",
+				"v3_password",
+				true,
+				"AES",
+				"v3_private_secret",
+				"",
+				"",
+				"",
+				*template.Must(template.New("dummyDescriptionTemplate").Parse(dummyDescriptionTemplate)),
+			},
 			true,
 		},
 	}
@@ -74,8 +125,6 @@ func TestSend(t *testing.T) {
 	defer server.Close()
 
 	for index, test := range tests {
-		host := fmt.Sprintf("127.0.0.1:%d", test.Port)
-
 		t.Log("Launching test ", index)
 		bucketByteData, err := ioutil.ReadFile(test.BucketFileName)
 		if err != nil {
@@ -88,13 +137,7 @@ func TestSend(t *testing.T) {
 			t.Fatal("Error while parsing bucket file:", err)
 		}
 
-		descriptionTemplate, err := template.New("description").Parse(test.Template)
-		if err != nil {
-			t.Fatal("Error while building template")
-		}
-
-		trapSenderConfiguration := Configuration{host, 1, "public", *descriptionTemplate}
-		trapSender := New(trapSenderConfiguration)
+		trapSender := New(*test.Configuration)
 
 		err = trapSender.SendAlertTraps(bucketData)
 		if test.ExpectError && err == nil {

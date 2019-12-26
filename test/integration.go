@@ -42,6 +42,16 @@ func LaunchTrapReceiver(port int32) (*snmpgo.TrapServer, chan *snmpgo.TrapReques
 		Version:   snmpgo.V2c,
 		Community: "public",
 	})
+	err = trapServer.AddSecurity(&snmpgo.SecurityEntry{
+		Version:          snmpgo.V3,
+		SecurityLevel:    snmpgo.AuthPriv,
+		UserName:         "v3_username",
+		AuthPassword:     "v3_password",
+		AuthProtocol:     snmpgo.AuthProtocol("SHA"),
+		PrivPassword:     "v3_private_secret",
+		PrivProtocol:     snmpgo.PrivProtocol("AES"),
+		SecurityEngineId: "8000000004736e6d70676f",
+	})
 	if err != nil {
 		return nil, nil, err
 	}
