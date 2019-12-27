@@ -140,12 +140,12 @@ Flags:
 
 Also, it is recommanded to use the following environment variables to set the SNMP secrets:
 
-|     Environment variable    |               Configuration              | Default |
-|-----------------------------|------------------------------------------|---------|
-| SNMP_NOTIFIER_COMMUNITY     | SNMP community for SNMP v2c              | public  |
-| SNMP_NOTIFIER_AUTH_USERNAME | SNMP authentication username for SNMP v3 |         |
-| SNMP_NOTIFIER_AUTH_PASSWORD | SNMP authentication password for SNMP v3 |         |
-| SNMP_NOTIFIER_PRIV_PASSWORD | SNMP private (or server) password        |         |
+|     Environment variable    |               Configuration                          | Default |
+|-----------------------------|------------------------------------------------------|---------|
+| SNMP_NOTIFIER_COMMUNITY     | SNMP community for SNMP v2c                          | public  |
+| SNMP_NOTIFIER_AUTH_USERNAME | SNMP authentication username for SNMP v3             |         |
+| SNMP_NOTIFIER_AUTH_PASSWORD | SNMP authentication password for SNMP v3             |         |
+| SNMP_NOTIFIER_PRIV_PASSWORD | SNMP private (or server) password for SNMP v3        |         |
 
 Any Go template directive may be used in the `snmp.trap-description-template` file.
 
