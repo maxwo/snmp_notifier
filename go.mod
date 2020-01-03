@@ -13,7 +13,7 @@ require (
 	github.com/onsi/ginkgo v1.7.0 // indirect
 	github.com/onsi/gomega v1.4.3 // indirect
 	github.com/pkg/errors v0.8.0 // indirect
-	github.com/prometheus/alertmanager v0.15.3
+	github.com/prometheus/alertmanager v0.20.0
 	github.com/prometheus/client_golang v0.9.2
 	github.com/prometheus/common v0.0.0-20181218105931-67670fe90761
 	github.com/shirou/gopsutil v2.18.11+incompatible
