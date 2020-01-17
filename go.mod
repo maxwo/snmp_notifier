@@ -7,7 +7,7 @@ require (
 	github.com/cloudfoundry/gosigar v1.1.0
 	github.com/geoffgarside/ber v0.0.0-20181018193237-27a1aff36ce6 // indirect
 	github.com/go-ole/go-ole v1.2.2 // indirect
-	github.com/go-test/deep v1.0.1
+	github.com/go-test/deep v1.0.5
 	github.com/gorilla/handlers v1.4.0
 	github.com/k-sone/snmpgo v3.2.0+incompatible
 	github.com/onsi/ginkgo v1.7.0 // indirect
