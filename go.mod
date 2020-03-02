@@ -16,7 +16,7 @@ require (
 	github.com/prometheus/alertmanager v0.15.3
 	github.com/prometheus/client_golang v0.9.2
 	github.com/prometheus/common v0.0.0-20181218105931-67670fe90761
-	github.com/shirou/gopsutil v2.18.11+incompatible
+	github.com/shirou/gopsutil v2.20.2+incompatible
 	github.com/shirou/w32 v0.0.0-20160930032740-bb4de0191aa4 // indirect
 	github.com/sirupsen/logrus v1.2.0 // indirect
 	golang.org/x/sys v0.0.0-20181221143128-b4a75ba826a6 // indirect
