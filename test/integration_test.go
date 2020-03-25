@@ -23,7 +23,7 @@ import (
 
 func TestReadV2Traps(t *testing.T) {
 
-	server, channel, err := LaunchTrapReceiver(1162)
+	server, channel, err := LaunchTrapReceiver("127.0.0.1:1162")
 	if err != nil {
 		t.Fatal("Error while opening server", err)
 	}
@@ -44,7 +44,7 @@ func TestReadV2Traps(t *testing.T) {
 
 func TestFindTrap(t *testing.T) {
 
-	server, channel, err := LaunchTrapReceiver(1162)
+	server, channel, err := LaunchTrapReceiver("127.0.0.1:1162")
 	if err != nil {
 		t.Fatal("Error while opening server", err)
 	}
