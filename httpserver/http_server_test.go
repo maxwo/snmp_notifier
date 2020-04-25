@@ -141,7 +141,7 @@ var tests = []Test{
 }
 
 func TestPostAlerts(t *testing.T) {
-	server, channel, err := testutils.LaunchTrapReceiver(1164)
+	server, channel, err := testutils.LaunchTrapReceiver("127.0.0.1:1164")
 	if err != nil {
 		t.Fatal("Error while opening server:", err)
 	}

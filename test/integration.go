@@ -14,7 +14,6 @@
 package test
 
 import (
-	"fmt"
 	"log"
 	"time"
 
@@ -31,9 +30,9 @@ func (trapListener *testTrapListener) OnTRAP(trap *snmpgo.TrapRequest) {
 }
 
 // LaunchTrapReceiver provides a SNMP server for testing purposes
-func LaunchTrapReceiver(port int32) (*snmpgo.TrapServer, chan *snmpgo.TrapRequest, error) {
+func LaunchTrapReceiver(addr string) (*snmpgo.TrapServer, chan *snmpgo.TrapRequest, error) {
 	trapServer, err := snmpgo.NewTrapServer(snmpgo.ServerArguments{
-		LocalAddr: fmt.Sprintf("127.0.0.1:%d", port),
+		LocalAddr: addr,
 	})
 	if err != nil {
 		return nil, nil, err
