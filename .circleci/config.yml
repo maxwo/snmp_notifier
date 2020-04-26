@@ -6,7 +6,7 @@ executors:
   # should also be updated.
   golang:
     docker:
-    - image: circleci/golang:1.12
+    - image: circleci/golang:1.14
     # errcheck requires to be executed from GOPATH for now.
     working_directory: /go/src/github.com/maxwo/snmp_notifier
 
