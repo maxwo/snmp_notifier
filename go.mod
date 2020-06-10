@@ -15,7 +15,7 @@ require (
 	github.com/onsi/gomega v1.4.3 // indirect
 	github.com/prometheus/alertmanager v0.20.0
 	github.com/prometheus/client_golang v1.5.1
-	github.com/prometheus/common v0.9.1
+	github.com/prometheus/common v0.10.0
 	github.com/prometheus/procfs v0.0.11 // indirect
 	github.com/shirou/gopsutil v2.20.3+incompatible
 	github.com/sirupsen/logrus v1.5.0 // indirect
