@@ -17,7 +17,7 @@ require (
 	github.com/prometheus/client_golang v1.5.1
 	github.com/prometheus/common v0.10.0
 	github.com/prometheus/procfs v0.0.11 // indirect
-	github.com/shirou/gopsutil v2.20.3+incompatible
+	github.com/shirou/gopsutil v2.20.6+incompatible
 	github.com/sirupsen/logrus v1.5.0 // indirect
 	golang.org/x/sys v0.0.0-20200420163511-1957bb5e6d1f // indirect
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
