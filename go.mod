@@ -8,7 +8,7 @@ require (
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/go-test/deep v1.0.6
 	github.com/golang/protobuf v1.4.0 // indirect
-	github.com/gorilla/handlers v1.4.2
+	github.com/gorilla/handlers v1.5.0
 	github.com/k-sone/snmpgo v3.2.0+incompatible
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/onsi/ginkgo v1.7.0 // indirect
