@@ -141,6 +141,7 @@ func (trapSender TrapSender) connect() (*snmpgo.SNMP, error) {
 
 	if trapSender.configuration.SNMPVersion == "V3" {
 		snmpArguments.Version = snmpgo.V3
+		snmpArguments.UserName = trapSender.configuration.SNMPAuthenticationUsername
 
 		if trapSender.configuration.SNMPAuthenticationEnabled && trapSender.configuration.SNMPPrivateEnabled {
 			snmpArguments.SecurityLevel = snmpgo.AuthPriv
@@ -157,7 +158,6 @@ func (trapSender TrapSender) connect() (*snmpgo.SNMP, error) {
 
 		if trapSender.configuration.SNMPAuthenticationEnabled {
 			snmpArguments.AuthProtocol = snmpgo.AuthProtocol(trapSender.configuration.SNMPAuthenticationProtocol)
-			snmpArguments.UserName = trapSender.configuration.SNMPAuthenticationUsername
 			snmpArguments.AuthPassword = trapSender.configuration.SNMPAuthenticationPassword
 		}
 
