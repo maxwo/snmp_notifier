@@ -49,10 +49,11 @@ var tests = []Test{
 				Severities:      []string{"critical", "warning", "info"},
 			},
 			trapsender.Configuration{
-				SNMPVersion:     "V2c",
-				SNMPDestination: "127.0.0.1:162",
-				SNMPRetries:     1,
-				SNMPCommunity:   "public",
+				SNMPVersion:         "V2c",
+				SNMPDestination:     "127.0.0.1:162",
+				SNMPRetries:         1,
+				SNMPCommunity:       "public",
+				ExtraFieldTemplates: make(map[string]template.Template),
 			},
 			httpserver.Configuration{
 				WebListenAddress: ":1234",
@@ -74,10 +75,11 @@ var tests = []Test{
 				Severities:      []string{"critical", "error", "warning", "info"},
 			},
 			trapsender.Configuration{
-				SNMPVersion:     "V2c",
-				SNMPDestination: "127.0.0.2:163",
-				SNMPRetries:     4,
-				SNMPCommunity:   "private",
+				SNMPVersion:         "V2c",
+				SNMPDestination:     "127.0.0.2:163",
+				SNMPRetries:         4,
+				SNMPCommunity:       "private",
+				ExtraFieldTemplates: make(map[string]template.Template),
 			},
 			httpserver.Configuration{
 				WebListenAddress: ":1234",
@@ -99,9 +101,10 @@ var tests = []Test{
 				Severities:      []string{"critical", "error", "warning", "info"},
 			},
 			trapsender.Configuration{
-				SNMPVersion:     "V3",
-				SNMPDestination: "127.0.0.2:163",
-				SNMPRetries:     4,
+				SNMPVersion:         "V3",
+				SNMPDestination:     "127.0.0.2:163",
+				SNMPRetries:         4,
+				ExtraFieldTemplates: make(map[string]template.Template),
 			},
 			httpserver.Configuration{
 				WebListenAddress: ":1234",
@@ -131,6 +134,7 @@ var tests = []Test{
 				SNMPAuthenticationProtocol: "MD5",
 				SNMPAuthenticationUsername: "username_v3",
 				SNMPAuthenticationPassword: "password_v3",
+				ExtraFieldTemplates:        make(map[string]template.Template),
 			},
 			httpserver.Configuration{
 				WebListenAddress: ":1234",
@@ -153,9 +157,10 @@ var tests = []Test{
 				Severities:      []string{"critical", "error", "warning", "info"},
 			},
 			trapsender.Configuration{
-				SNMPVersion:     "V3",
-				SNMPDestination: "127.0.0.2:163",
-				SNMPRetries:     4,
+				SNMPVersion:         "V3",
+				SNMPDestination:     "127.0.0.2:163",
+				SNMPRetries:         4,
+				ExtraFieldTemplates: make(map[string]template.Template),
 			},
 			httpserver.Configuration{
 				WebListenAddress: ":1234",
@@ -189,6 +194,7 @@ var tests = []Test{
 				SNMPAuthenticationProtocol: "MD5",
 				SNMPAuthenticationUsername: "username_v3",
 				SNMPAuthenticationPassword: "password_v3",
+				ExtraFieldTemplates:        make(map[string]template.Template),
 			},
 			httpserver.Configuration{
 				WebListenAddress: ":1234",
