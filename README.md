@@ -88,8 +88,6 @@ Launch the `snmp_notifier` executable with the help flag to see the available op
 
 ```
 $ ./snmp_notifier --help
-usage: snmp_notifier [<flags>]
-
 A tool to relay Prometheus alerts as SNMP traps
 
 Flags:
@@ -102,16 +100,18 @@ Flags:
                                  The ordered list of alert severities, from more prioritary to less prioritary.
       --alert.default-severity="critical"
                                  The alert severity if none is provided via labels.
-      --snmp.version=V2c         SNMP version. V2c and V3 are currently supported
+      --snmp.version=V2c         SNMP version. V2c and V3 are currently supported.
       --snmp.destination=127.0.0.1:162
                                  SNMP trap server destination.
       --snmp.retries=1           SNMP number of retries
       --snmp.trap-oid-label="oid"
                                  Label where to find the trap OID.
       --snmp.trap-default-oid="1.3.6.1.4.1.98789.0.1"
-                                 Trap OID to send if none is found in the alert labels
+                                 Trap OID to send if none is found in the alert labels.
       --snmp.trap-description-template=description-template.tpl
                                  SNMP description template.
+      --snmp.extra-field-template=4=extra-field-template.tpl ...
+                                 SNMP extra field templates, eg. --snmp.extra-field-templates=4=new-field.template.tpl will add a 4th field to the trap, with the given template file. You may add several fields using this flag several times.
       --snmp.community="public"  SNMP community (V2c only). Passing secrets to the command line is not recommanded, consider using the SNMP_NOTIFIER_COMMUNITY environment variable instead.
       --snmp.authentication-enabled
                                  Enable SNMP authentication (V3 only).
@@ -127,11 +127,11 @@ Flags:
       --snmp.private-password=SECRET
                                  SNMP private password (V3 only). Passing secrets to the command line is not recommanded, consider using the SNMP_NOTIFIER_PRIV_PASSWORD environment variable instead.
       --snmp.security-engine-id=SECURITY_ENGINE_ID
-                                 SNMP security engine ID (V3 only)
+                                 SNMP security engine ID (V3 only).
       --snmp.context-engine-id=CONTEXT_ENGINE_ID
-                                 SNMP context engine ID (V3 only)
+                                 SNMP context engine ID (V3 only).
       --snmp.context-name=CONTEXT_ENGINE_NAME
-                                 SNMP context name (V3 only)
+                                 SNMP context name (V3 only).
       --log.level="info"         Only log messages with the given severity or above. Valid levels: [debug, info, warn, error, fatal]
       --log.format="logger:stderr"
                                  Set the log target and format. Example: "logger:syslog?appname=bob&local=7" or "logger:stdout?json=true"
@@ -150,6 +150,8 @@ Also, it is recommanded to use the following environment variables to set the SN
 Any Go template directive may be used in the `snmp.trap-description-template` file.
 
 ## Examples
+
+### Simple Usage
 
 Here are 2 example traps received with default configuration. It includes 2 firing alerts sharing the same OID, and 1 resolved alert.
 
@@ -200,6 +202,40 @@ Status: warning
 .iso.org.dod.internet.private.enterprises.1234.0.10.1.1.1.1.1.3 = STRING: "Status: OK"
  --------------
  ```
+
+### With extra fields
+
+You may add additional fields thanks to the `--snmp.extra-field-template` arguments.
+
+For instance, the template `{{ len .Alerts }} alerts are firing.` given in the `--snmp.extra-field-template=4=alert-count.tpl` argument will produce:
+
+```
+ Agent Address: 0.0.0.0
+ Agent Hostname: localhost
+ Date: 1 - 0 - 0 - 1 - 1 - 1970
+ Enterprise OID: .
+ Trap Type: Cold Start
+ Trap Sub-Type: 0
+ Community/Infosec Context: TRAP2, SNMP v2c, community public
+ Uptime: 0
+ Description: Cold Start
+ PDU Attribute/Value Pair Array:
+.iso.org.dod.internet.mgmt.mib-2.system.sysUpTime.sysUpTimeInstance = Timeticks: (2665700) 7:24:17.00
+.iso.org.dod.internet.snmpV2.snmpModules.snmpMIB.snmpMIBObjects.snmpTrap.snmpTrapOID.0 = OID: .iso.org.dod.internet.private.enterprises.98789.0.1
+.iso.org.dod.internet.private.enterprises.98789.0.1.1 = STRING: "1.3.6.1.4.1.98789.0.1[environment=production,label=test]"
+.iso.org.dod.internet.private.enterprises.98789.0.1.2 = STRING: "critical"
+.iso.org.dod.internet.private.enterprises.98789.0.1.3 = STRING: "Status: critical
+- Alert: TestAlert
+  Summary: this is the summary
+  Description: this is the description on job1
+
+Status: warning
+- Alert: TestAlert
+  Summary: this is the random summary
+  Description: this is the description of alert 1"
+.iso.org.dod.internet.private.enterprises.98789.0.1.4 = STRING: "2 alerts are firing."
+--------------
+```
 
 ## Contributing
 

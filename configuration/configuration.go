@@ -47,7 +47,7 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, error) {
 		snmpTrapOidLabel            = application.Flag("snmp.trap-oid-label", "Label where to find the trap OID.").Default("oid").String()
 		snmpDefaultOid              = application.Flag("snmp.trap-default-oid", "Trap OID to send if none is found in the alert labels.").Default("1.3.6.1.4.1.98789.0.1").String()
 		snmpTrapDescriptionTemplate = application.Flag("snmp.trap-description-template", "SNMP description template.").Default("description-template.tpl").ExistingFile()
-		snmpExtraFieldTemplates     = application.Flag("snmp.extra-field-templates", "SNMP extra field templates.").StringMap()
+		snmpExtraFieldTemplate      = application.Flag("snmp.extra-field-template", "SNMP extra field templates, eg. --snmp.extra-field-templates=4=new-field.template.tpl to add a 4th field to the trap, with the given template file. You may add several fields using that flag several times.").PlaceHolder("4=extra-field-template.tpl").StringMap()
 
 		// V2c only
 		snmpCommunity = application.Flag("snmp.community", "SNMP community (V2c only). Passing secrets to the command line is not recommanded, consider using the SNMP_NOTIFIER_COMMUNITY environment variable instead.").Envar(snmpCommunityEnvironmentVariable).Default("public").String()
@@ -79,8 +79,8 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, error) {
 	}
 
 	extraFieldTemplates := make(map[string]template.Template)
-	if snmpExtraFieldTemplates != nil {
-		for k, v := range *snmpExtraFieldTemplates {
+	if snmpExtraFieldTemplate != nil {
+		for k, v := range *snmpExtraFieldTemplate {
 			i, err := strconv.Atoi(k)
 			if err != nil || i < 4 {
 				return nil, fmt.Errorf("Invalid field ID: %s. Field ID must be a number superior to 3", k)
