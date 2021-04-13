@@ -29,11 +29,11 @@ Docker images are available on the [Docker Hub](https://hub.docker.com/r/maxwo/s
 
 Check out the source code and build it manually:
 
-```
-$ git clone https://github.com/maxwo/snmp_notifier.git
-$ cd snmp_notifier
-$ make build
-$ ./snmp_notifier
+```console
+git clone https://github.com/maxwo/snmp_notifier.git
+cd snmp_notifier
+make build
+./snmp_notifier
 ```
 
 ## Running and configuration
@@ -43,13 +43,12 @@ $ ./snmp_notifier
 OID may be added to the alert labels to identify the kind of trap to be sent:
 
 ---
-**NOTE**
 
 A default OID is specified in the SNMP notifier if none is found in the alert. This can be used if you want all the alerts to share the same OID as well.
 
 ---
 
-```
+```yaml
 groups:
 - name: service
   rules:
@@ -71,7 +70,7 @@ groups:
 
 The Alertmanager should be configured with the SNMP notifier as alert receiver:
 
-```
+```yaml
 receivers:
 
 - name: 'snmp_notifier'
@@ -86,7 +85,7 @@ Note that the `send_resolved` option allows the notifier to update the trap stat
 
 Launch the `snmp_notifier` executable with the help flag to see the available options.
 
-```
+```console
 $ ./snmp_notifier --help
 usage: snmp_notifier [<flags>]
 
@@ -153,16 +152,17 @@ Any Go template directive may be used in the `snmp.trap-description-template` fi
 
 ## Examples
 
-### Simple Usage
+### Simple Usage
 
 Here are 2 example traps received with default configuration. It includes 2 firing alerts sharing the same OID, and 1 resolved alert.
 
 Traps include 3 fields:
+
 * a trap unique ID;
 * the alert/trap status;
 * a description of the alerts.
 
-```
+```console
  Agent Address: 0.0.0.0
  Agent Hostname: localhost
  Date: 1 - 0 - 0 - 1 - 1 - 1970
@@ -211,7 +211,7 @@ You may add additional fields thanks to the `--snmp.extra-field-template` argume
 
 For instance, the template `{{ len .Alerts }} alerts are firing.` given in the `--snmp.extra-field-template=4=alert-count.tpl` argument will produce:
 
-```
+```console
  Agent Address: 0.0.0.0
  Agent Hostname: localhost
  Date: 1 - 0 - 0 - 1 - 1 - 1970
