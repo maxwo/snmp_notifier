@@ -163,6 +163,7 @@ Traps include 3 fields:
 * a description of the alerts.
 
 ```console
+$ snmptrapd -m ALL -m +SNMP-NOTIFIER-MIB -f -Of -Lo -c scripts/snmptrapd.conf
  Agent Address: 0.0.0.0
  Agent Hostname: localhost
  Date: 1 - 0 - 0 - 1 - 1 - 1970
@@ -212,6 +213,7 @@ You may add additional fields thanks to the `--snmp.extra-field-template` argume
 For instance, the template `{{ len .Alerts }} alerts are firing.` given in the `--snmp.extra-field-template=4=alert-count.tpl` argument will produce:
 
 ```console
+$ snmptrapd -m ALL -m +SNMP-NOTIFIER-MIB -f -Of -Lo -c scripts/snmptrapd.conf
  Agent Address: 0.0.0.0
  Agent Hostname: localhost
  Date: 1 - 0 - 0 - 1 - 1 - 1970
