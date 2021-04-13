@@ -1,4 +1,4 @@
-{{- if (len .Alerts) gt 0 -}}
+{{- if .Alerts -}}
 {{- range $severity, $alerts := (groupAlertsByLabel .Alerts "severity") -}}
 Status: {{ $severity }}
 {{- range $index, $alert := $alerts }}
