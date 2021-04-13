@@ -88,6 +88,8 @@ Launch the `snmp_notifier` executable with the help flag to see the available op
 
 ```
 $ ./snmp_notifier --help
+usage: snmp_notifier [<flags>]
+
 A tool to relay Prometheus alerts as SNMP traps
 
 Flags:
