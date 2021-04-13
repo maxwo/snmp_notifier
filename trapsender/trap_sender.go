@@ -51,6 +51,7 @@ type Configuration struct {
 	SNMPContextName            string
 
 	DescriptionTemplate template.Template
+	ExtraFieldTemplates map[string]template.Template
 }
 
 // New creates a new TrapSender
@@ -102,7 +103,7 @@ func (trapSender TrapSender) generateVarBinds(alertGroup types.AlertGroup) (snmp
 
 	trapUniqueID := strings.Join([]string{alertGroup.OID, "[", alertGroup.GroupID, "]"}, "")
 
-	descriptions, err := commons.FillTemplate(alertGroup, trapSender.configuration.DescriptionTemplate)
+	description, err := commons.FillTemplate(alertGroup, trapSender.configuration.DescriptionTemplate)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +113,14 @@ func (trapSender TrapSender) generateVarBinds(alertGroup types.AlertGroup) (snmp
 	varBinds = append(varBinds, snmpgo.NewVarBind(snmpgo.OidSnmpTrap, trapOid))
 	varBinds = addStringSubOid(varBinds, alertGroup.OID, "1", trapUniqueID)
 	varBinds = addStringSubOid(varBinds, alertGroup.OID, "2", alertGroup.Severity)
-	varBinds = addStringSubOid(varBinds, alertGroup.OID, "3", *descriptions)
+	varBinds = addStringSubOid(varBinds, alertGroup.OID, "3", *description)
+	for subOid, template := range trapSender.configuration.ExtraFieldTemplates {
+		value, err := commons.FillTemplate(alertGroup, template)
+		if err != nil {
+			return nil, err
+		}
+		varBinds = addStringSubOid(varBinds, alertGroup.OID, subOid, *value)
+	}
 
 	return varBinds, nil
 }
