@@ -11,6 +11,8 @@ import (
 	"github.com/maxwo/snmp_notifier/httpserver"
 	"github.com/maxwo/snmp_notifier/trapsender"
 
+	"strconv"
+
 	"github.com/prometheus/common/log"
 	"github.com/prometheus/common/version"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
@@ -45,6 +47,7 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, error) {
 		snmpTrapOidLabel            = application.Flag("snmp.trap-oid-label", "Label where to find the trap OID.").Default("oid").String()
 		snmpDefaultOid              = application.Flag("snmp.trap-default-oid", "Trap OID to send if none is found in the alert labels.").Default("1.3.6.1.4.1.98789.0.1").String()
 		snmpTrapDescriptionTemplate = application.Flag("snmp.trap-description-template", "SNMP description template.").Default("description-template.tpl").ExistingFile()
+		snmpExtraFieldTemplate      = application.Flag("snmp.extra-field-template", "SNMP extra field templates, eg. --snmp.extra-field-templates=4=new-field.template.tpl to add a 4th field to the trap, with the given template file. You may add several fields using that flag several times.").PlaceHolder("4=extra-field-template.tpl").StringMap()
 
 		// V2c only
 		snmpCommunity = application.Flag("snmp.community", "SNMP community (V2c only). Passing secrets to the command line is not recommanded, consider using the SNMP_NOTIFIER_COMMUNITY environment variable instead.").Envar(snmpCommunityEnvironmentVariable).Default("public").String()
@@ -75,6 +78,24 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, error) {
 		return nil, err
 	}
 
+	extraFieldTemplates := make(map[string]template.Template)
+	if snmpExtraFieldTemplate != nil {
+		for k, v := range *snmpExtraFieldTemplate {
+			i, err := strconv.Atoi(k)
+			if err != nil || i < 4 {
+				return nil, fmt.Errorf("Invalid field ID: %s. Field ID must be a number superior to 3", k)
+			}
+			currentTemplate, err := template.New(filepath.Base(v)).Funcs(template.FuncMap{
+				"groupAlertsByLabel": commons.GroupAlertsByLabel,
+				"groupAlertsByName":  commons.GroupAlertsByName,
+			}).ParseFiles(v)
+			if err != nil {
+				return nil, err
+			}
+			extraFieldTemplates[k] = *currentTemplate
+		}
+	}
+
 	if !commons.IsOID(*snmpDefaultOid) {
 		return nil, fmt.Errorf("Invalid default OID provided: %s", *snmpDefaultOid)
 	}
@@ -96,6 +117,7 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, error) {
 		SNMPDestination:     (*snmpDestination).String(),
 		SNMPRetries:         *snmpRetries,
 		DescriptionTemplate: *descriptionTemplate,
+		ExtraFieldTemplates: extraFieldTemplates,
 	}
 
 	if isV2c {

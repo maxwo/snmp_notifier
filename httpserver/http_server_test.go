@@ -235,7 +235,9 @@ func launchHTTPServer(t *testing.T, test Test) *http.Server {
 		"",
 		"",
 		"",
-		*descriptionTemplate}
+		*descriptionTemplate,
+		make(map[string]template.Template),
+	}
 	trapSender := trapsender.New(trapSenderConfiguration)
 
 	httpServerConfiguration := Configuration{":9465"}
