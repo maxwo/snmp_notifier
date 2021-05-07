@@ -157,10 +157,11 @@ var tests = []Test{
 				Severities:      []string{"critical", "error", "warning", "info"},
 			},
 			trapsender.Configuration{
-				SNMPVersion:         "V3",
-				SNMPDestination:     "127.0.0.2:163",
-				SNMPRetries:         4,
-				ExtraFieldTemplates: make(map[string]template.Template),
+				SNMPVersion:                "V3",
+				SNMPDestination:            "127.0.0.2:163",
+				SNMPRetries:                4,
+				SNMPAuthenticationUsername: "username_v3",
+				ExtraFieldTemplates:        make(map[string]template.Template),
 			},
 			httpserver.Configuration{
 				WebListenAddress: ":1234",
