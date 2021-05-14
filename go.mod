@@ -10,7 +10,7 @@ require (
 	github.com/k-sone/snmpgo v3.2.0+incompatible
 	github.com/prometheus/alertmanager v0.20.0
 	github.com/prometheus/client_golang v1.10.0
-	github.com/prometheus/common v0.18.0
+	github.com/prometheus/common v0.19.0
 	github.com/shirou/gopsutil v2.20.3+incompatible
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 )
