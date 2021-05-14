@@ -125,6 +125,7 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, error) {
 	}
 
 	if !isV2c {
+		trapSenderConfiguration.SNMPAuthenticationUsername = *snmpAuthenticationUsername
 		trapSenderConfiguration.SNMPSecurityEngineID = *snmpSecurityEngineID
 		trapSenderConfiguration.SNMPContextEngineID = *snmpContextEngineID
 		trapSenderConfiguration.SNMPContextName = *snmpContextName
@@ -141,7 +142,6 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, error) {
 	if *snmpAuthenticationEnabled {
 		trapSenderConfiguration.SNMPAuthenticationEnabled = *snmpAuthenticationEnabled
 		trapSenderConfiguration.SNMPAuthenticationProtocol = *snmpAuthenticationProtocol
-		trapSenderConfiguration.SNMPAuthenticationUsername = *snmpAuthenticationUsername
 		trapSenderConfiguration.SNMPAuthenticationPassword = *snmpAuthenticationPassword
 	}
 	if *snmpPrivateEnabled {
