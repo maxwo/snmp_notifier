@@ -8,10 +8,13 @@ require (
 	github.com/go-test/deep v1.0.6
 	github.com/gorilla/handlers v1.4.2
 	github.com/k-sone/snmpgo v3.2.0+incompatible
+	github.com/onsi/ginkgo v1.7.0 // indirect
+	github.com/onsi/gomega v1.4.3 // indirect
 	github.com/prometheus/alertmanager v0.20.0
-	github.com/prometheus/client_golang v1.10.0
-	github.com/prometheus/common v0.19.0
+	github.com/prometheus/client_golang v1.11.0
+	github.com/prometheus/common v0.26.0
 	github.com/shirou/gopsutil v2.20.3+incompatible
+	golang.org/x/tools v0.0.0-20200103221440-774c71fcf114 // indirect
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 )
 
