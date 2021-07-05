@@ -76,7 +76,7 @@ func (alertParser AlertParser) addAlertToGroup(alertGroup *types.AlertGroup, ale
 	var currentGroupSeverityIndex = commons.IndexOf(alertGroup.Severity, alertParser.configuration.Severities)
 	var alertSeverityIndex = commons.IndexOf(severity, alertParser.configuration.Severities)
 	if alertSeverityIndex == -1 {
-		return fmt.Errorf("Incorrect severity: %s", severity)
+		return fmt.Errorf("incorrect severity: %s", severity)
 	}
 	// Update group severity
 	if alertSeverityIndex < currentGroupSeverityIndex {
@@ -96,7 +96,7 @@ func (alertParser AlertParser) getAlertOID(alert types.Alert) (*string, error) {
 		oid = alertParser.configuration.DefaultOID
 	}
 	if !commons.IsOID(oid) {
-		return nil, fmt.Errorf("Invalid OID provided: \"%s\"", oid)
+		return nil, fmt.Errorf("invalid OID provided: \"%s\"", oid)
 	}
 	return &oid, nil
 }
