@@ -102,6 +102,7 @@ Flags:
       --alert.default-severity="critical"
                                  The alert severity if none is provided via labels.
       --snmp.version=V2c         SNMP version. V2c and V3 are currently supported.
+      --snmp.timeout=5s          SNMP timeout
       --snmp.destination=127.0.0.1:162
                                  SNMP trap server destination.
       --snmp.retries=1           SNMP number of retries
