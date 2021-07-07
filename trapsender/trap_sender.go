@@ -15,6 +15,7 @@ package trapsender
 
 import (
 	"strings"
+	"time"
 
 	"github.com/maxwo/snmp_notifier/commons"
 	"github.com/maxwo/snmp_notifier/telemetry"
@@ -36,6 +37,7 @@ type Configuration struct {
 	SNMPDestination string
 	SNMPRetries     uint
 	SNMPVersion     string
+	SNMPTimeout     time.Duration
 
 	SNMPCommunity string
 

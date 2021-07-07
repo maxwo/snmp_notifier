@@ -20,6 +20,7 @@ import (
 	"strings"
 	"testing"
 	"text/template"
+	"time"
 
 	"github.com/maxwo/snmp_notifier/alertparser"
 	"github.com/maxwo/snmp_notifier/commons"
@@ -38,7 +39,7 @@ type Test struct {
 
 var tests = []Test{
 	{
-		"--web.listen-address=:1234 --snmp.trap-description-template=../description-template.tpl",
+		"--web.listen-address=:1234 --snmp.trap-description-template=../description-template.tpl --snmp.timeout=10s",
 		map[string]string{},
 		SNMPNotifierConfiguration{
 			alertparser.Configuration{
@@ -52,6 +53,7 @@ var tests = []Test{
 				SNMPVersion:         "V2c",
 				SNMPDestination:     "127.0.0.1:162",
 				SNMPRetries:         1,
+				SNMPTimeout:         10 * time.Second,
 				SNMPCommunity:       "public",
 				ExtraFieldTemplates: make(map[string]template.Template),
 			},
@@ -62,7 +64,7 @@ var tests = []Test{
 		false,
 	},
 	{
-		"--web.listen-address=:1234 --snmp.trap-description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=criticity --alert.severities=critical,error,warning,info",
+		"--web.listen-address=:1234 --snmp.trap-description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=severity --alert.severities=critical,error,warning,info",
 		map[string]string{
 			"SNMP_NOTIFIER_COMMUNITY": "private",
 		},
@@ -71,13 +73,14 @@ var tests = []Test{
 				DefaultOID:      "4.4.4",
 				OIDLabel:        "other-oid",
 				DefaultSeverity: "warning",
-				SeverityLabel:   "criticity",
+				SeverityLabel:   "severity",
 				Severities:      []string{"critical", "error", "warning", "info"},
 			},
 			trapsender.Configuration{
 				SNMPVersion:         "V2c",
 				SNMPDestination:     "127.0.0.2:163",
 				SNMPRetries:         4,
+				SNMPTimeout:         5 * time.Second,
 				SNMPCommunity:       "private",
 				ExtraFieldTemplates: make(map[string]template.Template),
 			},
@@ -88,7 +91,7 @@ var tests = []Test{
 		false,
 	},
 	{
-		"--web.listen-address=:1234 --snmp.version=V3 --snmp.trap-description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=criticity --alert.severities=critical,error,warning,info",
+		"--web.listen-address=:1234 --snmp.version=V3 --snmp.trap-description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=severity --alert.severities=critical,error,warning,info",
 		map[string]string{
 			"SNMP_NOTIFIER_COMMUNITY": "private",
 		},
@@ -97,13 +100,14 @@ var tests = []Test{
 				DefaultOID:      "4.4.4",
 				OIDLabel:        "other-oid",
 				DefaultSeverity: "warning",
-				SeverityLabel:   "criticity",
+				SeverityLabel:   "severity",
 				Severities:      []string{"critical", "error", "warning", "info"},
 			},
 			trapsender.Configuration{
 				SNMPVersion:         "V3",
 				SNMPDestination:     "127.0.0.2:163",
 				SNMPRetries:         4,
+				SNMPTimeout:         5 * time.Second,
 				ExtraFieldTemplates: make(map[string]template.Template),
 			},
 			httpserver.Configuration{
@@ -113,7 +117,7 @@ var tests = []Test{
 		false,
 	},
 	{
-		"--web.listen-address=:1234 --snmp.version=V3 --snmp.authentication-enabled --snmp.trap-description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=criticity --alert.severities=critical,error,warning,info",
+		"--web.listen-address=:1234 --snmp.version=V3 --snmp.authentication-enabled --snmp.trap-description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=severity --alert.severities=critical,error,warning,info",
 		map[string]string{
 			"SNMP_NOTIFIER_AUTH_USERNAME": "username_v3",
 			"SNMP_NOTIFIER_AUTH_PASSWORD": "password_v3",
@@ -123,13 +127,14 @@ var tests = []Test{
 				DefaultOID:      "4.4.4",
 				OIDLabel:        "other-oid",
 				DefaultSeverity: "warning",
-				SeverityLabel:   "criticity",
+				SeverityLabel:   "severity",
 				Severities:      []string{"critical", "error", "warning", "info"},
 			},
 			trapsender.Configuration{
 				SNMPVersion:                "V3",
 				SNMPDestination:            "127.0.0.2:163",
 				SNMPRetries:                4,
+				SNMPTimeout:                5 * time.Second,
 				SNMPAuthenticationEnabled:  true,
 				SNMPAuthenticationProtocol: "MD5",
 				SNMPAuthenticationUsername: "username_v3",
@@ -143,7 +148,7 @@ var tests = []Test{
 		false,
 	},
 	{
-		"--web.listen-address=:1234 --snmp.version=V3 --snmp.trap-description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=criticity --alert.severities=critical,error,warning,info",
+		"--web.listen-address=:1234 --snmp.version=V3 --snmp.trap-description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=severity --alert.severities=critical,error,warning,info",
 		map[string]string{
 			"SNMP_NOTIFIER_AUTH_USERNAME": "username_v3",
 			"SNMP_NOTIFIER_AUTH_PASSWORD": "password_v3",
@@ -153,13 +158,14 @@ var tests = []Test{
 				DefaultOID:      "4.4.4",
 				OIDLabel:        "other-oid",
 				DefaultSeverity: "warning",
-				SeverityLabel:   "criticity",
+				SeverityLabel:   "severity",
 				Severities:      []string{"critical", "error", "warning", "info"},
 			},
 			trapsender.Configuration{
 				SNMPVersion:                "V3",
 				SNMPDestination:            "127.0.0.2:163",
 				SNMPRetries:                4,
+				SNMPTimeout:                5 * time.Second,
 				SNMPAuthenticationUsername: "username_v3",
 				ExtraFieldTemplates:        make(map[string]template.Template),
 			},
@@ -170,7 +176,7 @@ var tests = []Test{
 		false,
 	},
 	{
-		"--web.listen-address=:1234 --snmp.version=V3 --snmp.private-enabled --snmp.authentication-enabled --snmp.trap-description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=criticity --alert.severities=critical,error,warning,info",
+		"--web.listen-address=:1234 --snmp.version=V3 --snmp.private-enabled --snmp.authentication-enabled --snmp.trap-description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=severity --alert.severities=critical,error,warning,info",
 		map[string]string{
 			"SNMP_NOTIFIER_AUTH_USERNAME": "username_v3",
 			"SNMP_NOTIFIER_AUTH_PASSWORD": "password_v3",
@@ -181,13 +187,14 @@ var tests = []Test{
 				DefaultOID:      "4.4.4",
 				OIDLabel:        "other-oid",
 				DefaultSeverity: "warning",
-				SeverityLabel:   "criticity",
+				SeverityLabel:   "severity",
 				Severities:      []string{"critical", "error", "warning", "info"},
 			},
 			trapsender.Configuration{
 				SNMPVersion:                "V3",
 				SNMPDestination:            "127.0.0.2:163",
 				SNMPRetries:                4,
+				SNMPTimeout:                5 * time.Second,
 				SNMPPrivateEnabled:         true,
 				SNMPPrivateProtocol:        "DES",
 				SNMPPrivatePassword:        "priv_password_v3",
@@ -204,7 +211,7 @@ var tests = []Test{
 		false,
 	},
 	{
-		"--web.listen-address=:1234 --snmp.version=V2c --snmp.private-enabled --snmp.authentication-enabled --snmp.trap-description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=criticity --alert.severities=critical,error,warning,info",
+		"--web.listen-address=:1234 --snmp.version=V2c --snmp.private-enabled --snmp.authentication-enabled --snmp.trap-description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=severity --alert.severities=critical,error,warning,info",
 		map[string]string{
 			"SNMP_NOTIFIER_AUTH_USERNAME": "username_v3",
 			"SNMP_NOTIFIER_AUTH_PASSWORD": "password_v3",
@@ -214,7 +221,7 @@ var tests = []Test{
 		true,
 	},
 	{
-		"--web.listen-address=:1234 --snmp.version=V3 --snmp.private-enabled --snmp.trap-description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=criticity --alert.severities=critical,error,warning,info",
+		"--web.listen-address=:1234 --snmp.version=V3 --snmp.private-enabled --snmp.trap-description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=severity --alert.severities=critical,error,warning,info",
 		map[string]string{
 			"SNMP_NOTIFIER_AUTH_USERNAME": "username_v3",
 			"SNMP_NOTIFIER_AUTH_PASSWORD": "password_v3",
