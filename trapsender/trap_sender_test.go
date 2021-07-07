@@ -19,6 +19,7 @@ import (
 	"io/ioutil"
 	"log"
 	"testing"
+	"time"
 
 	"text/template"
 
@@ -53,6 +54,7 @@ func TestSend(t *testing.T) {
 				"127.0.0.1:1163",
 				1,
 				"V2c",
+				5 * time.Second,
 				"public",
 				false,
 				"",
@@ -78,6 +80,7 @@ func TestSend(t *testing.T) {
 				"127.0.0.1:1163",
 				1,
 				"V2c",
+				5 * time.Second,
 				"public",
 				false,
 				"",
@@ -103,6 +106,7 @@ func TestSend(t *testing.T) {
 				"127.0.0.1:1166",
 				1,
 				"V3",
+				5 * time.Second,
 				"",
 				true,
 				"SHA",
