@@ -7,7 +7,7 @@
 
 ## Overview
 
-The SNMP notifier receives alerts, and send them as SNMP traps to any given SNMP poller.
+The SNMP notifier receives alerts and sends them as SNMP traps to any given SNMP poller.
 
 It has been created to handle older monitoring and alerting systems such as Nagios or Centreon.
 
@@ -98,7 +98,7 @@ Flags:
       --alert.severity-label="severity"
                                  Label where to find the alert severity.
       --alert.severities="critical,warning,info"
-                                 The ordered list of alert severities, from more prioritary to less prioritary.
+                                 The ordered list of alert severities, from more priority to less priority.
       --alert.default-severity="critical"
                                  The alert severity if none is provided via labels.
       --snmp.version=V2c         SNMP version. V2c and V3 are currently supported.
@@ -113,21 +113,21 @@ Flags:
       --snmp.trap-description-template=description-template.tpl
                                  SNMP description template.
       --snmp.extra-field-template=4=extra-field-template.tpl ...
-                                 SNMP extra field templates, eg. --snmp.extra-field-templates=4=new-field.template.tpl will add a 4th field to the trap, with the given template file. You may add several fields using this flag several times.
-      --snmp.community="public"  SNMP community (V2c only). Passing secrets to the command line is not recommanded, consider using the SNMP_NOTIFIER_COMMUNITY environment variable instead.
+                                 SNMP extra field templates, eg. --snmp.extra-field-templates=4=new-field.template.tpl will add the 4th field to the trap, with the given template file. You may add several fields using this flag several times.
+      --snmp.community="public"  SNMP community (V2c only). Passing secrets to the command line is not recommended, consider using the SNMP_NOTIFIER_COMMUNITY environment variable instead.
       --snmp.authentication-enabled
                                  Enable SNMP authentication (V3 only).
       --snmp.authentication-protocol=MD5
                                  Protocol for password encryption (V3 only). MD5 and SHA are currently supported.
       --snmp.authentication-username=USERNAME
-                                 SNMP authentication username (V3 only). Passing secrets to the command line is not recommanded, consider using the SNMP_NOTIFIER_AUTH_USERNAME environment variable instead.
+                                 SNMP authentication username (V3 only). Passing secrets to the command line is not recommended, consider using the SNMP_NOTIFIER_AUTH_USERNAME environment variable instead.
       --snmp.authentication-password=PASSWORD
-                                 SNMP authentication password (V3 only). Passing secrets to the command line is not recommanded, consider using the SNMP_NOTIFIER_AUTH_PASSWORD environment variable instead.
+                                 SNMP authentication password (V3 only). Passing secrets to the command line is not recommended, consider using the SNMP_NOTIFIER_AUTH_PASSWORD environment variable instead.
       --snmp.private-enabled     Enable SNMP encryption (V3 only).
       --snmp.private-protocol=DES
                                  Protocol for SNMP data transmission (V3 only). DES and AES are currently supported.
       --snmp.private-password=SECRET
-                                 SNMP private password (V3 only). Passing secrets to the command line is not recommanded, consider using the SNMP_NOTIFIER_PRIV_PASSWORD environment variable instead.
+                                 SNMP private password (V3 only). Passing secrets to the command line is not recommended, consider using the SNMP_NOTIFIER_PRIV_PASSWORD environment variable instead.
       --snmp.security-engine-id=SECURITY_ENGINE_ID
                                  SNMP security engine ID (V3 only).
       --snmp.context-engine-id=CONTEXT_ENGINE_ID
@@ -140,7 +140,7 @@ Flags:
       --version                  Show application version.
 ```
 
-Also, it is recommanded to use the following environment variables to set the SNMP secrets:
+Also, it is recommended to use the following environment variables to set the SNMP secrets:
 
 |     Environment variable    |               Configuration                          | Default |
 |-----------------------------|------------------------------------------------------|---------|
@@ -155,7 +155,7 @@ Any Go template directive may be used in the `snmp.trap-description-template` fi
 
 ### Simple Usage
 
-Here are 2 example traps received with default configuration. It includes 2 firing alerts sharing the same OID, and 1 resolved alert.
+Here are 2 example traps received with the default configuration. It includes 2 firing alerts sharing the same OID, and 1 resolved alert.
 
 Traps include 3 fields:
 
@@ -187,7 +187,7 @@ $ snmptrapd -m ALL -m +SNMP-NOTIFIER-MIB -f -Of -Lo -c scripts/snmptrapd.conf
 Status: warning
 - Alert: TestAlert
   Summary: this is the random summary
-  Description: this is the description of alert 1"
+  Description: This is the description of alert 1"
  --------------
  Agent Address: 0.0.0.0
  Agent Hostname: localhost
@@ -231,13 +231,13 @@ $ snmptrapd -m ALL -m +SNMP-NOTIFIER-MIB -f -Of -Lo -c scripts/snmptrapd.conf
 .iso.org.dod.internet.private.enterprises.98789.0.1.2 = STRING: "critical"
 .iso.org.dod.internet.private.enterprises.98789.0.1.3 = STRING: "Status: critical
 - Alert: TestAlert
-  Summary: this is the summary
-  Description: this is the description on job1
+  Summary: This is the summary
+  Description: This is the description on job1
 
 Status: warning
 - Alert: TestAlert
-  Summary: this is the random summary
-  Description: this is the description of alert 1"
+  Summary: This is the random summary
+  Description: This is the description of alert 1"
 .iso.org.dod.internet.private.enterprises.98789.0.1.4 = STRING: "2 alerts are firing."
 --------------
 ```
