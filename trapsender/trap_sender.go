@@ -142,6 +142,7 @@ func (trapSender TrapSender) connect() (*snmpgo.SNMP, error) {
 	snmpArguments := snmpgo.SNMPArguments{
 		Address: trapSender.configuration.SNMPDestination,
 		Retries: trapSender.configuration.SNMPRetries,
+		Timeout: trapSender.configuration.SNMPTimeout,
 	}
 
 	if trapSender.configuration.SNMPVersion == "V2c" {
