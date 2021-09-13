@@ -16,6 +16,7 @@ package httpserver
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/go-kit/log/level"
 	"io"
 	"net/http"
 	"os"
@@ -29,7 +30,7 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"github.com/prometheus/common/log"
+	"github.com/go-kit/log"
 	"github.com/prometheus/common/version"
 )
 
@@ -38,6 +39,7 @@ type HTTPServer struct {
 	configuration Configuration
 	alertParser   alertparser.AlertParser
 	trapSender    trapsender.TrapSender
+	logger        log.Logger
 }
 
 // Configuration describes the configuration for serving HTTP requests
@@ -46,8 +48,8 @@ type Configuration struct {
 }
 
 // New creates an HTTPServer instance
-func New(configuration Configuration, alertParser alertparser.AlertParser, trapSender trapsender.TrapSender) *HTTPServer {
-	return &HTTPServer{configuration, alertParser, trapSender}
+func New(configuration Configuration, alertParser alertparser.AlertParser, trapSender trapsender.TrapSender, logger log.Logger) *HTTPServer {
+	return &HTTPServer{configuration, alertParser, trapSender, logger}
 }
 
 // Configure creates and configures the HTTP server
@@ -73,25 +75,26 @@ func (httpServer HTTPServer) Configure() *http.Server {
 	})
 
 	mux.HandleFunc("/alerts", func(w http.ResponseWriter, req *http.Request) {
-		log.Debugf("Handling /alerts webhook request")
+		level.Debug(httpServer.logger).Log("msg", "Handling /alerts webhook request")
+
 		defer req.Body.Close()
 
 		data := types.AlertsData{}
 		err := json.NewDecoder(req.Body).Decode(&data)
 		if err != nil {
-			errorHandler(w, http.StatusUnprocessableEntity, err, &data)
+			httpServer.errorHandler(w, http.StatusUnprocessableEntity, err, &data)
 			return
 		}
 
 		alertBucket, err := httpServer.alertParser.Parse(data)
 		if err != nil {
-			errorHandler(w, http.StatusBadRequest, err, &data)
+			httpServer.errorHandler(w, http.StatusBadRequest, err, &data)
 			return
 		}
 
 		err = httpServer.trapSender.SendAlertTraps(*alertBucket)
 		if err != nil {
-			errorHandler(w, http.StatusBadGateway, err, &data)
+			httpServer.errorHandler(w, http.StatusBadGateway, err, &data)
 			return
 		}
 
@@ -101,7 +104,7 @@ func (httpServer HTTPServer) Configure() *http.Server {
 	mux.Handle("/metrics", promhttp.Handler())
 	mux.HandleFunc("/health", healthHandler)
 
-	log.Infoln("Preparing to listen on: ", httpServer.configuration.WebListenAddress)
+	level.Info(httpServer.logger).Log("msg", "Preparing to listen", "address", httpServer.configuration.WebListenAddress)
 	return server
 }
 
@@ -109,7 +112,7 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "Health: OK\n")
 }
 
-func errorHandler(w http.ResponseWriter, status int, err error, data *types.AlertsData) {
+func (httpServer HTTPServer) errorHandler(w http.ResponseWriter, status int, err error, data *types.AlertsData) {
 	w.WriteHeader(status)
 
 	response := struct {
@@ -126,6 +129,6 @@ func errorHandler(w http.ResponseWriter, status int, err error, data *types.Aler
 	json := string(bytes[:])
 	fmt.Fprint(w, json)
 
-	log.Errorf("%d %s: err=%s data=%+v", status, http.StatusText(status), err, data)
+	level.Error(httpServer.logger).Log("status", status, "statustext", http.StatusText(status), "err", err, "data", data)
 	telemetry.RequestTotal.WithLabelValues(strconv.FormatInt(int64(status), 10)).Inc()
 }

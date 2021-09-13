@@ -14,6 +14,8 @@
 package main
 
 import (
+	"fmt"
+	"github.com/go-kit/log/level"
 	"os"
 
 	"github.com/maxwo/snmp_notifier/alertparser"
@@ -21,24 +23,28 @@ import (
 	"github.com/maxwo/snmp_notifier/httpserver"
 	"github.com/maxwo/snmp_notifier/telemetry"
 	"github.com/maxwo/snmp_notifier/trapsender"
-
-	"github.com/prometheus/common/log"
 )
 
 func main() {
-	configuration, err := configuration.ParseConfiguration(os.Args[1:])
+	configuration, logger, err := configuration.ParseConfiguration(os.Args[1:])
+	if logger == nil {
+		fmt.Fprintln(os.Stderr, "logger is nil")
+		os.Exit(1)
+	}
 	if err != nil {
-		log.Fatal(err)
+		level.Error(logger).Log("msg", "unable to parse configuration", "err", err)
+		os.Exit(1)
 	}
 
 	trapSender := trapsender.New(configuration.TrapSenderConfiguration)
 	alertParser := alertparser.New(configuration.AlertParserConfiguration)
-	httpServer := httpserver.New(configuration.HTTPServerConfiguration, alertParser, trapSender)
+	httpServer := httpserver.New(configuration.HTTPServerConfiguration, alertParser, trapSender, logger)
 
 	telemetry.Init()
 
 	err = httpServer.Configure().ListenAndServe()
 	if err != nil {
-		log.Fatal(err)
+		level.Error(logger).Log("msg", "unable to start the http server", "err", err)
+		os.Exit(1)
 	}
 }
