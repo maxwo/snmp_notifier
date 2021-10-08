@@ -9,7 +9,9 @@ require (
 	github.com/go-test/deep v1.0.7
 	github.com/gorilla/handlers v1.5.1
 	github.com/k-sone/snmpgo v3.2.0+incompatible
-	github.com/prometheus/alertmanager v0.22.2
+	github.com/onsi/ginkgo v1.7.0 // indirect
+	github.com/onsi/gomega v1.4.3 // indirect
+	github.com/prometheus/alertmanager v0.23.0
 	github.com/prometheus/client_golang v1.11.0
 	github.com/prometheus/common v0.30.0
 	github.com/shirou/gopsutil v2.20.9+incompatible
