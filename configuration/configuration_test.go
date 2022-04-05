@@ -246,7 +246,7 @@ func TestParseConfiguration(t *testing.T) {
 		}
 		elements := strings.Split(test.CommandLine, " ")
 		log.Print(elements)
-		configuration, err := ParseConfiguration(elements)
+		configuration, _, err := ParseConfiguration(elements)
 		log.Print(elements)
 
 		if test.ExpectError && err == nil {
