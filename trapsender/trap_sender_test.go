@@ -51,7 +51,7 @@ func TestSend(t *testing.T) {
 			dummyDescriptionTemplate,
 			1163,
 			&Configuration{
-				"127.0.0.1:1163",
+				[]string{"127.0.0.1:1163"},
 				1,
 				"V2c",
 				5 * time.Second,
@@ -77,7 +77,7 @@ func TestSend(t *testing.T) {
 			invalidDescriptionTemplate,
 			1163,
 			&Configuration{
-				"127.0.0.1:1163",
+				[]string{"127.0.0.1:1163"},
 				1,
 				"V2c",
 				5 * time.Second,
@@ -103,7 +103,7 @@ func TestSend(t *testing.T) {
 			dummyDescriptionTemplate,
 			1166,
 			&Configuration{
-				"127.0.0.1:1166",
+				[]string{"127.0.0.1:1166"},
 				1,
 				"V3",
 				5 * time.Second,

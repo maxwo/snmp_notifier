@@ -223,7 +223,7 @@ func launchHTTPServer(t *testing.T, test Test) *http.Server {
 	}
 
 	trapSenderConfiguration := trapsender.Configuration{
-		snmpDestination,
+		[]string{snmpDestination},
 		1,
 		"V2c",
 		5 * time.Second,
