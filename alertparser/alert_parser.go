@@ -56,11 +56,9 @@ func (alertParser AlertParser) Parse(alertsData types.AlertsData) (*types.AlertB
 		if _, found := alertGroups[key]; !found {
 			alertGroups[key] = &types.AlertGroup{OID: *oid, GroupID: groupID, Severity: alertParser.getLowestSeverity(), Alerts: []types.Alert{}}
 		}
-		if alert.Status == "firing" {
-			err = alertParser.addAlertToGroup(alertGroups[key], alert)
-			if err != nil {
-				return nil, err
-			}
+		err = alertParser.addAlertToGroup(alertGroups[key], alert)
+		if err != nil {
+			return nil, err
 		}
 	}
 
