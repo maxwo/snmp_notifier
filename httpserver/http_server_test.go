@@ -30,6 +30,8 @@ import (
 	testutils "github.com/maxwo/snmp_notifier/test"
 
 	"text/template"
+
+	"github.com/prometheus/common/promlog"
 )
 
 var dummyDescriptionTemplate = `{{ range $key, $value := .Alerts }}Alert name: {{ $value.Labels.alertname }}
@@ -242,7 +244,10 @@ func launchHTTPServer(t *testing.T, test Test) *http.Server {
 	trapSender := trapsender.New(trapSenderConfiguration)
 
 	httpServerConfiguration := Configuration{":9465"}
-	httpServer := New(httpServerConfiguration, alertParser, trapSender).Configure()
+
+	promlogConfig := promlog.Config{}
+	logger := promlog.New(&promlogConfig)
+	httpServer := New(httpServerConfiguration, alertParser, trapSender, logger).Configure()
 	go func() {
 		httpServer.ListenAndServe()
 	}()
