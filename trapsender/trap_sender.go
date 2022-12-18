@@ -34,7 +34,7 @@ type TrapSender struct {
 
 // Configuration describes the configuration for sending traps
 type Configuration struct {
-	SNMPDestination string
+	SNMPDestination []string
 	SNMPRetries     uint
 	SNMPVersion     string
 	SNMPTimeout     time.Duration
@@ -67,19 +67,27 @@ func (trapSender TrapSender) SendAlertTraps(alertBucket types.AlertBucket) error
 	if err != nil {
 		return err
 	}
-	connection, err := trapSender.connect()
+	connections, err := trapSender.connect()
 	if err != nil {
 		return err
 	}
-	defer connection.Close()
-	for _, trap := range traps {
-		err = connection.V2Trap(trap)
-		if err != nil {
-			telemetry.SNMPErrorTotal.WithLabelValues().Inc()
-			return err
+	defer func() {
+		for _, connection := range connections {
+			connection.Close()
 		}
-		telemetry.SNMPSentTotal.WithLabelValues().Inc()
+	}()
+
+	for _, connection := range connections {
+		for _, trap := range traps {
+			err = connection.V2Trap(trap)
+			if err != nil {
+				telemetry.SNMPErrorTotal.WithLabelValues().Inc()
+				return err
+			}
+			telemetry.SNMPSentTotal.WithLabelValues().Inc()
+		}
 	}
+
 	return nil
 }
 
@@ -138,52 +146,64 @@ func addStringSubOid(varBinds snmpgo.VarBinds, alertOid string, subOid string, v
 	return append(varBinds, snmpgo.NewVarBind(oid, snmpgo.NewOctetString([]byte(strings.TrimSpace(value)))))
 }
 
-func (trapSender TrapSender) connect() (*snmpgo.SNMP, error) {
-	snmpArguments := snmpgo.SNMPArguments{
-		Address: trapSender.configuration.SNMPDestination,
-		Retries: trapSender.configuration.SNMPRetries,
-		Timeout: trapSender.configuration.SNMPTimeout,
-	}
-
-	if trapSender.configuration.SNMPVersion == "V2c" {
-		snmpArguments.Version = snmpgo.V2c
-		snmpArguments.Community = trapSender.configuration.SNMPCommunity
-	}
-
-	if trapSender.configuration.SNMPVersion == "V3" {
-		snmpArguments.Version = snmpgo.V3
-		snmpArguments.UserName = trapSender.configuration.SNMPAuthenticationUsername
-
-		if trapSender.configuration.SNMPAuthenticationEnabled && trapSender.configuration.SNMPPrivateEnabled {
-			snmpArguments.SecurityLevel = snmpgo.AuthPriv
-		} else if trapSender.configuration.SNMPAuthenticationEnabled {
-			snmpArguments.SecurityLevel = snmpgo.AuthNoPriv
-		} else {
-			snmpArguments.SecurityLevel = snmpgo.NoAuthNoPriv
+func (trapSender TrapSender) connect() ([]*snmpgo.SNMP, error) {
+	snmpArguments := []snmpgo.SNMPArguments{}
+	for _, destination := range trapSender.configuration.SNMPDestination {
+		snmpArgument := snmpgo.SNMPArguments{
+			Address: destination,
+			Retries: trapSender.configuration.SNMPRetries,
+			Timeout: trapSender.configuration.SNMPTimeout,
 		}
 
-		if trapSender.configuration.SNMPPrivateEnabled {
-			snmpArguments.PrivProtocol = snmpgo.PrivProtocol(trapSender.configuration.SNMPPrivateProtocol)
-			snmpArguments.PrivPassword = trapSender.configuration.SNMPPrivatePassword
+		if trapSender.configuration.SNMPVersion == "V2c" {
+			snmpArgument.Version = snmpgo.V2c
+			snmpArgument.Community = trapSender.configuration.SNMPCommunity
 		}
 
-		if trapSender.configuration.SNMPAuthenticationEnabled {
-			snmpArguments.AuthProtocol = snmpgo.AuthProtocol(trapSender.configuration.SNMPAuthenticationProtocol)
-			snmpArguments.AuthPassword = trapSender.configuration.SNMPAuthenticationPassword
+		if trapSender.configuration.SNMPVersion == "V3" {
+			snmpArgument.Version = snmpgo.V3
+			snmpArgument.UserName = trapSender.configuration.SNMPAuthenticationUsername
+
+			if trapSender.configuration.SNMPAuthenticationEnabled && trapSender.configuration.SNMPPrivateEnabled {
+				snmpArgument.SecurityLevel = snmpgo.AuthPriv
+			} else if trapSender.configuration.SNMPAuthenticationEnabled {
+				snmpArgument.SecurityLevel = snmpgo.AuthNoPriv
+			} else {
+				snmpArgument.SecurityLevel = snmpgo.NoAuthNoPriv
+			}
+
+			if trapSender.configuration.SNMPPrivateEnabled {
+				snmpArgument.PrivProtocol = snmpgo.PrivProtocol(trapSender.configuration.SNMPPrivateProtocol)
+				snmpArgument.PrivPassword = trapSender.configuration.SNMPPrivatePassword
+			}
+
+			if trapSender.configuration.SNMPAuthenticationEnabled {
+				snmpArgument.AuthProtocol = snmpgo.AuthProtocol(trapSender.configuration.SNMPAuthenticationProtocol)
+				snmpArgument.AuthPassword = trapSender.configuration.SNMPAuthenticationPassword
+			}
+
+			snmpArgument.SecurityEngineId = trapSender.configuration.SNMPSecurityEngineID
+			snmpArgument.ContextEngineId = trapSender.configuration.SNMPContextEngineID
+			snmpArgument.ContextName = trapSender.configuration.SNMPContextName
 		}
 
-		snmpArguments.SecurityEngineId = trapSender.configuration.SNMPSecurityEngineID
-		snmpArguments.ContextEngineId = trapSender.configuration.SNMPContextEngineID
-		snmpArguments.ContextName = trapSender.configuration.SNMPContextName
+		snmpArguments = append(snmpArguments, snmpArgument)
 	}
 
-	snmp, err := snmpgo.NewSNMP(snmpArguments)
-	if err != nil {
-		return nil, err
+	snmps := []*snmpgo.SNMP{}
+	for _, snmpArgument := range snmpArguments {
+		snmp, err := snmpgo.NewSNMP(snmpArgument)
+		if err != nil {
+			return nil, err
+		}
+
+		err = snmp.Open()
+		if err != nil {
+			return nil, err
+		}
+
+		snmps = append(snmps, snmp)
 	}
-	err = snmp.Open()
-	if err != nil {
-		return nil, err
-	}
-	return snmp, nil
+
+	return snmps, nil
 }

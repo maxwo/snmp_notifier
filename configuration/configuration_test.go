@@ -51,7 +51,7 @@ var tests = []Test{
 			},
 			trapsender.Configuration{
 				SNMPVersion:         "V2c",
-				SNMPDestination:     "127.0.0.1:162",
+				SNMPDestination:     []string{"127.0.0.1:162"},
 				SNMPRetries:         1,
 				SNMPTimeout:         10 * time.Second,
 				SNMPCommunity:       "public",
@@ -78,7 +78,7 @@ var tests = []Test{
 			},
 			trapsender.Configuration{
 				SNMPVersion:         "V2c",
-				SNMPDestination:     "127.0.0.2:163",
+				SNMPDestination:     []string{"127.0.0.2:163"},
 				SNMPRetries:         4,
 				SNMPTimeout:         5 * time.Second,
 				SNMPCommunity:       "private",
@@ -105,7 +105,7 @@ var tests = []Test{
 			},
 			trapsender.Configuration{
 				SNMPVersion:         "V3",
-				SNMPDestination:     "127.0.0.2:163",
+				SNMPDestination:     []string{"127.0.0.2:163"},
 				SNMPRetries:         4,
 				SNMPTimeout:         5 * time.Second,
 				ExtraFieldTemplates: make(map[string]template.Template),
@@ -132,7 +132,7 @@ var tests = []Test{
 			},
 			trapsender.Configuration{
 				SNMPVersion:                "V3",
-				SNMPDestination:            "127.0.0.2:163",
+				SNMPDestination:            []string{"127.0.0.2:163"},
 				SNMPRetries:                4,
 				SNMPTimeout:                5 * time.Second,
 				SNMPAuthenticationEnabled:  true,
@@ -163,7 +163,7 @@ var tests = []Test{
 			},
 			trapsender.Configuration{
 				SNMPVersion:                "V3",
-				SNMPDestination:            "127.0.0.2:163",
+				SNMPDestination:            []string{"127.0.0.2:163"},
 				SNMPRetries:                4,
 				SNMPTimeout:                5 * time.Second,
 				SNMPAuthenticationUsername: "username_v3",
@@ -192,7 +192,7 @@ var tests = []Test{
 			},
 			trapsender.Configuration{
 				SNMPVersion:                "V3",
-				SNMPDestination:            "127.0.0.2:163",
+				SNMPDestination:            []string{"127.0.0.2:163"},
 				SNMPRetries:                4,
 				SNMPTimeout:                5 * time.Second,
 				SNMPPrivateEnabled:         true,

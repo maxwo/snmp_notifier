@@ -44,7 +44,7 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, log.Logger, 
 		alertDefaultSeverity = application.Flag("alert.default-severity", "The alert severity if none is provided via labels.").Default("critical").String()
 
 		snmpVersion                 = application.Flag("snmp.version", "SNMP version. V2c and V3 are currently supported.").Default("V2c").HintOptions("V2c", "V3").Enum("V2c", "V3")
-		snmpDestination             = application.Flag("snmp.destination", "SNMP trap server destination.").Default("127.0.0.1:162").TCP()
+		snmpDestination             = application.Flag("snmp.destination", "SNMP trap server destination.").Default("127.0.0.1:162").TCPList()
 		snmpRetries                 = application.Flag("snmp.retries", "SNMP number of retries").Default("1").Uint()
 		snmpTrapOidLabel            = application.Flag("snmp.trap-oid-label", "Label where to find the trap OID.").Default("oid").String()
 		snmpDefaultOid              = application.Flag("snmp.trap-default-oid", "Trap OID to send if none is found in the alert labels.").Default("1.3.6.1.4.1.98789.0.1").String()
@@ -119,9 +119,14 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, log.Logger, 
 
 	isV2c := *snmpVersion == "V2c"
 
+	snmpDestinations := []string{}
+	for _, destination := range *snmpDestination {
+		snmpDestinations = append(snmpDestinations, destination.String())
+	}
+
 	trapSenderConfiguration := trapsender.Configuration{
 		SNMPVersion:         *snmpVersion,
-		SNMPDestination:     (*snmpDestination).String(),
+		SNMPDestination:     snmpDestinations,
 		SNMPRetries:         *snmpRetries,
 		DescriptionTemplate: *descriptionTemplate,
 		ExtraFieldTemplates: extraFieldTemplates,
