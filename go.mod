@@ -4,7 +4,7 @@ require (
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
 	github.com/cloudfoundry/gosigar v1.2.0
 	github.com/geoffgarside/ber v1.1.0 // indirect
-	github.com/go-kit/log v0.2.0
+	github.com/go-kit/log v0.2.1
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/go-test/deep v1.1.0
 	github.com/gorilla/handlers v1.5.1
