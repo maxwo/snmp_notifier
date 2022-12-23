@@ -1,44 +1,44 @@
 verbose: false
 go:
-    version: 1.16.0
-    cgo: false
+  version: 1.19
+  cgo: false
 repository:
-    path: github.com/maxwo/snmp_notifier
+  path: github.com/maxwo/snmp_notifier
 build:
-    prefix: .
-    flags: -a -tags netgo
-    ldflags: |
-        -s
-        -X github.com/prometheus/common/version.Version={{.Version}}
-        -X github.com/prometheus/common/version.Revision={{.Revision}}
-        -X github.com/prometheus/common/version.Branch={{.Branch}}
-        -X github.com/prometheus/common/version.BuildUser={{user}}@{{host}}
-        -X github.com/prometheus/common/version.BuildDate={{date "20060102-15:04:05"}}
+  prefix: .
+  flags: -a -tags netgo
+  ldflags: |
+    -s
+    -X github.com/prometheus/common/version.Version={{.Version}}
+    -X github.com/prometheus/common/version.Revision={{.Revision}}
+    -X github.com/prometheus/common/version.Branch={{.Branch}}
+    -X github.com/prometheus/common/version.BuildUser={{user}}@{{host}}
+    -X github.com/prometheus/common/version.BuildDate={{date "20060102-15:04:05"}}
 tarball:
-    files:
-        - description-template.tpl
-        - LICENSE
-        - NOTICE
+  files:
+    - description-template.tpl
+    - LICENSE
+    - NOTICE
 crossbuild:
-    platforms:
-        - linux/amd64
-        - linux/386
-        - darwin/amd64
-#        - darwin/386
-        - windows/amd64
-        - windows/386
-        - freebsd/amd64
-        - freebsd/386
-#        - openbsd/amd64
-#        - openbsd/386
-        - netbsd/amd64
-        - netbsd/386
-        - dragonfly/amd64
-        - linux/arm
-        - linux/arm64
-#        - freebsd/arm
-        - netbsd/arm
-#        - linux/ppc64
-#        - linux/ppc64le
-        - linux/mips64
-        - linux/mips64le
+  platforms:
+    - linux/amd64
+    - linux/386
+    - darwin/amd64
+    #        - darwin/386
+    - windows/amd64
+    - windows/386
+    - freebsd/amd64
+    - freebsd/386
+    #        - openbsd/amd64
+    #        - openbsd/386
+    - netbsd/amd64
+    - netbsd/386
+    - dragonfly/amd64
+    - linux/arm
+    - linux/arm64
+    #        - freebsd/arm
+    - netbsd/arm
+    #        - linux/ppc64
+    #        - linux/ppc64le
+    - linux/mips64
+    - linux/mips64le
