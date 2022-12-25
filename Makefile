@@ -27,5 +27,14 @@ endif
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 mkfile_dir := $(dir $(mkfile_path))
 
+install-docker:
+	apt-get update
+	apt-get install --yes ca-certificates curl gnupg
+	mkdir -p /etc/apt/keyrings
+	curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+	echo "deb [arch=$(shell dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian buster stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+	apt-get update
+	apt-get install --yes docker-ce-cli
+
 listen:
 	snmptrapd -m ALL -m +SNMP-NOTIFIER-MIB -M +$(mkfile_dir)/mibs/ -f -Of -Lo -c scripts/snmptrapd.conf

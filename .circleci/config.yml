@@ -50,6 +50,7 @@ jobs:
       - attach_workspace:
           at: .
       - run: ln -s .build/linux-amd64/snmp_notifier snmp_notifier
+      - run: make install-docker
       - run: make docker
       - run: docker images
       - run: docker login -u $DOCKER_LOGIN -p $DOCKER_PASSWORD
@@ -74,6 +75,7 @@ jobs:
           path: .tarballs
           destination: releases
       - run: ln -s .build/linux-amd64/snmp_notifier snmp_notifier
+      - run: make install-docker
       - run: make docker DOCKER_IMAGE_TAG=$CIRCLE_TAG
       - run: docker login -u $DOCKER_LOGIN -p $DOCKER_PASSWORD
       - run: |
