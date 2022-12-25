@@ -2,12 +2,13 @@ package configuration
 
 import (
 	"fmt"
-	"github.com/go-kit/log"
-	"github.com/prometheus/common/promlog"
-	promlogflag "github.com/prometheus/common/promlog/flag"
 	"path/filepath"
 	"strings"
 	"text/template"
+
+	"github.com/go-kit/log"
+	"github.com/prometheus/common/promlog"
+	promlogflag "github.com/prometheus/common/promlog/flag"
 
 	"github.com/maxwo/snmp_notifier/alertparser"
 	"github.com/maxwo/snmp_notifier/commons"
@@ -78,8 +79,9 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, log.Logger, 
 	logger := promlog.New(&promlogConfig)
 
 	descriptionTemplate, err := template.New(filepath.Base(*snmpTrapDescriptionTemplate)).Funcs(template.FuncMap{
-		"groupAlertsByLabel": commons.GroupAlertsByLabel,
-		"groupAlertsByName":  commons.GroupAlertsByName,
+		"groupAlertsByLabel":  commons.GroupAlertsByLabel,
+		"groupAlertsByName":   commons.GroupAlertsByName,
+		"groupAlertsByStatus": commons.GroupAlertsByStatus,
 	}).ParseFiles(*snmpTrapDescriptionTemplate)
 	if err != nil {
 		return nil, logger, err
@@ -93,8 +95,9 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, log.Logger, 
 				return nil, logger, fmt.Errorf("Invalid field ID: %s. Field ID must be a number superior to 3", k)
 			}
 			currentTemplate, err := template.New(filepath.Base(v)).Funcs(template.FuncMap{
-				"groupAlertsByLabel": commons.GroupAlertsByLabel,
-				"groupAlertsByName":  commons.GroupAlertsByName,
+				"groupAlertsByLabel":  commons.GroupAlertsByLabel,
+				"groupAlertsByName":   commons.GroupAlertsByName,
+				"groupAlertsByStatus": commons.GroupAlertsByStatus,
 			}).ParseFiles(v)
 			if err != nil {
 				return nil, logger, err
