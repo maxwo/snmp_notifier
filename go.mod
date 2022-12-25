@@ -11,9 +11,9 @@ require (
 	github.com/k-sone/snmpgo v3.2.0+incompatible
 	github.com/onsi/ginkgo v1.7.0 // indirect
 	github.com/onsi/gomega v1.4.3 // indirect
-	github.com/prometheus/alertmanager v0.24.0
+	github.com/prometheus/alertmanager v0.25.0
 	github.com/prometheus/client_golang v1.14.0
-	github.com/prometheus/common v0.37.0
+	github.com/prometheus/common v0.38.0
 	github.com/shirou/gopsutil v2.20.9+incompatible
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 )
