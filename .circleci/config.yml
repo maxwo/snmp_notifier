@@ -55,6 +55,7 @@ jobs:
       - run: docker images
       - run: docker login -u $DOCKER_LOGIN -p $DOCKER_PASSWORD
       - run: make docker-publish
+      - run: make docker-manifest
 
   docker_hub_release_tags:
     executor: golang
@@ -83,6 +84,7 @@ jobs:
             make docker-tag-latest DOCKER_IMAGE_TAG="$CIRCLE_TAG"
           fi
       - run: make docker-publish
+      - run: make docker-manifest
 
 workflows:
   version: 2
