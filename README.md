@@ -19,7 +19,7 @@ There are various ways to install the SNMP notifier:
 
 ### Precompiled binaries
 
-Precompiled binaries are available in the [*release* section](https://github.com/maxwo/snmp_notifier/releases) of this repository.
+Precompiled binaries are available in the [_release_ section](https://github.com/maxwo/snmp_notifier/releases) of this repository.
 
 ### Docker Images
 
@@ -50,20 +50,19 @@ A default OID is specified in the SNMP notifier if none is found in the alert. T
 
 ```yaml
 groups:
-- name: service
-  rules:
-
-  - alert: ServiceIsDown
-    expr: up == 0
-    for: 5m
-    labels:
-      severity: "critical"
-      type: "service"
-      oid: "1.3.6.1.4.1.123.0.10.1.1.1.5.1"
-      environment: "production"
-    annotations:
-      description: "Service {{ $labels.job }} on {{ $labels.instance }} is down"
-      summary: "A service is down."
+  - name: service
+    rules:
+      - alert: ServiceIsDown
+        expr: up == 0
+        for: 5m
+        labels:
+          severity: "critical"
+          type: "service"
+          oid: "1.3.6.1.4.1.123.0.10.1.1.1.5.1"
+          environment: "production"
+        annotations:
+          description: "Service {{ $labels.job }} on {{ $labels.instance }} is down"
+          summary: "A service is down."
 ```
 
 ### Alertmanager configuration
@@ -72,11 +71,10 @@ The Alertmanager should be configured with the SNMP notifier as alert receiver:
 
 ```yaml
 receivers:
-
-- name: 'snmp_notifier'
-  webhook_configs:
-  - send_resolved: true
-    url: http://snmp.notifier.service:9464/alerts
+  - name: "snmp_notifier"
+    webhook_configs:
+      - send_resolved: true
+        url: http://snmp.notifier.service:9464/alerts
 ```
 
 Note that the `send_resolved` option allows the notifier to update the trap status to normal.
@@ -142,12 +140,12 @@ Flags:
 
 Also, it is recommended to use the following environment variables to set the SNMP secrets:
 
-|     Environment variable    |               Configuration                          | Default |
-|-----------------------------|------------------------------------------------------|---------|
-| SNMP_NOTIFIER_COMMUNITY     | SNMP community for SNMP v2c                          | public  |
-| SNMP_NOTIFIER_AUTH_USERNAME | SNMP authentication username for SNMP v3             |         |
-| SNMP_NOTIFIER_AUTH_PASSWORD | SNMP authentication password for SNMP v3             |         |
-| SNMP_NOTIFIER_PRIV_PASSWORD | SNMP private (or server) password for SNMP v3        |         |
+| Environment variable        | Configuration                                 | Default |
+| --------------------------- | --------------------------------------------- | ------- |
+| SNMP_NOTIFIER_COMMUNITY     | SNMP community for SNMP v2c                   | public  |
+| SNMP_NOTIFIER_AUTH_USERNAME | SNMP authentication username for SNMP v3      |         |
+| SNMP_NOTIFIER_AUTH_PASSWORD | SNMP authentication password for SNMP v3      |         |
+| SNMP_NOTIFIER_PRIV_PASSWORD | SNMP private (or server) password for SNMP v3 |         |
 
 Any Go template directive may be used in the `snmp.trap-description-template` file.
 
@@ -159,9 +157,9 @@ Here are 2 example traps received with the default configuration. It includes 2 
 
 Traps include 3 fields:
 
-* a trap unique ID;
-* the alert/trap status;
-* a description of the alerts.
+- a trap unique ID;
+- the alert/trap status;
+- a description of the alerts.
 
 ```console
 $ snmptrapd -m ALL -m +SNMP-NOTIFIER-MIB -f -Of -Lo -c scripts/snmptrapd.conf
@@ -180,6 +178,9 @@ $ snmptrapd -m ALL -m +SNMP-NOTIFIER-MIB -f -Of -Lo -c scripts/snmptrapd.conf
 .iso.org.dod.internet.private.enterprises.snmpNotifier.prometheusAlerts.defaultAlert.1 = STRING: "1.3.6.1.4.1.98789.0.1[environment=production,label=test]"
 .iso.org.dod.internet.private.enterprises.snmpNotifier.prometheusAlerts.defaultAlert.2 = STRING: "critical"
 .iso.org.dod.internet.private.enterprises.snmpNotifier.prometheusAlerts.defaultAlert.3 = STRING: "Status: critical
+
+2/3 alerts are firing:
+
 - Alert: TestAlert
   Summary: this is the summary
   Description: this is the description on job1
@@ -205,7 +206,7 @@ Status: warning
 .iso.org.dod.internet.private.enterprises.1234.0.10.1.1.1.1.1.2 = STRING: "info"
 .iso.org.dod.internet.private.enterprises.1234.0.10.1.1.1.1.1.3 = STRING: "Status: OK"
  --------------
- ```
+```
 
 ### With extra fields
 

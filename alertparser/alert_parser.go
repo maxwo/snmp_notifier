@@ -54,8 +54,9 @@ func (alertParser AlertParser) Parse(alertsData types.AlertsData) (*types.AlertB
 		}
 		key := strings.Join([]string{*oid, "[", groupID, "]"}, "")
 		if _, found := alertGroups[key]; !found {
-			alertGroups[key] = &types.AlertGroup{OID: *oid, GroupID: groupID, Severity: alertParser.getLowestSeverity(), Alerts: []types.Alert{}}
+			alertGroups[key] = &types.AlertGroup{OID: *oid, GroupID: groupID, Severity: alertParser.getLowestSeverity(), Alerts: []types.Alert{}, DeclaredAlerts: []types.Alert{}}
 		}
+		alertGroups[key].DeclaredAlerts = append(alertGroups[key].DeclaredAlerts, alert)
 		if alert.Status == "firing" {
 			err = alertParser.addAlertToGroup(alertGroups[key], alert)
 			if err != nil {

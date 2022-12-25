@@ -17,7 +17,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"testing"
 	"time"
 
@@ -28,7 +27,8 @@ import (
 	testutils "github.com/maxwo/snmp_notifier/test"
 )
 
-var dummyDescriptionTemplate = `{{ range $key, $value := .Alerts }}Alert name: {{ $value.Labels.alertname }}
+var dummyDescriptionTemplate = `{{ len .Alerts }}/{{ len .DeclaredAlerts }} alerts are firing:
+{{ range $key, $value := .Alerts }}Alert name: {{ $value.Labels.alertname }}
 Severity: {{ $value.Labels.severity }}
 Summary: {{ $value.Annotations.summary }}
 Description: {{ $value.Annotations.description }}
@@ -158,7 +158,7 @@ func TestSend(t *testing.T) {
 		if err == nil {
 			receivedTraps := testutils.ReadTraps(channel)
 
-			log.Print("Traps received:", receivedTraps)
+			// log.Print("Traps received:", receivedTraps)
 
 			if len(receivedTraps) != 2 {
 				t.Error("2 traps expected, but received", receivedTraps)

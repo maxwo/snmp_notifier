@@ -34,7 +34,8 @@ import (
 	"github.com/prometheus/common/promlog"
 )
 
-var dummyDescriptionTemplate = `{{ range $key, $value := .Alerts }}Alert name: {{ $value.Labels.alertname }}
+var dummyDescriptionTemplate = `{{ len .Alerts }}/{{ len .DeclaredAlerts }} alerts are firing:
+{{ range $key, $value := .Alerts }}Alert name: {{ $value.Labels.alertname }}
 Severity: {{ $value.Labels.severity }}
 Summary: {{ $value.Annotations.summary }}
 Description: {{ $value.Annotations.description }}

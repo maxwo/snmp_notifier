@@ -45,6 +45,17 @@ func GroupAlertsByName(alerts []types.Alert) (*map[string][]types.Alert, error) 
 	return GroupAlertsBy(alerts, getAlertLabel("alertname"))
 }
 
+// GroupAlertsByStatus groups several alerts by their statuses
+func GroupAlertsByStatus(alerts []types.Alert) (*map[string][]types.Alert, error) {
+	return GroupAlertsBy(alerts, getAlertStatus())
+}
+
+func getAlertStatus() types.GetAlertGroupName {
+	return func(alert types.Alert) (*string, error) {
+		return &alert.Status, nil
+	}
+}
+
 func getAlertLabel(label string) types.GetAlertGroupName {
 	return func(alert types.Alert) (*string, error) {
 		value := "<none>"
