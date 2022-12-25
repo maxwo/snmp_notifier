@@ -6,7 +6,7 @@ executors:
   # should also be updated.
   golang:
     docker:
-    - image: circleci/golang:1.16
+      - image: golang:1.19.4-buster
     # errcheck requires to be executed from GOPATH for now.
     working_directory: /go/src/github.com/maxwo/snmp_notifier
 
@@ -15,98 +15,98 @@ jobs:
     executor: golang
 
     steps:
-    - checkout
-    - setup_remote_docker
-    - run: make promu
-    - run: make
-    - run: git diff --exit-code
-    - store_artifacts:
-        path: snmp_notifier
-        destination: /build/snmp_notifier
-    - run: rm -v snmp_notifier
+      - checkout
+      - setup_remote_docker
+      - run: make promu
+      - run: make
+      - run: git diff --exit-code
+      - store_artifacts:
+          path: snmp_notifier
+          destination: /build/snmp_notifier
+      - run: rm -v snmp_notifier
 
   build:
     machine: true
     working_directory: /home/circleci/.go_workspace/src/github.com/maxwo/snmp_notifier
 
     steps:
-    - checkout
-    - run: make promu
-    - run: promu crossbuild -v
-    - persist_to_workspace:
-        root: .
-        paths:
-        - .build
-    - store_artifacts:
-        path: .build
-        destination: /build
+      - checkout
+      - run: make promu
+      - run: promu crossbuild -v
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .build
+      - store_artifacts:
+          path: .build
+          destination: /build
 
   docker_hub_master:
     executor: golang
 
     steps:
-    - checkout
-    - setup_remote_docker
-    - attach_workspace:
-        at: .
-    - run: ln -s .build/linux-amd64/snmp_notifier snmp_notifier
-    - run: make docker
-    - run: docker images
-    - run: docker login -u $DOCKER_LOGIN -p $DOCKER_PASSWORD
-    - run: make docker-publish
+      - checkout
+      - setup_remote_docker
+      - attach_workspace:
+          at: .
+      - run: ln -s .build/linux-amd64/snmp_notifier snmp_notifier
+      - run: make docker
+      - run: docker images
+      - run: docker login -u $DOCKER_LOGIN -p $DOCKER_PASSWORD
+      - run: make docker-publish
 
   docker_hub_release_tags:
     executor: golang
 
     steps:
-    - checkout
-    - setup_remote_docker
-    - run: mkdir -v -p ${HOME}/bin
-    - run: curl -L 'https://github.com/aktau/github-release/releases/download/v0.7.2/linux-amd64-github-release.tar.bz2' | tar xvjf - --strip-components 3 -C ${HOME}/bin
-    - run: echo 'export PATH=${HOME}/bin:${PATH}' >> ${BASH_ENV}
-    - attach_workspace:
-        at: .
-    - run: make promu
-    - run: promu crossbuild tarballs
-    - run: promu checksum .tarballs
-    - run: promu release .tarballs
-    - store_artifacts:
-        path: .tarballs
-        destination: releases
-    - run: ln -s .build/linux-amd64/snmp_notifier snmp_notifier
-    - run: make docker DOCKER_IMAGE_TAG=$CIRCLE_TAG
-    - run: docker login -u $DOCKER_LOGIN -p $DOCKER_PASSWORD
-    - run: |
-        if [[ "$CIRCLE_TAG" =~ ^v[0-9]+(\.[0-9]+){2}$ ]]; then
-          make docker-tag-latest DOCKER_IMAGE_TAG="$CIRCLE_TAG"
-        fi
-    - run: make docker-publish
+      - checkout
+      - setup_remote_docker
+      - run: mkdir -v -p ${HOME}/bin
+      - run: curl -L 'https://github.com/aktau/github-release/releases/download/v0.7.2/linux-amd64-github-release.tar.bz2' | tar xvjf - --strip-components 3 -C ${HOME}/bin
+      - run: echo 'export PATH=${HOME}/bin:${PATH}' >> ${BASH_ENV}
+      - attach_workspace:
+          at: .
+      - run: make promu
+      - run: promu crossbuild tarballs
+      - run: promu checksum .tarballs
+      - run: promu release .tarballs
+      - store_artifacts:
+          path: .tarballs
+          destination: releases
+      - run: ln -s .build/linux-amd64/snmp_notifier snmp_notifier
+      - run: make docker DOCKER_IMAGE_TAG=$CIRCLE_TAG
+      - run: docker login -u $DOCKER_LOGIN -p $DOCKER_PASSWORD
+      - run: |
+          if [[ "$CIRCLE_TAG" =~ ^v[0-9]+(\.[0-9]+){2}$ ]]; then
+            make docker-tag-latest DOCKER_IMAGE_TAG="$CIRCLE_TAG"
+          fi
+      - run: make docker-publish
 
 workflows:
   version: 2
   snmp_notifier:
     jobs:
-    - test:
-        filters:
-          tags:
-            only: /.*/
-    - build:
-        filters:
-          tags:
-            only: /.*/
-    - docker_hub_master:
-        requires:
-        - test
-        - build
-        filters:
-          branches:
-            only: master
-    - docker_hub_release_tags:
-        requires:
-        - test
-        - build
-        filters:
-          tags:
-            only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
-          branches:
-            ignore: /.*/
+      - test:
+          filters:
+            tags:
+              only: /.*/
+      - build:
+          filters:
+            tags:
+              only: /.*/
+      - docker_hub_master:
+          requires:
+            - test
+            - build
+          filters:
+            branches:
+              only: master
+      - docker_hub_release_tags:
+          requires:
+            - test
+            - build
+          filters:
+            tags:
+              only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
+            branches:
+              ignore: /.*/
