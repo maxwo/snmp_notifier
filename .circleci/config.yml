@@ -6,7 +6,11 @@ executors:
   # should also be updated.
   golang:
     docker:
+<<<<<<< HEAD
       - image: golang:1.19.4-buster
+=======
+      - image: circleci/golang:1.16
+>>>>>>> c3d409a (ci: fix docker upload)
     # errcheck requires to be executed from GOPATH for now.
     working_directory: /go/src/github.com/maxwo/snmp_notifier
 
@@ -50,6 +54,7 @@ jobs:
       - attach_workspace:
           at: .
       - run: ln -s .build/linux-amd64/snmp_notifier snmp_notifier
+      - run: make install-docker
       - run: make docker
       - run: docker images
       - run: docker login -u $DOCKER_LOGIN -p $DOCKER_PASSWORD
@@ -74,6 +79,7 @@ jobs:
           path: .tarballs
           destination: releases
       - run: ln -s .build/linux-amd64/snmp_notifier snmp_notifier
+      - run: make install-docker
       - run: make docker DOCKER_IMAGE_TAG=$CIRCLE_TAG
       - run: docker login -u $DOCKER_LOGIN -p $DOCKER_PASSWORD
       - run: |
