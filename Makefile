@@ -38,3 +38,10 @@ install-docker:
 
 listen:
 	snmptrapd -m ALL -m +SNMP-NOTIFIER-MIB -M +$(mkfile_dir)/mibs/ -f -Of -Lo -c scripts/snmptrapd.conf
+
+install-github-release:
+	apt-get update
+	apt-get install --yes bzip2
+	mkdir -v -p ${HOME}/bin
+	curl -L 'https://github.com/github-release/github-release/releases/download/v0.7.2/linux-amd64-github-release.tar.bz2' | tar xvjf - --strip-components 3 -C ${HOME}/bin
+	
