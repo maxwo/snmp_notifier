@@ -1,5 +1,5 @@
 {{- if .Alerts -}}
-{{ len .Alerts }}/{{ len .DeclaredAlerts }} are firing:
+{{ len .Alerts }}/{{ len .DeclaredAlerts }} alerts are firing:
 
 {{ range $severity, $alerts := (groupAlertsByLabel .Alerts "severity") -}}
 Status: {{ $severity }}

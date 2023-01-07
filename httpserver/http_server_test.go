@@ -59,13 +59,13 @@ type Test struct {
 var tests = []Test{
 	{
 		dummyDescriptionTemplate,
-		"1.1",
+		"1",
 		"oid",
 		"critical",
 		strings.Split("critical,warning,info", ","),
 		"severity",
 		"test_mixed_alerts.json",
-		"../trapsender/test_mixed_traps.json",
+		"test_mixed_traps.json",
 		1164,
 		"/alerts",
 		"POST",
@@ -73,7 +73,7 @@ var tests = []Test{
 	},
 	{
 		dummyDescriptionTemplate,
-		"1.1",
+		"1",
 		"oid",
 		"critical",
 		strings.Split("critical,warning,info", ","),
@@ -87,7 +87,7 @@ var tests = []Test{
 	},
 	{
 		dummyDescriptionTemplate,
-		"1.1",
+		"1",
 		"oid",
 		"critical",
 		strings.Split("critical,warning,info", ","),
@@ -101,7 +101,7 @@ var tests = []Test{
 	},
 	{
 		dummyDescriptionTemplate,
-		"1.1",
+		"1",
 		"oid",
 		"critical",
 		strings.Split("critical,warning,info", ","),
@@ -115,7 +115,7 @@ var tests = []Test{
 	},
 	{
 		dummyDescriptionTemplate,
-		"1.1",
+		"1",
 		"oid",
 		"critical",
 		strings.Split("critical,warning,info", ","),
@@ -129,7 +129,7 @@ var tests = []Test{
 	},
 	{
 		dummyDescriptionTemplate,
-		"1.1",
+		"1",
 		"oid",
 		"critical",
 		strings.Split("critical,warning,info", ","),
