@@ -161,7 +161,7 @@ Traps include 3 fields:
 - the alert/trap status;
 - a description of the alerts.
 
-````console
+```console
 $ snmptrapd -m ALL -m +SNMP-NOTIFIER-MIB -f -Of -Lo -c scripts/snmptrapd.conf
  Agent Address: 0.0.0.0
  Agent Hostname: localhost
