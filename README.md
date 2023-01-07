@@ -106,7 +106,7 @@ Flags:
       --snmp.retries=1           SNMP number of retries
       --snmp.trap-oid-label="oid"
                                  Label where to find the trap OID.
-      --snmp.trap-default-oid="1.3.6.1.4.1.98789.0.1"
+      --snmp.trap-default-oid="1.3.6.1.4.1.98789"
                                  Trap OID to send if none is found in the alert labels.
       --snmp.trap-description-template=description-template.tpl
                                  SNMP description template.
