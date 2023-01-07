@@ -43,7 +43,7 @@ var tests = []Test{
 		map[string]string{},
 		SNMPNotifierConfiguration{
 			alertparser.Configuration{
-				DefaultOID:      "1.3.6.1.4.1.98789.0.1",
+				DefaultOID:      "1.3.6.1.4.1.98789",
 				OIDLabel:        "oid",
 				DefaultSeverity: "critical",
 				SeverityLabel:   "severity",

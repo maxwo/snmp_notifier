@@ -161,7 +161,7 @@ Traps include 3 fields:
 - the alert/trap status;
 - a description of the alerts.
 
-```console
+````console
 $ snmptrapd -m ALL -m +SNMP-NOTIFIER-MIB -f -Of -Lo -c scripts/snmptrapd.conf
  Agent Address: 0.0.0.0
  Agent Hostname: localhost
@@ -169,18 +169,17 @@ $ snmptrapd -m ALL -m +SNMP-NOTIFIER-MIB -f -Of -Lo -c scripts/snmptrapd.conf
  Enterprise OID: .
  Trap Type: Cold Start
  Trap Sub-Type: 0
- Community/Infosec Context: TRAP2, SNMP v3, user snmp_user_v3, context
+ Community/Infosec Context: TRAP2, SNMP v2c, community public
  Uptime: 0
  Description: Cold Start
  PDU Attribute/Value Pair Array:
-.iso.org.dod.internet.mgmt.mib-2.system.sysUpTime.sysUpTimeInstance = Timeticks: (17131100) 1 day, 23:35:11.00
-.iso.org.dod.internet.snmpV2.snmpModules.snmpMIB.snmpMIBObjects.snmpTrap.snmpTrapOID.0 = OID: .iso.org.dod.internet.private.enterprises.snmpNotifier.prometheusAlerts.defaultAlert
-.iso.org.dod.internet.private.enterprises.snmpNotifier.prometheusAlerts.defaultAlert.1 = STRING: "1.3.6.1.4.1.98789.0.1[environment=production,label=test]"
-.iso.org.dod.internet.private.enterprises.snmpNotifier.prometheusAlerts.defaultAlert.2 = STRING: "critical"
-.iso.org.dod.internet.private.enterprises.snmpNotifier.prometheusAlerts.defaultAlert.3 = STRING: "Status: critical
+.iso.org.dod.internet.mgmt.mib-2.system.sysUpTime.sysUpTimeInstance = Timeticks: (853395100) 98 days, 18:32:31.00
+.iso.org.dod.internet.snmpV2.snmpModules.snmpMIB.snmpMIBObjects.snmpTrap.snmpTrapOID.0 = OID: .iso.org.dod.internet.private.enterprises.snmpNotifier.snmpNotifierDefaultTrap
+.iso.org.dod.internet.private.enterprises.snmpNotifier.snmpNotifierAlertsObjects.snmpNotifierAlertId = STRING: "1.3.6.1.4.1.98789[environment=production,label=test]"
+.iso.org.dod.internet.private.enterprises.snmpNotifier.snmpNotifierAlertsObjects.snmpNotifierAlertSeverity = STRING: "critical"
+.iso.org.dod.internet.private.enterprises.snmpNotifier.snmpNotifierAlertsObjects.snmpNotifierAlertDescription = STRING: "2/3 alerts are firing:
 
-2/3 alerts are firing:
-
+Status: critical
 - Alert: TestAlert
   Summary: this is the summary
   Description: this is the description on job1
@@ -188,25 +187,8 @@ $ snmptrapd -m ALL -m +SNMP-NOTIFIER-MIB -f -Of -Lo -c scripts/snmptrapd.conf
 Status: warning
 - Alert: TestAlert
   Summary: this is the random summary
-  Description: This is the description of alert 1"
- --------------
- Agent Address: 0.0.0.0
- Agent Hostname: localhost
- Date: 1 - 0 - 0 - 1 - 1 - 1970
- Enterprise OID: .
- Trap Type: Cold Start
- Trap Sub-Type: 0
- Community/Infosec Context: TRAP2, SNMP v3, user snmp_user_v3, context
- Uptime: 0
- Description: Cold Start
- PDU Attribute/Value Pair Array:
-.iso.org.dod.internet.mgmt.mib-2.system.sysUpTime.sysUpTimeInstance = Timeticks: (17129200) 1 day, 23:34:52.00
-.iso.org.dod.internet.snmpV2.snmpModules.snmpMIB.snmpMIBObjects.snmpTrap.snmpTrapOID.0 = OID: .iso.org.dod.internet.private.enterprises.1234.0.10.1.1.1.1.1
-.iso.org.dod.internet.private.enterprises.1234.0.10.1.1.1.1.1.1 = STRING: "1.3.6.1.4.1.1234.0.10.1.1.1.1.1[environment=production,label=test]"
-.iso.org.dod.internet.private.enterprises.1234.0.10.1.1.1.1.1.2 = STRING: "info"
-.iso.org.dod.internet.private.enterprises.1234.0.10.1.1.1.1.1.3 = STRING: "Status: OK"
- --------------
-```
+  Description: this is the description of alert 1"
+ --------------```
 
 ### With extra fields
 
@@ -241,7 +223,7 @@ Status: warning
   Description: This is the description of alert 1"
 .iso.org.dod.internet.private.enterprises.98789.0.1.4 = STRING: "2 alerts are firing."
 --------------
-```
+````
 
 ## Contributing
 

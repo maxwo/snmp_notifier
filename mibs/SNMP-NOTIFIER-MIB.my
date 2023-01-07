@@ -1,36 +1,59 @@
 SNMP-NOTIFIER-MIB DEFINITIONS ::= BEGIN
 
 IMPORTS
-    MODULE-IDENTITY, enterprises FROM SNMPv2-SMI;
+   MODULE-IDENTITY, enterprises FROM SNMPv2-SMI;
 
 snmpNotifier MODULE-IDENTITY
-     LAST-UPDATED "201912260000Z"
-     ORGANIZATION "SNMP Notifier"
-     CONTACT-INFO
-        "SNMP Notifier
+   LAST-UPDATED "202201070000Z"
+   ORGANIZATION "SNMP Notifier"
+   CONTACT-INFO
+      "SNMP Notifier
 
-        https://github.com/maxwo/snmp_notifier/
+      https://github.com/maxwo/snmp_notifier/
 
-        "
+      "
 
-     DESCRIPTION
-        "This MIB contains definition of the SNMP Traps
-        associated to alerts sent by the SNMP Notifier"
+   DESCRIPTION
+      "This MIB contains definition of the SNMP Traps
+      associated to alerts sent by the SNMP Notifier"
 
-     REVISION
-        "201912260000Z"
+   REVISION
+      "201912260000Z"
 
-     DESCRIPTION
-        "First revision that includes only the alerts subtree"
+   DESCRIPTION
+      "First revision that includes only the alerts subtree"
+::= { enterprises 98789 }
 
-  ::= { enterprises 98789 }
+snmpNotifierAlertsObjects OBJECT IDENTIFIER ::= { snmpNotifier 2 }
 
- prometheusAlerts OBJECT IDENTIFIER ::= { snmpNotifier 0 }
+snmpNotifierAlertId OBJECT-TYPE
+   SYNTAX      DisplayString
+   MAX-ACCESS  accessible-for-notify
+   STATUS      current
+   DESCRIPTION "The ID of the SNMP notifier alert."
+::= { snmpNotifierAlertsObjects 1 }
 
- defaultAlert NOTIFICATION-TYPE
-       OBJECTS { sysLocation }
-       STATUS current
-       DESCRIPTION "The default SNMP notifier notification"
-       ::= { prometheusAlerts 1 }
+snmpNotifierAlertSeverity OBJECT-TYPE
+   SYNTAX      DisplayString
+   MAX-ACCESS  accessible-for-notify
+   STATUS      current
+   DESCRIPTION "The severity of the SNMP notifier alert."
+::= { snmpNotifierAlertsObjects 2 }
 
- END
+snmpNotifierAlertDescription OBJECT-TYPE
+   SYNTAX      DisplayString
+   MAX-ACCESS  accessible-for-notify
+   STATUS      current
+   DESCRIPTION "The description of the SNMP notifier alert."
+::= { snmpNotifierAlertsObjects 3 }
+
+snmpNotifierDefaultTrap NOTIFICATION-TYPE
+   OBJECTS {
+      snmpNotifierAlertId,
+      snmpNotifierAlertSeverity,
+      snmpNotifierAlertDescription
+   }
+   STATUS current
+   DESCRIPTION "The default SNMP notifier notification"
+   ::= { snmpNotifier 1 }
+END

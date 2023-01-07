@@ -118,18 +118,18 @@ func (trapSender TrapSender) generateVarBinds(alertGroup types.AlertGroup) (snmp
 		return nil, err
 	}
 
-	trapOid, _ := snmpgo.NewOid(alertGroup.OID)
+	trapOid, _ := snmpgo.NewOid(strings.Join([]string{alertGroup.OID, "1"}, "."))
 	varBinds = addUpTime(varBinds)
 	varBinds = append(varBinds, snmpgo.NewVarBind(snmpgo.OidSnmpTrap, trapOid))
-	varBinds = addStringSubOid(varBinds, alertGroup.OID, "1", trapUniqueID)
-	varBinds = addStringSubOid(varBinds, alertGroup.OID, "2", alertGroup.Severity)
-	varBinds = addStringSubOid(varBinds, alertGroup.OID, "3", *description)
+	varBinds = addTrapSubObject(varBinds, alertGroup.OID, "1", trapUniqueID)
+	varBinds = addTrapSubObject(varBinds, alertGroup.OID, "2", alertGroup.Severity)
+	varBinds = addTrapSubObject(varBinds, alertGroup.OID, "3", *description)
 	for subOid, template := range trapSender.configuration.ExtraFieldTemplates {
 		value, err := commons.FillTemplate(alertGroup, template)
 		if err != nil {
 			return nil, err
 		}
-		varBinds = addStringSubOid(varBinds, alertGroup.OID, subOid, *value)
+		varBinds = addTrapSubObject(varBinds, alertGroup.OID, subOid, *value)
 	}
 
 	return varBinds, nil
@@ -140,8 +140,8 @@ func addUpTime(varBinds snmpgo.VarBinds) snmpgo.VarBinds {
 	return append(varBinds, snmpgo.NewVarBind(snmpgo.OidSysUpTime, snmpgo.NewTimeTicks(uint32(uptime*100))))
 }
 
-func addStringSubOid(varBinds snmpgo.VarBinds, alertOid string, subOid string, value string) snmpgo.VarBinds {
-	oidString := strings.Join([]string{alertOid, subOid}, ".")
+func addTrapSubObject(varBinds snmpgo.VarBinds, alertOid string, subOid string, value string) snmpgo.VarBinds {
+	oidString := strings.Join([]string{alertOid, "2", subOid}, ".")
 	oid, _ := snmpgo.NewOid(oidString)
 	return append(varBinds, snmpgo.NewVarBind(oid, snmpgo.NewOctetString([]byte(strings.TrimSpace(value)))))
 }
