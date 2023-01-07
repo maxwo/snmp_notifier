@@ -188,7 +188,8 @@ Status: warning
 - Alert: TestAlert
   Summary: this is the random summary
   Description: this is the description of alert 1"
- --------------```
+ --------------
+```
 
 ### With extra fields
 
@@ -209,19 +210,21 @@ $ snmptrapd -m ALL -m +SNMP-NOTIFIER-MIB -f -Of -Lo -c scripts/snmptrapd.conf
  Description: Cold Start
  PDU Attribute/Value Pair Array:
 .iso.org.dod.internet.mgmt.mib-2.system.sysUpTime.sysUpTimeInstance = Timeticks: (2665700) 7:24:17.00
-.iso.org.dod.internet.snmpV2.snmpModules.snmpMIB.snmpMIBObjects.snmpTrap.snmpTrapOID.0 = OID: .iso.org.dod.internet.private.enterprises.98789.0.1
-.iso.org.dod.internet.private.enterprises.98789.0.1.1 = STRING: "1.3.6.1.4.1.98789.0.1[environment=production,label=test]"
-.iso.org.dod.internet.private.enterprises.98789.0.1.2 = STRING: "critical"
-.iso.org.dod.internet.private.enterprises.98789.0.1.3 = STRING: "Status: critical
+.iso.org.dod.internet.snmpV2.snmpModules.snmpMIB.snmpMIBObjects.snmpTrap.snmpTrapOID.0 = OID: .iso.org.dod.internet.private.enterprises.snmpNotifier.snmpNotifierDefaultTrap
+.iso.org.dod.internet.private.enterprises.snmpNotifier.snmpNotifierAlertsObjects.snmpNotifierAlertId = STRING: "1.3.6.1.4.1.98789[environment=production,label=test]"
+.iso.org.dod.internet.private.enterprises.snmpNotifier.snmpNotifierAlertsObjects.snmpNotifierAlertSeverity = STRING: "critical"
+.iso.org.dod.internet.private.enterprises.snmpNotifier.snmpNotifierAlertsObjects.snmpNotifierAlertDescription = STRING: "2/3 alerts are firing:
+
+Status: critical
 - Alert: TestAlert
-  Summary: This is the summary
-  Description: This is the description on job1
+  Summary: this is the summary
+  Description: this is the description on job1
 
 Status: warning
 - Alert: TestAlert
-  Summary: This is the random summary
-  Description: This is the description of alert 1"
-.iso.org.dod.internet.private.enterprises.98789.0.1.4 = STRING: "2 alerts are firing."
+  Summary: this is the random summary
+  Description: this is the description of alert 1"
+.iso.org.dod.internet.private.enterprises.snmpNotifier.snmpNotifierAlertsObjects.4 = STRING: "2 alerts are firing."
 --------------
 ````
 
