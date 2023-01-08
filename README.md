@@ -1,6 +1,6 @@
 # SNMP Notifier
 
-[![CircleCI](https://circleci.com/gh/maxwo/snmp_notifier/tree/main.svg?style=svg)](https://circleci.com/gh/maxwo/snmp_notifier/tree/master)
+[![CircleCI](https://circleci.com/gh/maxwo/snmp_notifier/tree/main.svg?style=svg)](https://circleci.com/gh/maxwo/snmp_notifier/tree/main)
 [![Go Report Card](https://goreportcard.com/badge/github.com/maxwo/snmp_notifier)](https://goreportcard.com/report/github.com/maxwo/snmp_notifier)
 
 `snmp_notifier` receives alerts from the Prometheus' Alertmanager and routes them as SNMP traps.
