@@ -6,10 +6,3 @@ updates:
     interval: daily
     time: "04:00"
   open-pull-requests-limit: 10
-  ignore:
-  - dependency-name: github.com/prometheus/common
-    versions:
-    - 0.15.0
-    - 0.16.0
-    - 0.17.0
-    - 0.18.0
