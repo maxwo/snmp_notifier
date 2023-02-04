@@ -17,13 +17,24 @@ Prometheus' Alertmanager sends the alerts to the SNMP notifier on its HTTP API. 
 
 There are various ways to install the SNMP notifier:
 
-### Precompiled binaries
+### Helm Chart
 
-Precompiled binaries are available in the [_release_ section](https://github.com/maxwo/snmp_notifier/releases) of this repository.
+The SNMP notifier chart is available via the [Prometheus Community Kubernetes Helm Charts](https://github.com/prometheus-community/helm-charts):
+
+```console
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm install snmp-notifier prometheus-community/alertmanager-snmp-notifier --set 'snmpNotifier.snmpDestinations={my-snmp-server:162}'
+```
+
+Refer the the [chart values](https://github.com/prometheus-community/helm-charts/blob/main/charts/alertmanager-snmp-notifier/values.yaml) to see the available options.
 
 ### Docker Images
 
 Docker images are available on the [Docker Hub](https://hub.docker.com/r/maxwo/snmp-notifier).
+
+### Precompiled binaries
+
+Precompiled binaries are available in the [_release_ section](https://github.com/maxwo/snmp_notifier/releases) of this repository.
 
 ### Compiling the binary
 
