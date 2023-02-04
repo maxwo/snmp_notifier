@@ -26,7 +26,7 @@ helm repo add prometheus-community https://prometheus-community.github.io/helm-c
 helm install snmp-notifier prometheus-community/alertmanager-snmp-notifier --set 'snmpNotifier.snmpDestinations={my-snmp-server:162}'
 ```
 
-Refer the the [chart values](https://github.com/prometheus-community/helm-charts/blob/main/charts/alertmanager-snmp-notifier/values.yaml) to see the available options.
+Refer to the [chart values](https://github.com/prometheus-community/helm-charts/blob/main/charts/alertmanager-snmp-notifier/values.yaml) to see the available options.
 
 ### Docker Images
 
