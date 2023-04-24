@@ -41,16 +41,18 @@ type Configuration struct {
 
 	SNMPCommunity string
 
-	SNMPAuthenticationEnabled  bool
-	SNMPAuthenticationProtocol string
-	SNMPAuthenticationUsername string
-	SNMPAuthenticationPassword string
-	SNMPPrivateEnabled         bool
-	SNMPPrivateProtocol        string
-	SNMPPrivatePassword        string
-	SNMPSecurityEngineID       string
-	SNMPContextEngineID        string
-	SNMPContextName            string
+	SNMPAuthenticationEnabled         bool
+	SNMPAuthenticationProtocol        string
+	SNMPAuthenticationUsername        string
+	SNMPAuthenticationPassword        string
+	SNMPPrivateEnabled                bool
+	SNMPPrivateProtocol               string
+	SNMPPrivatePassword               string
+	SNMPSecurityEngineID              string
+	SNMPContextEngineID               string
+	SNMPContextName                   string
+	SNMPCustomSubObjectBaseOidEnabled bool
+	SNMPSubObjectBaseOid              string
 
 	DescriptionTemplate template.Template
 	ExtraFieldTemplates map[string]template.Template
@@ -118,18 +120,23 @@ func (trapSender TrapSender) generateVarBinds(alertGroup types.AlertGroup) (snmp
 		return nil, err
 	}
 
+	baseOid := strings.Join([]string{alertGroup.OID, "2"}, ".")
+	if trapSender.configuration.SNMPCustomSubObjectBaseOidEnabled {
+		baseOid = trapSender.configuration.SNMPSubObjectBaseOid
+	}
+
 	trapOid, _ := snmpgo.NewOid(strings.Join([]string{alertGroup.OID, "1"}, "."))
 	varBinds = addUpTime(varBinds)
 	varBinds = append(varBinds, snmpgo.NewVarBind(snmpgo.OidSnmpTrap, trapOid))
-	varBinds = addTrapSubObject(varBinds, alertGroup.OID, "1", trapUniqueID)
-	varBinds = addTrapSubObject(varBinds, alertGroup.OID, "2", alertGroup.Severity)
-	varBinds = addTrapSubObject(varBinds, alertGroup.OID, "3", *description)
+	varBinds = addTrapSubObject(varBinds, baseOid, "1", trapUniqueID)
+	varBinds = addTrapSubObject(varBinds, baseOid, "2", alertGroup.Severity)
+	varBinds = addTrapSubObject(varBinds, baseOid, "3", *description)
 	for subOid, template := range trapSender.configuration.ExtraFieldTemplates {
 		value, err := commons.FillTemplate(alertGroup, template)
 		if err != nil {
 			return nil, err
 		}
-		varBinds = addTrapSubObject(varBinds, alertGroup.OID, subOid, *value)
+		varBinds = addTrapSubObject(varBinds, baseOid, subOid, *value)
 	}
 
 	return varBinds, nil
@@ -140,8 +147,8 @@ func addUpTime(varBinds snmpgo.VarBinds) snmpgo.VarBinds {
 	return append(varBinds, snmpgo.NewVarBind(snmpgo.OidSysUpTime, snmpgo.NewTimeTicks(uint32(uptime*100))))
 }
 
-func addTrapSubObject(varBinds snmpgo.VarBinds, alertOid string, subOid string, value string) snmpgo.VarBinds {
-	oidString := strings.Join([]string{alertOid, "2", subOid}, ".")
+func addTrapSubObject(varBinds snmpgo.VarBinds, baseOid string, subOid string, value string) snmpgo.VarBinds {
+	oidString := strings.Join([]string{baseOid, subOid}, ".")
 	oid, _ := snmpgo.NewOid(oidString)
 	return append(varBinds, snmpgo.NewVarBind(oid, snmpgo.NewOctetString([]byte(strings.TrimSpace(value)))))
 }
