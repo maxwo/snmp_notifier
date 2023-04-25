@@ -41,18 +41,17 @@ type Configuration struct {
 
 	SNMPCommunity string
 
-	SNMPAuthenticationEnabled         bool
-	SNMPAuthenticationProtocol        string
-	SNMPAuthenticationUsername        string
-	SNMPAuthenticationPassword        string
-	SNMPPrivateEnabled                bool
-	SNMPPrivateProtocol               string
-	SNMPPrivatePassword               string
-	SNMPSecurityEngineID              string
-	SNMPContextEngineID               string
-	SNMPContextName                   string
-	SNMPCustomSubObjectBaseOidEnabled bool
-	SNMPSubObjectBaseOid              string
+	SNMPAuthenticationEnabled  bool
+	SNMPAuthenticationProtocol string
+	SNMPAuthenticationUsername string
+	SNMPAuthenticationPassword string
+	SNMPPrivateEnabled         bool
+	SNMPPrivateProtocol        string
+	SNMPPrivatePassword        string
+	SNMPSecurityEngineID       string
+	SNMPContextEngineID        string
+	SNMPContextName            string
+	SNMPCustomSubObjectBaseOid string
 
 	DescriptionTemplate template.Template
 	ExtraFieldTemplates map[string]template.Template
@@ -121,8 +120,8 @@ func (trapSender TrapSender) generateVarBinds(alertGroup types.AlertGroup) (snmp
 	}
 
 	baseOid := strings.Join([]string{alertGroup.OID, "2"}, ".")
-	if trapSender.configuration.SNMPCustomSubObjectBaseOidEnabled {
-		baseOid = trapSender.configuration.SNMPSubObjectBaseOid
+	if trapSender.configuration.SNMPCustomSubObjectBaseOid != "" {
+		baseOid = trapSender.configuration.SNMPCustomSubObjectBaseOid
 	}
 
 	trapOid, _ := snmpgo.NewOid(strings.Join([]string{alertGroup.OID, "1"}, "."))
