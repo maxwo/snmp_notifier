@@ -239,6 +239,7 @@ func launchHTTPServer(t *testing.T, test Test) *http.Server {
 		"",
 		"",
 		"",
+		"",
 		*descriptionTemplate,
 		make(map[string]template.Template),
 	}
