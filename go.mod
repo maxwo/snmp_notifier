@@ -1,7 +1,7 @@
 module github.com/maxwo/snmp_notifier
 
 require (
-	github.com/cloudfoundry/gosigar v1.3.10
+	github.com/cloudfoundry/gosigar v1.3.15
 	github.com/geoffgarside/ber v1.1.0 // indirect
 	github.com/go-kit/log v0.2.1
 	github.com/go-test/deep v1.1.0
