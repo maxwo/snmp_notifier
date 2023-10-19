@@ -1,12 +1,13 @@
 module github.com/maxwo/snmp_notifier
 
 require (
-	github.com/cloudfoundry/gosigar v1.3.17
+	github.com/cloudfoundry/gosigar v1.3.32
 	github.com/geoffgarside/ber v1.1.0 // indirect
 	github.com/go-kit/log v0.2.1
 	github.com/go-test/deep v1.1.0
 	github.com/gorilla/handlers v1.5.1
 	github.com/k-sone/snmpgo v3.2.0+incompatible
+	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/prometheus/alertmanager v0.25.0
 	github.com/prometheus/client_golang v1.14.0
 	github.com/prometheus/common v0.39.0
