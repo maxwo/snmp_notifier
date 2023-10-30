@@ -100,10 +100,13 @@ usage: snmp_notifier [<flags>]
 
 A tool to relay Prometheus alerts as SNMP traps
 
+
 Flags:
-  -h, --help                     Show context-sensitive help (also try --help-long and --help-man).
-      --web.listen-address=:9464
-                                 Address to listen on for web interface and telemetry.
+  -h, --[no-]help                Show context-sensitive help (also try --help-long and --help-man).
+      --web.listen-address=:9464 ...
+                                 Addresses on which to expose metrics and web interface. Repeatable for multiple addresses.
+      --web.config.file=""       [EXPERIMENTAL] Path to configuration file that can enable TLS or authentication. See:
+                                 https://github.com/prometheus/exporter-toolkit/blob/master/docs/web-configuration.md
       --alert.severity-label="severity"
                                  Label where to find the alert severity.
       --alert.severities="critical,warning,info"
@@ -111,8 +114,7 @@ Flags:
       --alert.default-severity="critical"
                                  The alert severity if none is provided via labels.
       --snmp.version=V2c         SNMP version. V2c and V3 are currently supported.
-      --snmp.timeout=5s          SNMP timeout
-      --snmp.destination=127.0.0.1:162
+      --snmp.destination=127.0.0.1:162 ...
                                  SNMP trap server destination.
       --snmp.retries=1           SNMP number of retries
       --snmp.trap-oid-label="oid"
@@ -122,31 +124,40 @@ Flags:
       --snmp.trap-description-template=description-template.tpl
                                  SNMP description template.
       --snmp.extra-field-template=4=extra-field-template.tpl ...
-                                 SNMP extra field templates, eg. --snmp.extra-field-templates=4=new-field.template.tpl will add the 4th field to the trap, with the given template file. You may add several fields using this flag several times.
-      --snmp.community="public"  SNMP community (V2c only). Passing secrets to the command line is not recommended, consider using the SNMP_NOTIFIER_COMMUNITY environment variable instead.
-      --snmp.authentication-enabled
+                                 SNMP extra field templates, eg. --snmp.extra-field-templates=4=new-field.template.tpl to add a 4th
+                                 field to the trap, with the given template file. You may add several fields using that flag several
+                                 times.
+      --snmp.timeout=5s          SNMP timeout duration
+      --snmp.community="public"  SNMP community (V2c only). Passing secrets to the command line is not recommended, consider using the
+                                 SNMP_NOTIFIER_COMMUNITY environment variable instead. ($SNMP_NOTIFIER_COMMUNITY)
+      --[no-]snmp.authentication-enabled
                                  Enable SNMP authentication (V3 only).
       --snmp.authentication-protocol=MD5
                                  Protocol for password encryption (V3 only). MD5 and SHA are currently supported.
       --snmp.authentication-username=USERNAME
-                                 SNMP authentication username (V3 only). Passing secrets to the command line is not recommended, consider using the SNMP_NOTIFIER_AUTH_USERNAME environment variable instead.
+                                 SNMP authentication username (V3 only). Passing secrets to the command line is not
+                                 recommended, consider using the SNMP_NOTIFIER_AUTH_USERNAME environment variable instead.
+                                 ($SNMP_NOTIFIER_AUTH_USERNAME)
       --snmp.authentication-password=PASSWORD
-                                 SNMP authentication password (V3 only). Passing secrets to the command line is not recommended, consider using the SNMP_NOTIFIER_AUTH_PASSWORD environment variable instead.
-      --snmp.private-enabled     Enable SNMP encryption (V3 only).
+                                 SNMP authentication password (V3 only). Passing secrets to the command line is not
+                                 recommended, consider using the SNMP_NOTIFIER_AUTH_PASSWORD environment variable instead.
+                                 ($SNMP_NOTIFIER_AUTH_PASSWORD)
+      --[no-]snmp.private-enabled
+                                 Enable SNMP encryption (V3 only).
       --snmp.private-protocol=DES
                                  Protocol for SNMP data transmission (V3 only). DES and AES are currently supported.
       --snmp.private-password=SECRET
-                                 SNMP private password (V3 only). Passing secrets to the command line is not recommended, consider using the SNMP_NOTIFIER_PRIV_PASSWORD environment variable instead.
+                                 SNMP private password (V3 only). Passing secrets to the command line is not recommended, consider using
+                                 the SNMP_NOTIFIER_PRIV_PASSWORD environment variable instead. ($SNMP_NOTIFIER_PRIV_PASSWORD)
       --snmp.security-engine-id=SECURITY_ENGINE_ID
                                  SNMP security engine ID (V3 only).
       --snmp.context-engine-id=CONTEXT_ENGINE_ID
                                  SNMP context engine ID (V3 only).
       --snmp.context-name=CONTEXT_ENGINE_NAME
                                  SNMP context name (V3 only).
-      --log.level="info"         Only log messages with the given severity or above. Valid levels: [debug, info, warn, error, fatal]
-      --log.format="logger:stderr"
-                                 Set the log target and format. Example: "logger:syslog?appname=bob&local=7" or "logger:stdout?json=true"
-      --version                  Show application version.
+      --log.level=info           Only log messages with the given severity or above. One of: [debug, info, warn, error]
+      --log.format=logfmt        Output format of log messages. One of: [logfmt, json]
+      --[no-]version             Show application version.
 ```
 
 Also, it is recommended to use the following environment variables to set the SNMP secrets:
