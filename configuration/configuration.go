@@ -10,6 +10,8 @@ import (
 	"github.com/prometheus/common/promlog"
 	promlogflag "github.com/prometheus/common/promlog/flag"
 
+	"github.com/prometheus/exporter-toolkit/web/kingpinflag"
+
 	"github.com/maxwo/snmp_notifier/alertparser"
 	"github.com/maxwo/snmp_notifier/commons"
 	"github.com/maxwo/snmp_notifier/httpserver"
@@ -17,8 +19,8 @@ import (
 
 	"strconv"
 
+	kingpin "github.com/alecthomas/kingpin/v2"
 	"github.com/prometheus/common/version"
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
 // SNMPNotifierConfiguration handles the configuration of the whole application
@@ -39,7 +41,8 @@ var (
 func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, log.Logger, error) {
 	var (
 		application          = kingpin.New("snmp_notifier", "A tool to relay Prometheus alerts as SNMP traps")
-		webListenAddress     = application.Flag("web.listen-address", "Address to listen on for web interface and telemetry.").Default(":9464").TCP()
+		toolKitConfiguration = kingpinflag.AddFlags(application, ":9464")
+
 		alertSeverityLabel   = application.Flag("alert.severity-label", "Label where to find the alert severity.").Default("severity").String()
 		alertSeverities      = application.Flag("alert.severities", "The ordered list of alert severities, from more priority to less priority.").Default("critical,warning,info").String()
 		alertDefaultSeverity = application.Flag("alert.default-severity", "The alert severity if none is provided via labels.").Default("critical").String()
@@ -167,7 +170,7 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, log.Logger, 
 	}
 
 	httpServerConfiguration := httpserver.Configuration{
-		WebListenAddress: (*webListenAddress).String(),
+		ToolKitConfiguration: *toolKitConfiguration,
 	}
 
 	configuration := SNMPNotifierConfiguration{

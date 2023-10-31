@@ -37,7 +37,7 @@ install-docker:
 	apt-get install --yes docker-ce-cli
 
 listen:
-	snmptrapd -m ALL -m +SNMP-NOTIFIER-MIB -M +$(mkfile_dir)/mibs/ -f -Of -Lo -c scripts/snmptrapd.conf
+	snmptrapd -m ALL -m +SNMP-NOTIFIER-MIB -M +$(mkfile_dir)/mibs/ -f -Of -Lo -c scripts/local/snmptrapd.conf
 
 install-github-release:
 	apt-get update

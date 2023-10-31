@@ -26,6 +26,7 @@ import (
 	"github.com/maxwo/snmp_notifier/commons"
 	"github.com/maxwo/snmp_notifier/httpserver"
 	"github.com/maxwo/snmp_notifier/trapsender"
+	"github.com/prometheus/exporter-toolkit/web"
 
 	"github.com/go-test/deep"
 )
@@ -36,6 +37,10 @@ type Test struct {
 	Configuration        SNMPNotifierConfiguration
 	ExpectError          bool
 }
+
+var falseValue = false
+var emptyString = ""
+var testListenAddresses = []string{":1234"}
 
 var tests = []Test{
 	{
@@ -58,7 +63,11 @@ var tests = []Test{
 				ExtraFieldTemplates: make(map[string]template.Template),
 			},
 			httpserver.Configuration{
-				WebListenAddress: ":1234",
+				ToolKitConfiguration: web.FlagConfig{
+					WebSystemdSocket:   &falseValue,
+					WebConfigFile:      &emptyString,
+					WebListenAddresses: &testListenAddresses,
+				},
 			},
 		},
 		false,
@@ -85,7 +94,11 @@ var tests = []Test{
 				ExtraFieldTemplates: make(map[string]template.Template),
 			},
 			httpserver.Configuration{
-				WebListenAddress: ":1234",
+				ToolKitConfiguration: web.FlagConfig{
+					WebSystemdSocket:   &falseValue,
+					WebConfigFile:      &emptyString,
+					WebListenAddresses: &testListenAddresses,
+				},
 			},
 		},
 		false,
@@ -111,7 +124,11 @@ var tests = []Test{
 				ExtraFieldTemplates: make(map[string]template.Template),
 			},
 			httpserver.Configuration{
-				WebListenAddress: ":1234",
+				ToolKitConfiguration: web.FlagConfig{
+					WebSystemdSocket:   &falseValue,
+					WebConfigFile:      &emptyString,
+					WebListenAddresses: &testListenAddresses,
+				},
 			},
 		},
 		false,
@@ -142,7 +159,11 @@ var tests = []Test{
 				ExtraFieldTemplates:        make(map[string]template.Template),
 			},
 			httpserver.Configuration{
-				WebListenAddress: ":1234",
+				ToolKitConfiguration: web.FlagConfig{
+					WebSystemdSocket:   &falseValue,
+					WebConfigFile:      &emptyString,
+					WebListenAddresses: &testListenAddresses,
+				},
 			},
 		},
 		false,
@@ -170,7 +191,11 @@ var tests = []Test{
 				ExtraFieldTemplates:        make(map[string]template.Template),
 			},
 			httpserver.Configuration{
-				WebListenAddress: ":1234",
+				ToolKitConfiguration: web.FlagConfig{
+					WebSystemdSocket:   &falseValue,
+					WebConfigFile:      &emptyString,
+					WebListenAddresses: &testListenAddresses,
+				},
 			},
 		},
 		false,
@@ -205,7 +230,11 @@ var tests = []Test{
 				ExtraFieldTemplates:        make(map[string]template.Template),
 			},
 			httpserver.Configuration{
-				WebListenAddress: ":1234",
+				ToolKitConfiguration: web.FlagConfig{
+					WebSystemdSocket:   &falseValue,
+					WebConfigFile:      &emptyString,
+					WebListenAddresses: &testListenAddresses,
+				},
 			},
 		},
 		false,

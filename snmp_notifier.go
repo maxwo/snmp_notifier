@@ -15,8 +15,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/go-kit/log/level"
 	"os"
+
+	"github.com/go-kit/log/level"
+	"github.com/prometheus/exporter-toolkit/web"
 
 	"github.com/maxwo/snmp_notifier/alertparser"
 	"github.com/maxwo/snmp_notifier/configuration"
@@ -42,9 +44,8 @@ func main() {
 
 	telemetry.Init()
 
-	err = httpServer.Configure().ListenAndServe()
-	if err != nil {
-		level.Error(logger).Log("msg", "unable to start the http server", "err", err)
+	if err := web.ListenAndServe(httpServer.Configure(), &configuration.HTTPServerConfiguration.ToolKitConfiguration, logger); err != nil {
+		level.Error(logger).Log("err", err)
 		os.Exit(1)
 	}
 }

@@ -16,18 +16,19 @@ package httpserver
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/go-kit/log/level"
 	"io"
 	"net/http"
-	"os"
 	"strconv"
+
+	"github.com/go-kit/log/level"
+
+	"github.com/prometheus/exporter-toolkit/web"
 
 	"github.com/maxwo/snmp_notifier/alertparser"
 	"github.com/maxwo/snmp_notifier/telemetry"
 	"github.com/maxwo/snmp_notifier/trapsender"
 	"github.com/maxwo/snmp_notifier/types"
 
-	"github.com/gorilla/handlers"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/go-kit/log"
@@ -44,7 +45,7 @@ type HTTPServer struct {
 
 // Configuration describes the configuration for serving HTTP requests
 type Configuration struct {
-	WebListenAddress string
+	ToolKitConfiguration web.FlagConfig
 }
 
 // New creates an HTTPServer instance
@@ -56,8 +57,7 @@ func New(configuration Configuration, alertParser alertparser.AlertParser, trapS
 func (httpServer HTTPServer) Configure() *http.Server {
 	mux := http.NewServeMux()
 	server := &http.Server{
-		Addr:    httpServer.configuration.WebListenAddress,
-		Handler: handlers.LoggingHandler(os.Stdout, mux),
+		Handler: mux,
 	}
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -104,7 +104,6 @@ func (httpServer HTTPServer) Configure() *http.Server {
 	mux.Handle("/metrics", promhttp.Handler())
 	mux.HandleFunc("/health", healthHandler)
 
-	level.Info(httpServer.logger).Log("msg", "Preparing to listen", "address", httpServer.configuration.WebListenAddress)
 	return server
 }
 

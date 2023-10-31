@@ -32,6 +32,7 @@ import (
 	"text/template"
 
 	"github.com/prometheus/common/promlog"
+	"github.com/prometheus/exporter-toolkit/web"
 )
 
 var dummyDescriptionTemplate = `{{ len .Alerts }}/{{ len .DeclaredAlerts }} alerts are firing:
@@ -223,6 +224,9 @@ func launchHTTPServer(t *testing.T, test Test) *http.Server {
 		t.Fatal("Error while building template")
 	}
 
+	var falseValue = false
+	var emptyString = ""
+
 	trapSenderConfiguration := trapsender.Configuration{
 		[]string{snmpDestination},
 		1,
@@ -244,13 +248,19 @@ func launchHTTPServer(t *testing.T, test Test) *http.Server {
 	}
 	trapSender := trapsender.New(trapSenderConfiguration)
 
-	httpServerConfiguration := Configuration{":9465"}
+	httpServerConfiguration := Configuration{
+		web.FlagConfig{
+			WebListenAddresses: &[]string{":9465"},
+			WebSystemdSocket:   &falseValue,
+			WebConfigFile:      &emptyString,
+		},
+	}
 
 	promlogConfig := promlog.Config{}
 	logger := promlog.New(&promlogConfig)
 	httpServer := New(httpServerConfiguration, alertParser, trapSender, logger).Configure()
 	go func() {
-		httpServer.ListenAndServe()
+		web.ListenAndServe(httpServer, &httpServerConfiguration.ToolKitConfiguration, logger)
 	}()
 	time.Sleep(200 * time.Millisecond)
 
