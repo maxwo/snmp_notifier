@@ -20,31 +20,22 @@ var (
 	RequestTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "snmp_notifier_requests_total",
-			Help: "Requests processed, by status code.",
+			Help: "Total number of HTTP requests by status code.",
 		},
 		[]string{"code"},
 	)
 	// SNMPSentTotal counts the number of SNMP traps sent.
-	SNMPSentTotal = prometheus.NewCounterVec(
+	SNMPTrapTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "snmp_notifier_trap_sent_total",
-			Help: "Traps sent, by SNMP destination.",
+			Name: "snmp_notifier_traps_total",
+			Help: "Total number of trap by SNMP destination and outcome.",
 		},
-		[]string{},
-	)
-	// SNMPErrorTotal counts the number of SNMP traps in error.
-	SNMPErrorTotal = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "snmp_notifier_trap_error_total",
-			Help: "Traps send errors, by SNMP destination.",
-		},
-		[]string{},
+		[]string{"destination", "outcome"},
 	)
 )
 
 // Init starts Prometheus metric counters collection
 func Init() {
 	prometheus.Register(RequestTotal)
-	prometheus.Register(SNMPSentTotal)
-	prometheus.Register(SNMPErrorTotal)
+	prometheus.Register(SNMPTrapTotal)
 }

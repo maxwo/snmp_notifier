@@ -19,11 +19,13 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/k-sone/snmpgo"
 	"github.com/maxwo/snmp_notifier/alertparser"
 	"github.com/maxwo/snmp_notifier/trapsender"
 
@@ -43,15 +45,9 @@ Description: {{ $value.Annotations.description }}
 {{ end -}}`
 
 type Test struct {
-	DescriptionTemplate string
-	DefaultOID          string
-	OIDLabel            string
-	DefaultSeverity     string
-	Severities          []string
-	SeverityLabel       string
 	AlertsFileName      string
 	TrapsFileName       string
-	SNMPConnectionPort  int
+	SNMPDestinationPort int
 	URI                 string
 	Verb                string
 	ExpectStatus        int
@@ -59,12 +55,6 @@ type Test struct {
 
 var tests = []Test{
 	{
-		dummyDescriptionTemplate,
-		"1",
-		"oid",
-		"critical",
-		strings.Split("critical,warning,info", ","),
-		"severity",
 		"test_mixed_alerts.json",
 		"test_mixed_traps.json",
 		1164,
@@ -73,12 +63,6 @@ var tests = []Test{
 		200,
 	},
 	{
-		dummyDescriptionTemplate,
-		"1",
-		"oid",
-		"critical",
-		strings.Split("critical,warning,info", ","),
-		"severity",
 		"test_unprocessable_alerts.json",
 		"test_no_trap.json",
 		1164,
@@ -87,26 +71,6 @@ var tests = []Test{
 		422,
 	},
 	{
-		dummyDescriptionTemplate,
-		"1",
-		"oid",
-		"critical",
-		strings.Split("critical,warning,info", ","),
-		"severity",
-		"test_wrong_oid_alerts.json",
-		"test_no_trap.json",
-		1164,
-		"/alerts",
-		"POST",
-		400,
-	},
-	{
-		dummyDescriptionTemplate,
-		"1",
-		"oid",
-		"critical",
-		strings.Split("critical,warning,info", ","),
-		"severity",
 		"test_mixed_alerts.json",
 		"test_no_trap.json",
 		1166,
@@ -115,12 +79,14 @@ var tests = []Test{
 		502,
 	},
 	{
-		dummyDescriptionTemplate,
-		"1",
-		"oid",
-		"critical",
-		strings.Split("critical,warning,info", ","),
-		"severity",
+		"test_wrong_oid_alerts.json",
+		"test_no_trap.json",
+		1164,
+		"/alerts",
+		"POST",
+		400,
+	},
+	{
 		"test_mixed_alerts.json",
 		"test_no_trap.json",
 		1164,
@@ -129,12 +95,6 @@ var tests = []Test{
 		200,
 	},
 	{
-		dummyDescriptionTemplate,
-		"1",
-		"oid",
-		"critical",
-		strings.Split("critical,warning,info", ","),
-		"severity",
 		"test_mixed_alerts.json",
 		"test_no_trap.json",
 		1164,
@@ -145,81 +105,96 @@ var tests = []Test{
 }
 
 func TestPostAlerts(t *testing.T) {
-	server, channel, err := testutils.LaunchTrapReceiver("127.0.0.1:1164")
+
+	server, trapChannel, err := testutils.LaunchTrapReceiver("127.0.0.1:1164")
 	if err != nil {
-		t.Fatal("Error while opening server:", err)
+		t.Fatal("msg", "Error while starting SNMP server:", "err", err)
 	}
 	defer server.Close()
 
 	for _, test := range tests {
-		httpserver := launchHTTPServer(t, test)
+		launchSingleTest(t, test, trapChannel)
+	}
+}
 
-		t.Log("Testing with file", test.AlertsFileName)
-		alertsByteData, err := ioutil.ReadFile(test.AlertsFileName)
+func launchSingleTest(t *testing.T, test Test, trapChannel chan *snmpgo.TrapRequest) {
+
+	httpserver, notifierPort := launchHTTPServer(t, test)
+
+	defer httpserver.Stop()
+
+	t.Log("Testing with file", test.AlertsFileName)
+	alertsByteData, err := ioutil.ReadFile(test.AlertsFileName)
+	if err != nil {
+		t.Fatal("Error while reading alert file:", err)
+	}
+	alertsReader := bytes.NewReader(alertsByteData)
+
+	url := fmt.Sprintf("http://127.0.0.1:%d%s", notifierPort, test.URI)
+	req, err := http.NewRequest(test.Verb, url, alertsReader)
+	if err != nil {
+		t.Fatal("Error while building request:", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal("Error while sending request:", err)
+	}
+	defer resp.Body.Close()
+
+	t.Log("response Status:", resp.Status)
+	t.Log("response Headers:", resp.Header)
+	body, _ := ioutil.ReadAll(resp.Body)
+	t.Log("response Body:", string(body))
+
+	if resp.StatusCode != test.ExpectStatus {
+		t.Fatal(test.ExpectStatus, "status expected, but got:", resp.StatusCode)
+	} else {
+		receivedTraps := testutils.ReadTraps(trapChannel)
+
+		log.Print("Traps received:", receivedTraps)
+
+		expectedTrapsByteData, err := ioutil.ReadFile(test.TrapsFileName)
 		if err != nil {
-			t.Fatal("Error while reading alert file:", err)
+			t.Fatal("Error while reading traps file:", err)
 		}
-		alertsReader := bytes.NewReader(alertsByteData)
-
-		url := fmt.Sprintf("http://127.0.0.1:9465%s", test.URI)
-		req, err := http.NewRequest(test.Verb, url, alertsReader)
+		expectedTrapsReader := bytes.NewReader(expectedTrapsByteData)
+		expectedTrapsData := []map[string]string{}
+		err = json.NewDecoder(expectedTrapsReader).Decode(&expectedTrapsData)
 		if err != nil {
-			t.Fatal("Error while building request:", err)
+			t.Fatal("Error while parsing traps file:", err)
 		}
-		req.Header.Set("Content-Type", "application/json")
 
-		client := &http.Client{}
-		resp, err := client.Do(req)
-		if err != nil {
-			t.Fatal("Error while sending request:", err)
+		if len(receivedTraps) != len(expectedTrapsData) {
+			t.Fatal(len(expectedTrapsData), "traps expected, but received", receivedTraps)
 		}
-		defer resp.Body.Close()
 
-		httpserver.Close()
-
-		t.Log("response Status:", resp.Status)
-		t.Log("response Headers:", resp.Header)
-		body, _ := ioutil.ReadAll(resp.Body)
-		t.Log("response Body:", string(body))
-
-		if resp.StatusCode != test.ExpectStatus {
-			t.Error(test.ExpectStatus, "status expected, but got:", resp.StatusCode)
-		} else {
-			receivedTraps := testutils.ReadTraps(channel)
-
-			log.Print("Traps received:", receivedTraps)
-
-			expectedTrapsByteData, err := ioutil.ReadFile(test.TrapsFileName)
-			if err != nil {
-				t.Fatal("Error while reading traps file:", err)
-			}
-			expectedTrapsReader := bytes.NewReader(expectedTrapsByteData)
-			expectedTrapsData := []map[string]string{}
-			err = json.NewDecoder(expectedTrapsReader).Decode(&expectedTrapsData)
-			if err != nil {
-				t.Fatal("Error while parsing traps file:", err)
-			}
-
-			if len(receivedTraps) != len(expectedTrapsData) {
-				t.Error(len(expectedTrapsData), "traps expected, but received", receivedTraps)
-			}
-
-			for _, expectedTrap := range expectedTrapsData {
-				if !testutils.FindTrap(receivedTraps, expectedTrap) {
-					t.Fatal("Expected trap not found:", expectedTrap)
-				}
+		for _, expectedTrap := range expectedTrapsData {
+			if !testutils.FindTrap(receivedTraps, expectedTrap) {
+				t.Fatal("Expected trap not found:", expectedTrap)
 			}
 		}
 	}
 }
 
-func launchHTTPServer(t *testing.T, test Test) *http.Server {
-	snmpDestination := fmt.Sprintf("127.0.0.1:%d", test.SNMPConnectionPort)
+func launchHTTPServer(t *testing.T, test Test) (*HTTPServer, int) {
+	notfierRandomPort := 10000 + rand.Intn(1000)
 
-	alertParserConfiguration := alertparser.Configuration{test.DefaultOID, test.OIDLabel, test.DefaultSeverity, test.Severities, test.SeverityLabel}
+	snmpDestination := fmt.Sprintf("127.0.0.1:%d", test.SNMPDestinationPort)
+	notifierAddress := fmt.Sprintf(":%d", notfierRandomPort)
+
+	alertParserConfiguration := alertparser.Configuration{
+		DefaultOID:      "1",
+		OIDLabel:        "oid",
+		DefaultSeverity: "critical",
+		Severities:      strings.Split("critical,warning,info", ","),
+		SeverityLabel:   "severity",
+	}
 	alertParser := alertparser.New(alertParserConfiguration)
 
-	descriptionTemplate, err := template.New("description").Parse(test.DescriptionTemplate)
+	descriptionTemplate, err := template.New("description").Parse(dummyDescriptionTemplate)
 	if err != nil {
 		t.Fatal("Error while building template")
 	}
@@ -228,41 +203,44 @@ func launchHTTPServer(t *testing.T, test Test) *http.Server {
 	var emptyString = ""
 
 	trapSenderConfiguration := trapsender.Configuration{
-		[]string{snmpDestination},
-		1,
-		"V2c",
-		5 * time.Second,
-		"public",
-		false,
-		"",
-		"",
-		"",
-		false,
-		"",
-		"",
-		"",
-		"",
-		"",
-		*descriptionTemplate,
-		make(map[string]template.Template),
-	}
-	trapSender := trapsender.New(trapSenderConfiguration)
-
-	httpServerConfiguration := Configuration{
-		web.FlagConfig{
-			WebListenAddresses: &[]string{":9465"},
-			WebSystemdSocket:   &falseValue,
-			WebConfigFile:      &emptyString,
-		},
+		SNMPDestination:            []string{snmpDestination},
+		SNMPRetries:                1,
+		SNMPVersion:                "V2c",
+		SNMPTimeout:                5 * time.Second,
+		SNMPCommunity:              "public",
+		SNMPAuthenticationEnabled:  false,
+		SNMPAuthenticationProtocol: "",
+		SNMPAuthenticationUsername: "",
+		SNMPAuthenticationPassword: "",
+		SNMPPrivateEnabled:         false,
+		SNMPPrivateProtocol:        "",
+		SNMPPrivatePassword:        "",
+		SNMPSecurityEngineID:       "",
+		SNMPContextEngineID:        "",
+		SNMPContextName:            "",
+		DescriptionTemplate:        *descriptionTemplate,
+		ExtraFieldTemplates:        make(map[string]template.Template),
 	}
 
 	promlogConfig := promlog.Config{}
 	logger := promlog.New(&promlogConfig)
-	httpServer := New(httpServerConfiguration, alertParser, trapSender, logger).Configure()
+
+	trapSender := trapsender.New(trapSenderConfiguration, &logger)
+
+	httpServerConfiguration := Configuration{
+		web.FlagConfig{
+			WebListenAddresses: &[]string{notifierAddress},
+			WebSystemdSocket:   &falseValue,
+			WebConfigFile:      &emptyString,
+		},
+	}
+	httpServer := New(httpServerConfiguration, alertParser, trapSender, &logger)
 	go func() {
-		web.ListenAndServe(httpServer, &httpServerConfiguration.ToolKitConfiguration, logger)
+		if err := httpServer.Start(); err != nil {
+			t.Error("err", err)
+		}
 	}()
 	time.Sleep(200 * time.Millisecond)
 
-	return httpServer
+	return httpServer, notfierRandomPort
 }
