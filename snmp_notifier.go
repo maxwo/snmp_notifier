@@ -18,7 +18,6 @@ import (
 	"os"
 
 	"github.com/go-kit/log/level"
-	"github.com/prometheus/exporter-toolkit/web"
 
 	"github.com/maxwo/snmp_notifier/alertparser"
 	"github.com/maxwo/snmp_notifier/configuration"
@@ -38,14 +37,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	trapSender := trapsender.New(configuration.TrapSenderConfiguration)
+	level.Debug(logger).Log("configuration", configuration)
+
+	trapSender := trapsender.New(configuration.TrapSenderConfiguration, &logger)
 	alertParser := alertparser.New(configuration.AlertParserConfiguration)
-	httpServer := httpserver.New(configuration.HTTPServerConfiguration, alertParser, trapSender, logger)
+	httpServer := httpserver.New(configuration.HTTPServerConfiguration, alertParser, trapSender, &logger)
 
 	telemetry.Init()
 
-	if err := web.ListenAndServe(httpServer.Configure(), &configuration.HTTPServerConfiguration.ToolKitConfiguration, logger); err != nil {
-		level.Error(logger).Log("err", err)
+	if err := httpServer.Start(); err != nil {
+		level.Error(logger).Log("msg", "error while launching the SNMP notifier", "err", err)
 		os.Exit(1)
 	}
 }

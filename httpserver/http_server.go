@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 
 	"github.com/prometheus/exporter-toolkit/web"
@@ -31,7 +32,6 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"github.com/go-kit/log"
 	"github.com/prometheus/common/version"
 )
 
@@ -40,7 +40,8 @@ type HTTPServer struct {
 	configuration Configuration
 	alertParser   alertparser.AlertParser
 	trapSender    trapsender.TrapSender
-	logger        log.Logger
+	logger        *log.Logger
+	server        *http.Server
 }
 
 // Configuration describes the configuration for serving HTTP requests
@@ -49,12 +50,12 @@ type Configuration struct {
 }
 
 // New creates an HTTPServer instance
-func New(configuration Configuration, alertParser alertparser.AlertParser, trapSender trapsender.TrapSender, logger log.Logger) *HTTPServer {
-	return &HTTPServer{configuration, alertParser, trapSender, logger}
+func New(configuration Configuration, alertParser alertparser.AlertParser, trapSender trapsender.TrapSender, logger *log.Logger) *HTTPServer {
+	return &HTTPServer{configuration, alertParser, trapSender, logger, nil}
 }
 
 // Configure creates and configures the HTTP server
-func (httpServer HTTPServer) Configure() *http.Server {
+func (httpServer HTTPServer) Start() error {
 	mux := http.NewServeMux()
 	server := &http.Server{
 		Handler: mux,
@@ -75,7 +76,7 @@ func (httpServer HTTPServer) Configure() *http.Server {
 	})
 
 	mux.HandleFunc("/alerts", func(w http.ResponseWriter, req *http.Request) {
-		level.Debug(httpServer.logger).Log("msg", "Handling /alerts webhook request")
+		level.Debug(*httpServer.logger).Log("msg", "Handling /alerts webhook request")
 
 		defer req.Body.Close()
 
@@ -104,7 +105,22 @@ func (httpServer HTTPServer) Configure() *http.Server {
 	mux.Handle("/metrics", promhttp.Handler())
 	mux.HandleFunc("/health", healthHandler)
 
-	return server
+	if err := web.ListenAndServe(server, &httpServer.configuration.ToolKitConfiguration, *httpServer.logger); err != nil {
+		level.Error(*httpServer.logger).Log("err", err)
+		return err
+	}
+
+	httpServer.server = server
+
+	return nil
+}
+
+func (httpServer HTTPServer) Stop() error {
+	if httpServer.server != nil {
+		level.Error(*httpServer.logger).Log("msg", "stopping server")
+		return httpServer.server.Close()
+	}
+	return nil
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
@@ -128,6 +144,6 @@ func (httpServer HTTPServer) errorHandler(w http.ResponseWriter, status int, err
 	json := string(bytes[:])
 	fmt.Fprint(w, json)
 
-	level.Error(httpServer.logger).Log("status", status, "statustext", http.StatusText(status), "err", err, "data", data)
+	level.Error(*httpServer.logger).Log("status", status, "statustext", http.StatusText(status), "err", err, "data", data)
 	telemetry.RequestTotal.WithLabelValues(strconv.FormatInt(int64(status), 10)).Inc()
 }

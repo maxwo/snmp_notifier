@@ -7,6 +7,7 @@ import (
 	"text/template"
 
 	"github.com/go-kit/log"
+
 	"github.com/prometheus/common/promlog"
 	promlogflag "github.com/prometheus/common/promlog/flag"
 
