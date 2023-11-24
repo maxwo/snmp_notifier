@@ -51,7 +51,7 @@ type Configuration struct {
 	SNMPSecurityEngineID       string
 	SNMPContextEngineID        string
 	SNMPContextName            string
-	SNMPCustomSubObjectBaseOid string
+	SNMPSubObjectDefaultOid    string
 
 	DescriptionTemplate template.Template
 	ExtraFieldTemplates map[string]template.Template
@@ -121,8 +121,8 @@ func (trapSender TrapSender) generateVarBinds(alertGroup types.AlertGroup) (snmp
 
 	baseOid := strings.Join([]string{alertGroup.OID, "2"}, ".")
 	trapOid, _ := snmpgo.NewOid(strings.Join([]string{alertGroup.OID, "1"}, "."))
-	if trapSender.configuration.SNMPCustomSubObjectBaseOid != "" {
-		baseOid = trapSender.configuration.SNMPCustomSubObjectBaseOid
+	if trapSender.configuration.SNMPSubObjectDefaultOid != "" {
+		baseOid = trapSender.configuration.SNMPSubObjectDefaultOid
 		trapOid, _ = snmpgo.NewOid(alertGroup.OID)
 	}
 

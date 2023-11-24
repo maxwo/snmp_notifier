@@ -112,8 +112,8 @@ Flags:
                                  The alert severity if none is provided via labels.
       --snmp.version=V2c         SNMP version. V2c and V3 are currently supported.
       --snmp.timeout=5s          SNMP timeout
-      --snmp.custom-base-oid-sub-object=BASE_OID_SUB_OBJECT
-                                 Base OID to use for the sub-objects of each trap
+      --snmp.sub-object-default-oid="1.3.6.1.4.1.123.456"
+                                 Base OID to use for the sub-objects of each trap. Defaults to the trap-default-oid
       --snmp.destination=127.0.0.1:162
                                  SNMP trap server destination.
       --snmp.retries=1           SNMP number of retries
