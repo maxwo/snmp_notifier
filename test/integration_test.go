@@ -17,7 +17,6 @@ import (
 	"fmt"
 	"testing"
 
-	sigar "github.com/cloudfoundry/gosigar"
 	"github.com/k-sone/snmpgo"
 )
 
@@ -68,12 +67,11 @@ func sendTrapV2(t *testing.T, port int32, text string) {
 		varBinds snmpgo.VarBinds
 	)
 
-	uptime := sigar.Uptime{}
-	uptime.Get()
+	uptime := 0
 	trapOid, _ := snmpgo.NewOid("1.1.1")
 	textOid, _ := snmpgo.NewOid("1.1.1.3")
 	constantOid, _ := snmpgo.NewOid("1.1.1.4")
-	varBinds = append(varBinds, snmpgo.NewVarBind(snmpgo.OidSysUpTime, snmpgo.NewTimeTicks(uint32(uptime.Length*100))))
+	varBinds = append(varBinds, snmpgo.NewVarBind(snmpgo.OidSysUpTime, snmpgo.NewTimeTicks(uint32(uptime*100))))
 	varBinds = append(varBinds, snmpgo.NewVarBind(snmpgo.OidSnmpTrap, trapOid))
 	varBinds = append(varBinds, snmpgo.NewVarBind(textOid, snmpgo.NewOctetString([]byte(text))))
 	varBinds = append(varBinds, snmpgo.NewVarBind(constantOid, snmpgo.NewOctetString([]byte("this is a constant"))))
@@ -104,12 +102,11 @@ func sendTrapV3(t *testing.T, port int32, text string) {
 		varBinds snmpgo.VarBinds
 	)
 
-	uptime := sigar.Uptime{}
-	uptime.Get()
+	uptime := 0
 	trapOid, _ := snmpgo.NewOid("1.1.1")
 	textOid, _ := snmpgo.NewOid("1.1.1.3")
 	constantOid, _ := snmpgo.NewOid("1.1.1.4")
-	varBinds = append(varBinds, snmpgo.NewVarBind(snmpgo.OidSysUpTime, snmpgo.NewTimeTicks(uint32(uptime.Length*100))))
+	varBinds = append(varBinds, snmpgo.NewVarBind(snmpgo.OidSysUpTime, snmpgo.NewTimeTicks(uint32(uptime*100))))
 	varBinds = append(varBinds, snmpgo.NewVarBind(snmpgo.OidSnmpTrap, trapOid))
 	varBinds = append(varBinds, snmpgo.NewVarBind(textOid, snmpgo.NewOctetString([]byte(text))))
 	varBinds = append(varBinds, snmpgo.NewVarBind(constantOid, snmpgo.NewOctetString([]byte("this is a constant"))))
