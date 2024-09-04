@@ -7,7 +7,7 @@ require (
 	github.com/k-sone/snmpgo v3.2.0+incompatible
 	github.com/prometheus/alertmanager v0.27.0
 	github.com/prometheus/client_golang v1.20.2
-	github.com/prometheus/common v0.57.0
+	github.com/prometheus/common v0.58.0
 	github.com/prometheus/exporter-toolkit v0.11.0
 	github.com/shirou/gopsutil v3.21.11+incompatible
 )
@@ -32,12 +32,12 @@ require (
 	github.com/tklauser/numcpus v0.6.0 // indirect
 	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
-	golang.org/x/crypto v0.25.0 // indirect
-	golang.org/x/net v0.27.0 // indirect
-	golang.org/x/oauth2 v0.21.0 // indirect
-	golang.org/x/sync v0.7.0 // indirect
-	golang.org/x/sys v0.22.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
+	golang.org/x/crypto v0.26.0 // indirect
+	golang.org/x/net v0.28.0 // indirect
+	golang.org/x/oauth2 v0.22.0 // indirect
+	golang.org/x/sync v0.8.0 // indirect
+	golang.org/x/sys v0.23.0 // indirect
+	golang.org/x/text v0.17.0 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
