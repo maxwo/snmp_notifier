@@ -19,8 +19,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"log/slog"
 	"math/rand"
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -33,7 +35,6 @@ import (
 
 	"text/template"
 
-	"github.com/prometheus/common/promlog"
 	"github.com/prometheus/exporter-toolkit/web"
 )
 
@@ -222,10 +223,9 @@ func launchHTTPServer(t *testing.T, test Test) (*HTTPServer, int) {
 		ExtraFieldTemplates:        make(map[string]template.Template),
 	}
 
-	promlogConfig := promlog.Config{}
-	logger := promlog.New(&promlogConfig)
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
-	trapSender := trapsender.New(trapSenderConfiguration, &logger)
+	trapSender := trapsender.New(trapSenderConfiguration, logger)
 
 	httpServerConfiguration := Configuration{
 		web.FlagConfig{
@@ -234,7 +234,7 @@ func launchHTTPServer(t *testing.T, test Test) (*HTTPServer, int) {
 			WebConfigFile:      &emptyString,
 		},
 	}
-	httpServer := New(httpServerConfiguration, alertParser, trapSender, &logger)
+	httpServer := New(httpServerConfiguration, alertParser, trapSender, logger)
 	go func() {
 		if err := httpServer.Start(); err != nil {
 			t.Error("err", err)

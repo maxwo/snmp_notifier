@@ -15,6 +15,7 @@ package trapsender
 
 import (
 	"errors"
+	"log/slog"
 	"math"
 	"strings"
 	"time"
@@ -25,16 +26,13 @@ import (
 
 	"text/template"
 
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
-
 	"github.com/k-sone/snmpgo"
 	"github.com/shirou/gopsutil/host"
 )
 
 // TrapSender sends traps according to given alerts
 type TrapSender struct {
-	logger                  *log.Logger
+	logger                  *slog.Logger
 	configuration           Configuration
 	snmpConnectionArguments []snmpgo.SNMPArguments
 }
@@ -65,7 +63,7 @@ type Configuration struct {
 }
 
 // New creates a new TrapSender
-func New(configuration Configuration, logger *log.Logger) TrapSender {
+func New(configuration Configuration, logger *slog.Logger) TrapSender {
 	snmpConnectionArguments := generationConnectionArguments(configuration)
 	return TrapSender{logger, configuration, snmpConnectionArguments}
 }
@@ -99,14 +97,14 @@ func (trapSender TrapSender) sendTraps(connectionArguments snmpgo.SNMPArguments,
 
 	snmp, err := snmpgo.NewSNMP(connectionArguments)
 	if err != nil {
-		level.Error(*trapSender.logger).Log("msg", "error while creating SNMP connection", "err", err)
+		trapSender.logger.Error("error while creating SNMP connection", "err", err.Error())
 		telemetry.SNMPTrapTotal.WithLabelValues(distinationForMetrics, "failure").Add(float64(len(traps)))
 		return err
 	}
 
 	err = snmp.Open()
 	if err != nil {
-		level.Error(*trapSender.logger).Log("msg", "error while opening SNMP connection", "err", err)
+		trapSender.logger.Error("error while opening SNMP connection", "err", err.Error())
 		telemetry.SNMPTrapTotal.WithLabelValues(distinationForMetrics, "failure").Add(float64(len(traps)))
 		return err
 	}
@@ -125,13 +123,13 @@ func (trapSender TrapSender) sendTraps(connectionArguments snmpgo.SNMPArguments,
 		err = snmp.V2TrapWithBootsTime(trap, 0, int(uptime))
 		if err != nil {
 			telemetry.SNMPTrapTotal.WithLabelValues(distinationForMetrics, "failure").Inc()
-			level.Error(*trapSender.logger).Log("msg", "error while generating trap", "destination", distinationForMetrics, "err", err)
+			trapSender.logger.Error("error while generating trap", "destination", distinationForMetrics, "err", err.Error())
 			hasError = true
 		}
 		telemetry.SNMPTrapTotal.WithLabelValues(distinationForMetrics, "success").Inc()
 	}
 
-	if hasError == true {
+	if hasError {
 		return errors.New("error while sending one or more traps")
 	}
 	return nil
