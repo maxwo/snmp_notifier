@@ -15,6 +15,7 @@ package trapsender
 
 import (
 	"errors"
+	"math"
 	"strings"
 	"time"
 
@@ -90,7 +91,6 @@ func (trapSender TrapSender) SendAlertTraps(alertBucket types.AlertBucket) error
 	if hasError {
 		return errors.New("error while sending one or more traps")
 	}
-
 	return nil
 }
 
@@ -115,10 +115,14 @@ func (trapSender TrapSender) sendTraps(connectionArguments snmpgo.SNMPArguments,
 		snmp.Close()
 	}()
 
-	hasError := false
+	uptime, _ := host.Uptime()
+	if uptime > math.MaxInt32 {
+		uptime = 0
+	}
 
+	hasError := false
 	for _, trap := range traps {
-		err = snmp.V2Trap(trap)
+		err = snmp.V2TrapWithBootsTime(trap, 0, int(uptime))
 		if err != nil {
 			telemetry.SNMPTrapTotal.WithLabelValues(distinationForMetrics, "failure").Inc()
 			level.Error(*trapSender.logger).Log("msg", "error while generating trap", "destination", distinationForMetrics, "err", err)
