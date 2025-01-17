@@ -90,6 +90,7 @@ func (trapSender TrapSender) SendAlertTraps(alertBucket types.AlertBucket) error
 	if hasError {
 		return errors.New("error while sending one or more traps")
 	}
+
 	return nil
 }
 
