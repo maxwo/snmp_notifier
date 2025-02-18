@@ -1,10 +1,11 @@
 SNMP-NOTIFIER-MIB DEFINITIONS ::= BEGIN
 
 IMPORTS
-   MODULE-IDENTITY, enterprises FROM SNMPv2-SMI;
+   MODULE-IDENTITY, enterprises, OBJECT-TYPE, NOTIFICATION-TYPE FROM SNMPv2-SMI
+   DisplayString FROM SNMPv2-TC;
 
 snmpNotifier MODULE-IDENTITY
-   LAST-UPDATED "202201070000Z"
+   LAST-UPDATED "202301070000Z"
    ORGANIZATION "SNMP Notifier"
    CONTACT-INFO
       "SNMP Notifier
@@ -17,6 +18,10 @@ snmpNotifier MODULE-IDENTITY
       "This MIB contains definition of the SNMP Traps
       associated to alerts sent by the SNMP Notifier"
 
+   REVISION
+      "202301070000Z"
+   DESCRIPTION
+      "Added sub objects to the alerts subtree"
    REVISION
       "201912260000Z"
 
