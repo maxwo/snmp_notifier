@@ -17,8 +17,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/go-kit/log/level"
-
 	"github.com/maxwo/snmp_notifier/alertparser"
 	"github.com/maxwo/snmp_notifier/configuration"
 	"github.com/maxwo/snmp_notifier/httpserver"
@@ -33,20 +31,20 @@ func main() {
 		os.Exit(1)
 	}
 	if err != nil {
-		level.Error(logger).Log("msg", "unable to parse configuration", "err", err)
+		logger.Error("unable to parse configuration", "err", err.Error())
 		os.Exit(1)
 	}
 
-	level.Debug(logger).Log("configuration", configuration)
+	logger.Debug("debugging configuration", "configuration", configuration)
 
-	trapSender := trapsender.New(configuration.TrapSenderConfiguration, &logger)
+	trapSender := trapsender.New(configuration.TrapSenderConfiguration, logger)
 	alertParser := alertparser.New(configuration.AlertParserConfiguration)
-	httpServer := httpserver.New(configuration.HTTPServerConfiguration, alertParser, trapSender, &logger)
+	httpServer := httpserver.New(configuration.HTTPServerConfiguration, alertParser, trapSender, logger)
 
 	telemetry.Init()
 
 	if err := httpServer.Start(); err != nil {
-		level.Error(logger).Log("msg", "error while launching the SNMP notifier", "err", err)
+		logger.Error("error while launching the SNMP notifier", "err", err.Error())
 		os.Exit(1)
 	}
 }

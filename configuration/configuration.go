@@ -6,11 +6,10 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/go-kit/log"
+	"log/slog"
 
-	"github.com/prometheus/common/promlog"
-	promlogflag "github.com/prometheus/common/promlog/flag"
-
+	"github.com/prometheus/common/promslog"
+	"github.com/prometheus/common/promslog/flag"
 	"github.com/prometheus/exporter-toolkit/web/kingpinflag"
 
 	"github.com/maxwo/snmp_notifier/alertparser"
@@ -39,7 +38,7 @@ var (
 )
 
 // ParseConfiguration parses the command line for configurations
-func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, log.Logger, error) {
+func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, *slog.Logger, error) {
 	var (
 		application          = kingpin.New("snmp_notifier", "A tool to relay Prometheus alerts as SNMP traps")
 		toolKitConfiguration = kingpinflag.AddFlags(application, ":9464")
@@ -74,14 +73,16 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, log.Logger, 
 		snmpContextName            = application.Flag("snmp.context-name", "SNMP context name (V3 only).").PlaceHolder("CONTEXT_ENGINE_NAME").String()
 	)
 
-	promlogConfig := promlog.Config{}
-	promlogflag.AddFlags(application, &promlogConfig)
+	promslogConfig := &promslog.Config{}
+	flag.AddFlags(application, promslogConfig)
 
 	application.Version(version.Print("snmp_notifier"))
 	application.HelpFlag.Short('h')
 	kingpin.MustParse(application.Parse(args))
 
-	logger := promlog.New(&promlogConfig)
+	logger := promslog.New(promslogConfig)
+	logger.Info("Starting snmp_notifier", "version", version.Info())
+	logger.Info("Build context", "build_context", version.BuildContext())
 
 	descriptionTemplate, err := template.New(filepath.Base(*snmpTrapDescriptionTemplate)).Funcs(template.FuncMap{
 		"groupAlertsByLabel":  commons.GroupAlertsByLabel,
@@ -97,7 +98,7 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, log.Logger, 
 		for k, v := range *snmpExtraFieldTemplate {
 			i, err := strconv.Atoi(k)
 			if err != nil || i < 4 {
-				return nil, logger, fmt.Errorf("Invalid field ID: %s. Field ID must be a number superior to 3", k)
+				return nil, logger, fmt.Errorf("invalid field ID: %s. Field ID must be a number superior to 3", k)
 			}
 			currentTemplate, err := template.New(filepath.Base(v)).Funcs(template.FuncMap{
 				"groupAlertsByLabel":  commons.GroupAlertsByLabel,
@@ -112,7 +113,7 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, log.Logger, 
 	}
 
 	if !commons.IsOID(*snmpDefaultOid) {
-		return nil, logger, fmt.Errorf("Invalid default OID provided: %s", *snmpDefaultOid)
+		return nil, logger, fmt.Errorf("invalid default OID provided: %s", *snmpDefaultOid)
 	}
 
 	severities := strings.Split(*alertSeverities, ",")
@@ -157,7 +158,7 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, log.Logger, 
 	}
 
 	if !*snmpAuthenticationEnabled && *snmpPrivateEnabled {
-		return nil, logger, fmt.Errorf("SNMP private encryption requires authentication enabled.")
+		return nil, logger, fmt.Errorf("SNMP private encryption requires authentication enabled")
 	}
 
 	if *snmpAuthenticationEnabled {

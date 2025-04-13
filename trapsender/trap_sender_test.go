@@ -25,7 +25,7 @@ import (
 
 	"github.com/maxwo/snmp_notifier/types"
 
-	loggergokit "github.com/go-kit/log"
+	"log/slog"
 
 	testutils "github.com/maxwo/snmp_notifier/test"
 )
@@ -164,8 +164,6 @@ func TestSend(t *testing.T) {
 	}
 	defer server.Close()
 
-	logger := loggergokit.NewLogfmtLogger(loggergokit.NewSyncWriter(os.Stderr))
-
 	for index, test := range tests {
 		t.Log("Launching test ", index)
 		bucketByteData, err := ioutil.ReadFile(test.BucketFileName)
@@ -179,7 +177,7 @@ func TestSend(t *testing.T) {
 			t.Fatal("Error while parsing bucket file:", err)
 		}
 
-		trapSender := New(*test.Configuration, &logger)
+		trapSender := New(*test.Configuration, slog.New(slog.NewTextHandler(os.Stdout, nil)))
 
 		err = trapSender.SendAlertTraps(bucketData)
 		if test.ExpectError && err == nil {

@@ -17,11 +17,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"strconv"
-
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 
 	"github.com/prometheus/exporter-toolkit/web"
 
@@ -40,7 +38,7 @@ type HTTPServer struct {
 	configuration Configuration
 	alertParser   alertparser.AlertParser
 	trapSender    trapsender.TrapSender
-	logger        *log.Logger
+	logger        *slog.Logger
 	server        *http.Server
 }
 
@@ -50,7 +48,7 @@ type Configuration struct {
 }
 
 // New creates an HTTPServer instance
-func New(configuration Configuration, alertParser alertparser.AlertParser, trapSender trapsender.TrapSender, logger *log.Logger) *HTTPServer {
+func New(configuration Configuration, alertParser alertparser.AlertParser, trapSender trapsender.TrapSender, logger *slog.Logger) *HTTPServer {
 	return &HTTPServer{configuration, alertParser, trapSender, logger, nil}
 }
 
@@ -76,7 +74,7 @@ func (httpServer HTTPServer) Start() error {
 	})
 
 	mux.HandleFunc("/alerts", func(w http.ResponseWriter, req *http.Request) {
-		level.Debug(*httpServer.logger).Log("msg", "Handling /alerts webhook request")
+		httpServer.logger.Info("Handling /alerts webhook request")
 
 		defer req.Body.Close()
 
@@ -105,8 +103,8 @@ func (httpServer HTTPServer) Start() error {
 	mux.Handle("/metrics", promhttp.Handler())
 	mux.HandleFunc("/health", healthHandler)
 
-	if err := web.ListenAndServe(server, &httpServer.configuration.ToolKitConfiguration, *httpServer.logger); err != nil {
-		level.Error(*httpServer.logger).Log("err", err)
+	if err := web.ListenAndServe(server, &httpServer.configuration.ToolKitConfiguration, httpServer.logger); err != nil {
+		httpServer.logger.Error("Unable to listen", "err", err.Error())
 		return err
 	}
 
@@ -117,7 +115,7 @@ func (httpServer HTTPServer) Start() error {
 
 func (httpServer HTTPServer) Stop() error {
 	if httpServer.server != nil {
-		level.Error(*httpServer.logger).Log("msg", "stopping server")
+		httpServer.logger.Error("No server started")
 		return httpServer.server.Close()
 	}
 	return nil
@@ -144,6 +142,6 @@ func (httpServer HTTPServer) errorHandler(w http.ResponseWriter, status int, err
 	json := string(bytes[:])
 	fmt.Fprint(w, json)
 
-	level.Error(*httpServer.logger).Log("status", status, "statustext", http.StatusText(status), "err", err, "data", data)
+	httpServer.logger.Error("error while handling request", "status", status, "statustext", http.StatusText(status), "err", err, "data", data)
 	telemetry.RequestTotal.WithLabelValues(strconv.FormatInt(int64(status), 10)).Inc()
 }
