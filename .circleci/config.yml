@@ -6,7 +6,7 @@ executors:
   # should also be updated.
   golang:
     docker:
-      - image: golang:1.23.1-bookworm
+      - image: golang:1.24.2-bookworm
     # errcheck requires to be executed from GOPATH for now.
     working_directory: /go/src/github.com/maxwo/snmp_notifier
 
