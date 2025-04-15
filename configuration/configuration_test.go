@@ -55,12 +55,12 @@ var tests = []Test{
 				Severities:      []string{"critical", "warning", "info"},
 			},
 			trapsender.Configuration{
-				SNMPVersion:         "V2c",
-				SNMPDestination:     []string{"127.0.0.1:162"},
-				SNMPRetries:         1,
-				SNMPTimeout:         10 * time.Second,
-				SNMPCommunity:       "public",
-				ExtraFieldTemplates: make(map[string]template.Template),
+				SNMPVersion:     "V2c",
+				SNMPDestination: []string{"127.0.0.1:162"},
+				SNMPRetries:     1,
+				SNMPTimeout:     10 * time.Second,
+				SNMPCommunity:   "public",
+				ExtraFields:     make([]trapsender.ExtraField, 0),
 			},
 			httpserver.Configuration{
 				ToolKitConfiguration: web.FlagConfig{
@@ -86,12 +86,12 @@ var tests = []Test{
 				Severities:      []string{"critical", "error", "warning", "info"},
 			},
 			trapsender.Configuration{
-				SNMPVersion:         "V2c",
-				SNMPDestination:     []string{"127.0.0.2:163"},
-				SNMPRetries:         4,
-				SNMPTimeout:         5 * time.Second,
-				SNMPCommunity:       "private",
-				ExtraFieldTemplates: make(map[string]template.Template),
+				SNMPVersion:     "V2c",
+				SNMPDestination: []string{"127.0.0.2:163"},
+				SNMPRetries:     4,
+				SNMPTimeout:     5 * time.Second,
+				SNMPCommunity:   "private",
+				ExtraFields:     make([]trapsender.ExtraField, 0),
 			},
 			httpserver.Configuration{
 				ToolKitConfiguration: web.FlagConfig{
@@ -117,11 +117,11 @@ var tests = []Test{
 				Severities:      []string{"critical", "error", "warning", "info"},
 			},
 			trapsender.Configuration{
-				SNMPVersion:         "V3",
-				SNMPDestination:     []string{"127.0.0.2:163"},
-				SNMPRetries:         4,
-				SNMPTimeout:         5 * time.Second,
-				ExtraFieldTemplates: make(map[string]template.Template),
+				SNMPVersion:     "V3",
+				SNMPDestination: []string{"127.0.0.2:163"},
+				SNMPRetries:     4,
+				SNMPTimeout:     5 * time.Second,
+				ExtraFields:     make([]trapsender.ExtraField, 0),
 			},
 			httpserver.Configuration{
 				ToolKitConfiguration: web.FlagConfig{
@@ -156,7 +156,7 @@ var tests = []Test{
 				SNMPAuthenticationProtocol: "MD5",
 				SNMPAuthenticationUsername: "username_v3",
 				SNMPAuthenticationPassword: "password_v3",
-				ExtraFieldTemplates:        make(map[string]template.Template),
+				ExtraFields:                make([]trapsender.ExtraField, 0),
 			},
 			httpserver.Configuration{
 				ToolKitConfiguration: web.FlagConfig{
@@ -188,7 +188,7 @@ var tests = []Test{
 				SNMPRetries:                4,
 				SNMPTimeout:                5 * time.Second,
 				SNMPAuthenticationUsername: "username_v3",
-				ExtraFieldTemplates:        make(map[string]template.Template),
+				ExtraFields:                make([]trapsender.ExtraField, 0),
 			},
 			httpserver.Configuration{
 				ToolKitConfiguration: web.FlagConfig{
@@ -227,7 +227,7 @@ var tests = []Test{
 				SNMPAuthenticationProtocol: "MD5",
 				SNMPAuthenticationUsername: "username_v3",
 				SNMPAuthenticationPassword: "password_v3",
-				ExtraFieldTemplates:        make(map[string]template.Template),
+				ExtraFields:                make([]trapsender.ExtraField, 0),
 			},
 			httpserver.Configuration{
 				ToolKitConfiguration: web.FlagConfig{

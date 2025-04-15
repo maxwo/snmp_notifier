@@ -17,6 +17,7 @@ import (
 	"errors"
 	"log/slog"
 	"math"
+	"strconv"
 	"strings"
 	"time"
 
@@ -59,7 +60,13 @@ type Configuration struct {
 	SNMPSubObjectDefaultOid    string
 
 	DescriptionTemplate template.Template
-	ExtraFieldTemplates map[string]template.Template
+	ExtraFields         []ExtraField
+}
+
+// ExtraField describes a custom field sent via SNMP
+type ExtraField struct {
+	SubOid          int
+	ContentTemplate template.Template
 }
 
 // New creates a new TrapSender
@@ -171,15 +178,16 @@ func (trapSender TrapSender) generateVarBinds(alertGroup types.AlertGroup) (snmp
 
 	varBinds = addUpTime(varBinds)
 	varBinds = append(varBinds, snmpgo.NewVarBind(snmpgo.OidSnmpTrap, trapOid))
-	varBinds = addTrapSubObject(varBinds, baseOid, "1", trapUniqueID)
-	varBinds = addTrapSubObject(varBinds, baseOid, "2", alertGroup.Severity)
-	varBinds = addTrapSubObject(varBinds, baseOid, "3", *description)
-	for subOid, template := range trapSender.configuration.ExtraFieldTemplates {
-		value, err := commons.FillTemplate(alertGroup, template)
+	varBinds = addTrapSubObject(varBinds, baseOid, 1, trapUniqueID)
+	varBinds = addTrapSubObject(varBinds, baseOid, 2, alertGroup.Severity)
+	varBinds = addTrapSubObject(varBinds, baseOid, 3, *description)
+
+	for _, extraField := range trapSender.configuration.ExtraFields {
+		value, err := commons.FillTemplate(alertGroup, extraField.ContentTemplate)
 		if err != nil {
 			return nil, err
 		}
-		varBinds = addTrapSubObject(varBinds, baseOid, subOid, *value)
+		varBinds = addTrapSubObject(varBinds, baseOid, extraField.SubOid, *value)
 	}
 
 	return varBinds, nil
@@ -190,8 +198,8 @@ func addUpTime(varBinds snmpgo.VarBinds) snmpgo.VarBinds {
 	return append(varBinds, snmpgo.NewVarBind(snmpgo.OidSysUpTime, snmpgo.NewTimeTicks(uint32(uptime*100))))
 }
 
-func addTrapSubObject(varBinds snmpgo.VarBinds, baseOid string, subOid string, value string) snmpgo.VarBinds {
-	oidString := strings.Join([]string{baseOid, subOid}, ".")
+func addTrapSubObject(varBinds snmpgo.VarBinds, baseOid string, subOid int, value string) snmpgo.VarBinds {
+	oidString := strings.Join([]string{baseOid, strconv.Itoa(subOid)}, ".")
 	oid, _ := snmpgo.NewOid(oidString)
 	return append(varBinds, snmpgo.NewVarBind(oid, snmpgo.NewOctetString([]byte(strings.TrimSpace(value)))))
 }

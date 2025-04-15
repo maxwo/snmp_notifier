@@ -3,6 +3,7 @@ package configuration
 import (
 	"fmt"
 	"path/filepath"
+	"sort"
 	"strings"
 	"text/template"
 
@@ -93,23 +94,46 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, *slog.Logger
 		return nil, logger, err
 	}
 
-	extraFieldTemplates := make(map[string]template.Template)
+	extraFieldTemplates := make(map[int]template.Template)
 	if snmpExtraFieldTemplate != nil {
-		for k, v := range *snmpExtraFieldTemplate {
-			i, err := strconv.Atoi(k)
-			if err != nil || i < 4 {
-				return nil, logger, fmt.Errorf("invalid field ID: %s. Field ID must be a number superior to 3", k)
+		for subOid, templatePath := range *snmpExtraFieldTemplate {
+			oidValue, err := strconv.Atoi(subOid)
+			if err != nil || oidValue < 4 {
+				return nil, logger, fmt.Errorf("invalid field ID: %s. Field ID must be a number superior to 3", subOid)
 			}
-			currentTemplate, err := template.New(filepath.Base(v)).Funcs(template.FuncMap{
+
+			_, defined := extraFieldTemplates[oidValue]
+			if defined {
+				return nil, logger, fmt.Errorf("invalid field ID: %d defined twice", oidValue)
+			}
+
+			currentTemplate, err := template.New(filepath.Base(templatePath)).Funcs(template.FuncMap{
 				"groupAlertsByLabel":  commons.GroupAlertsByLabel,
 				"groupAlertsByName":   commons.GroupAlertsByName,
 				"groupAlertsByStatus": commons.GroupAlertsByStatus,
-			}).ParseFiles(v)
+			}).ParseFiles(templatePath)
 			if err != nil {
 				return nil, logger, err
 			}
-			extraFieldTemplates[k] = *currentTemplate
+
+			extraFieldTemplates[oidValue] = *currentTemplate
 		}
+	}
+
+	subOids := make([]int, 0, len(extraFieldTemplates))
+	for subOid := range extraFieldTemplates {
+		subOids = append(subOids, subOid)
+	}
+	sort.Ints(subOids)
+
+	extraFields := make([]trapsender.ExtraField, len(extraFieldTemplates))
+	for index, subOid := range subOids {
+		contentTemplate := extraFieldTemplates[subOid]
+		extraField := trapsender.ExtraField{
+			SubOid:          subOid,
+			ContentTemplate: contentTemplate,
+		}
+		extraFields[index] = extraField
 	}
 
 	if !commons.IsOID(*snmpDefaultOid) {
@@ -138,7 +162,7 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, *slog.Logger
 		SNMPDestination:     snmpDestinations,
 		SNMPRetries:         *snmpRetries,
 		DescriptionTemplate: *descriptionTemplate,
-		ExtraFieldTemplates: extraFieldTemplates,
+		ExtraFields:         extraFields,
 		SNMPTimeout:         *snmpTimeout,
 	}
 

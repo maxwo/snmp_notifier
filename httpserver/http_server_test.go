@@ -220,7 +220,7 @@ func launchHTTPServer(t *testing.T, test Test) (*HTTPServer, int) {
 		SNMPContextEngineID:        "",
 		SNMPContextName:            "",
 		DescriptionTemplate:        *descriptionTemplate,
-		ExtraFieldTemplates:        make(map[string]template.Template),
+		ExtraFields:                make([]trapsender.ExtraField, 0),
 	}
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
