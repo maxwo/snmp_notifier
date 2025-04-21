@@ -1,7 +1,7 @@
 {
   "AlertGroups": {
     "1.2.3.2.1[environment=production,label=test]": {
-      "OID": "1.2.3.2.1",
+      "TrapOID": "1.2.3.2.1",
       "GroupID": "environment=production,label=test",
       "Severity": "critical",
       "Alerts": [
@@ -70,7 +70,7 @@
       ]
     },
     "1.2.3.1.1[environment=production,label=test]": {
-      "OID": "1.2.3.1.1",
+      "TrapOID": "1.2.3.1.1",
       "GroupID": "environment=production,label=test",
       "Severity": "info",
       "Alerts": [],
