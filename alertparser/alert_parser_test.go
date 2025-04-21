@@ -16,8 +16,7 @@ package alertparser
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
-	"strings"
+	"os"
 	"testing"
 
 	"github.com/maxwo/snmp_notifier/types"
@@ -25,93 +24,220 @@ import (
 	"github.com/go-test/deep"
 )
 
-func TestParse(t *testing.T) {
-	var tests = []struct {
-		DefaultOid      string
-		OidLabel        string
-		DefaultSeverity string
-		Severities      []string
-		SeverityLabel   string
-		AlertsFileName  string
-		BucketFileName  string
-		ExpectError     bool
-	}{
-		{
-			"1.1",
-			"oid",
-			"critical",
-			strings.Split("critical,warning,info", ","),
-			"severity",
-			"test_mixed_alerts.json",
-			"test_mixed_bucket.json",
-			false,
+func TestSimpleAlertBuckets(t *testing.T) {
+	alerts := readAlertFile(t, "test_mixed_alerts.json")
+	buckets := readBucketsFile(t, "test_mixed_bucket.json")
+
+	expectAlertBuckets(
+		t,
+		Configuration{
+			DefaultFiringTrapOID:   "1.1",
+			FiringTrapOIDLabel:     "oid",
+			DefaultResolvedTrapOID: "1.1",
+			ResolvedTrapOIDLabel:   "oid",
+			DefaultSeverity:        "critical",
+			Severities:             []string{"critical", "warning", "info"},
+			SeverityLabel:          "severity",
 		},
-		{
-			"1.1",
-			"oid",
-			"critical",
-			strings.Split("critical,warning,info", ","),
-			"severity",
-			"test_wrong_oid_alerts.json",
-			"",
-			true,
+		alerts,
+		buckets,
+	)
+}
+
+func TestAlertBucketsWithDefaultResolvedTrapOID(t *testing.T) {
+	alerts := readAlertFile(t, "test_resolved_alerts.json")
+	buckets := readBucketsFile(t, "test_resolved_default_resolved_oid_alerts.json")
+
+	expectAlertBuckets(
+		t,
+		Configuration{
+			DefaultFiringTrapOID:   "1.1",
+			FiringTrapOIDLabel:     "oid",
+			DefaultResolvedTrapOID: "2.2",
+			ResolvedTrapOIDLabel:   "resolution-oid",
+			DefaultSeverity:        "critical",
+			Severities:             []string{"critical", "warning", "info"},
+			SeverityLabel:          "severity",
 		},
-		{
-			"1.1",
-			"oid",
-			"critical",
-			strings.Split("critical,warning,info", ","),
-			"severity",
-			"test_wrong_severity_alerts.json",
-			"",
-			true,
+		alerts,
+		buckets,
+	)
+}
+
+func TestAlertBucketsWithFiringAndResolvedAlerts(t *testing.T) {
+	alerts := readAlertFile(t, "test_resolved_alerts.json")
+	buckets := readBucketsFile(t, "test_resolved_default_firing_oid_alerts.json")
+
+	alerts.Alerts[0].Status = "firing"
+
+	expectAlertBuckets(
+		t,
+		Configuration{
+			DefaultFiringTrapOID:   "1.1",
+			FiringTrapOIDLabel:     "oid",
+			DefaultResolvedTrapOID: "2.2",
+			ResolvedTrapOIDLabel:   "resolution-oid",
+			DefaultSeverity:        "critical",
+			Severities:             []string{"critical", "warning", "info"},
+			SeverityLabel:          "severity",
 		},
+		alerts,
+		buckets,
+	)
+}
+
+func TestAlertBucketsWithResolvedTrapOIDFromLabels(t *testing.T) {
+	alerts := readAlertFile(t, "test_resolved_alerts.json")
+	buckets := readBucketsFile(t, "test_resolved_oid_from_labels_alerts.json")
+
+	alerts.Alerts[0].Labels["resolution-oid"] = "7.7.7"
+	alerts.Alerts[1].Labels["resolution-oid"] = "7.7.7"
+
+	expectAlertBuckets(
+		t,
+		Configuration{
+			DefaultFiringTrapOID:   "1.1",
+			FiringTrapOIDLabel:     "oid",
+			DefaultResolvedTrapOID: "2.2",
+			ResolvedTrapOIDLabel:   "resolution-oid",
+			DefaultSeverity:        "critical",
+			Severities:             []string{"critical", "warning", "info"},
+			SeverityLabel:          "severity",
+		},
+		alerts,
+		buckets,
+	)
+}
+
+func TestAlertBucketsWithFiringAndResolvedTrapOIDFromLabels(t *testing.T) {
+	alerts := readAlertFile(t, "test_resolved_alerts.json")
+	buckets := readBucketsFile(t, "test_resolved_and_firing_oid_from_labels_alerts.json")
+
+	alerts.Alerts[0].Labels["oid"] = "8.8.8"
+	alerts.Alerts[1].Labels["oid"] = "8.8.8"
+	alerts.Alerts[0].Labels["resolution-oid"] = "7.7.7"
+	alerts.Alerts[1].Labels["resolution-oid"] = "7.7.7"
+
+	expectAlertBuckets(
+		t,
+		Configuration{
+			DefaultFiringTrapOID:   "1.1",
+			FiringTrapOIDLabel:     "oid",
+			DefaultResolvedTrapOID: "2.2",
+			ResolvedTrapOIDLabel:   "resolution-oid",
+			DefaultSeverity:        "critical",
+			Severities:             []string{"critical", "warning", "info"},
+			SeverityLabel:          "severity",
+		},
+		alerts,
+		buckets,
+	)
+}
+
+func TestSeverityLabelValueCheck(t *testing.T) {
+	alerts := readAlertFile(t, "test_mixed_alerts.json")
+
+	alerts.Alerts[0].Labels["severity"] = "unknown"
+
+	expectAlertParserError(
+		t,
+		Configuration{
+			DefaultFiringTrapOID:   "1.1",
+			FiringTrapOIDLabel:     "oid",
+			DefaultResolvedTrapOID: "1.1",
+			ResolvedTrapOIDLabel:   "oid",
+			DefaultSeverity:        "critical",
+			Severities:             []string{"critical", "warning", "info"},
+			SeverityLabel:          "severity",
+		},
+		alerts,
+	)
+}
+
+func TestOIDLabelValueCheck(t *testing.T) {
+	alerts := readAlertFile(t, "test_mixed_alerts.json")
+
+	alerts.Alerts[0].Labels["oid"] = "1.a.2.3"
+
+	expectAlertParserError(
+		t,
+		Configuration{
+			DefaultFiringTrapOID:   "1.1",
+			FiringTrapOIDLabel:     "oid",
+			DefaultResolvedTrapOID: "1.1",
+			ResolvedTrapOIDLabel:   "oid",
+			DefaultSeverity:        "critical",
+			Severities:             []string{"critical", "warning", "info"},
+			SeverityLabel:          "severity",
+		},
+		alerts,
+	)
+}
+
+func TestResolvedOIDLabelValueCheck(t *testing.T) {
+	alerts := readAlertFile(t, "test_mixed_alerts.json")
+
+	expectAlertParserError(
+		t,
+		Configuration{
+			DefaultFiringTrapOID:   "1.1",
+			FiringTrapOIDLabel:     "oid",
+			DefaultResolvedTrapOID: "1.1",
+			ResolvedTrapOIDLabel:   "severity", // tries to use severity as OID
+			DefaultSeverity:        "critical",
+			Severities:             []string{"critical", "warning", "info"},
+			SeverityLabel:          "severity",
+		},
+		alerts,
+	)
+}
+
+func expectAlertParserError(t *testing.T, configuration Configuration, alerts types.AlertsData) {
+	parser := New(configuration)
+	_, err := parser.Parse(alerts)
+
+	if err == nil {
+		t.Fatal("An unexpected error occurred:", err)
+	}
+}
+
+func expectAlertBuckets(t *testing.T, configuration Configuration, alerts types.AlertsData, expectedBuckets types.AlertBucket) {
+	parser := New(configuration)
+	actualBuckets, err := parser.Parse(alerts)
+
+	if err != nil {
+		t.Fatal("An error occured")
 	}
 
-	for _, test := range tests {
-		t.Log("Testing with file", test.AlertsFileName)
-		alertsByteData, err := ioutil.ReadFile(test.AlertsFileName)
-		if err != nil {
-			t.Fatal("Error while reading alert file:", err)
-		}
-		alertsReader := bytes.NewReader(alertsByteData)
-		alertsData := types.AlertsData{}
-		err = json.NewDecoder(alertsReader).Decode(&alertsData)
-		if err != nil {
-			t.Fatal("Error while parsing alert file:", err)
-		}
-
-		parserConfiguration := Configuration{test.DefaultOid, test.OidLabel, test.DefaultSeverity, test.Severities, test.SeverityLabel}
-		parser := New(parserConfiguration)
-		bucket, err := parser.Parse(alertsData)
-
-		if test.ExpectError && err == nil {
-			t.Error("An error was expected")
-			continue
-		}
-
-		if !test.ExpectError && err != nil {
-			t.Error("An unexpected error occurred:", err)
-			continue
-		}
-
-		if err == nil {
-			bucketByteData, err := ioutil.ReadFile(test.BucketFileName)
-			if err != nil {
-				t.Fatal("Error while reading bucket file:", err)
-				continue
-			}
-			bucketReader := bytes.NewReader(bucketByteData)
-			bucketData := types.AlertBucket{}
-			err = json.NewDecoder(bucketReader).Decode(&bucketData)
-			if err != nil {
-				t.Fatal("Error while parsing bucket file:", err)
-				continue
-			}
-
-			if diff := deep.Equal(bucketData, *bucket); diff != nil {
-				t.Error(diff)
-			}
-		}
+	if diff := deep.Equal(*actualBuckets, expectedBuckets); diff != nil {
+		t.Error(diff)
 	}
+}
+
+func readAlertFile(t *testing.T, alertFileName string) types.AlertsData {
+	alertsByteData, err := os.ReadFile(alertFileName)
+	if err != nil {
+		t.Fatal("Error while reading alert file:", err)
+	}
+	alertsReader := bytes.NewReader(alertsByteData)
+	alertsData := types.AlertsData{}
+	err = json.NewDecoder(alertsReader).Decode(&alertsData)
+	if err != nil {
+		t.Fatal("Error while parsing alert file:", err)
+	}
+	return alertsData
+}
+
+func readBucketsFile(t *testing.T, bucketFileName string) types.AlertBucket {
+	bucketByteData, err := os.ReadFile(bucketFileName)
+	if err != nil {
+		t.Fatal("Error while reading bucket file:", err)
+	}
+	bucketReader := bytes.NewReader(bucketByteData)
+	bucketData := types.AlertBucket{}
+	err = json.NewDecoder(bucketReader).Decode(&bucketData)
+	if err != nil {
+		t.Fatal("Error while parsing bucket file:", err)
+	}
+	return bucketData
 }

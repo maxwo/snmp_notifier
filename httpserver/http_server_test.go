@@ -187,11 +187,13 @@ func launchHTTPServer(t *testing.T, test Test) (*HTTPServer, int) {
 	notifierAddress := fmt.Sprintf(":%d", notfierRandomPort)
 
 	alertParserConfiguration := alertparser.Configuration{
-		DefaultOID:      "1",
-		OIDLabel:        "oid",
-		DefaultSeverity: "critical",
-		Severities:      strings.Split("critical,warning,info", ","),
-		SeverityLabel:   "severity",
+		DefaultFiringTrapOID:   "1",
+		FiringTrapOIDLabel:     "oid",
+		DefaultResolvedTrapOID: "1",
+		ResolvedTrapOIDLabel:   "oid",
+		DefaultSeverity:        "critical",
+		Severities:             strings.Split("critical,warning,info", ","),
+		SeverityLabel:          "severity",
 	}
 	alertParser := alertparser.New(alertParserConfiguration)
 

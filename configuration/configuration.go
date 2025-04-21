@@ -48,15 +48,17 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, *slog.Logger
 		alertSeverities      = application.Flag("alert.severities", "The ordered list of alert severities, from more priority to less priority.").Default("critical,warning,info").String()
 		alertDefaultSeverity = application.Flag("alert.default-severity", "The alert severity if none is provided via labels.").Default("critical").String()
 
-		snmpVersion                 = application.Flag("snmp.version", "SNMP version. V2c and V3 are currently supported.").Default("V2c").HintOptions("V2c", "V3").Enum("V2c", "V3")
-		snmpDestination             = application.Flag("snmp.destination", "SNMP trap server destination.").Default("127.0.0.1:162").TCPList()
-		snmpRetries                 = application.Flag("snmp.retries", "SNMP number of retries").Default("1").Uint()
-		snmpTrapOidLabel            = application.Flag("snmp.trap-oid-label", "Label where to find the trap OID.").Default("oid").String()
-		snmpDefaultOid              = application.Flag("snmp.trap-default-oid", "Trap OID to send if none is found in the alert labels.").Default("1.3.6.1.4.1.98789").String()
-		snmpTrapDescriptionTemplate = application.Flag("snmp.trap-description-template", "SNMP description template.").Default("description-template.tpl").ExistingFile()
-		snmpExtraFieldTemplate      = application.Flag("snmp.extra-field-template", "SNMP extra field templates, eg. --snmp.extra-field-templates=4=new-field.template.tpl to add a 4th field to the trap, with the given template file. You may add several fields using that flag several times.").PlaceHolder("4=extra-field-template.tpl").StringMap()
-		snmpTimeout                 = application.Flag("snmp.timeout", "SNMP timeout duration").Default("5s").Duration()
-		snmpSubObjectDefaultOid     = application.Flag("snmp.sub-object-default-oid", "OID to use as the base of the sub-objects of each trap.").PlaceHolder("1.3.6.1.4.1.123.456").String()
+		snmpVersion                  = application.Flag("snmp.version", "SNMP version. V2c and V3 are currently supported.").Default("V2c").HintOptions("V2c", "V3").Enum("V2c", "V3")
+		snmpDestination              = application.Flag("snmp.destination", "SNMP trap server destination.").Default("127.0.0.1:162").TCPList()
+		snmpRetries                  = application.Flag("snmp.retries", "SNMP number of retries").Default("1").Uint()
+		snmpDefaultFiringTrapOID     = application.Flag("snmp.trap-default-oid", "Trap OID to send if none is found in the alert labels.").Default("1.3.6.1.4.1.98789").String()
+		snmpFiringTrapOIDLabel       = application.Flag("snmp.trap-oid-label", "Label where to find the trap OID.").Default("oid").String()
+		snmpDefaultResolvedTrapOID   = application.Flag("snmp.trap-default-resolved-oid", "Resolution trap OID to send if none is found in the alert labels. Defaults to the same trap OID as the firing trap.").String()
+		snmpTrapResolvedTrapOidLabel = application.Flag("snmp.trap-resolved-oid-label", "Label where to find the resolution trap OID. Deafults to the same label as the firing OID label.").String()
+		snmpTrapDescriptionTemplate  = application.Flag("snmp.trap-description-template", "SNMP description template.").Default("description-template.tpl").ExistingFile()
+		snmpExtraFieldTemplate       = application.Flag("snmp.extra-field-template", "SNMP extra field templates, eg. --snmp.extra-field-templates=4=new-field.template.tpl to add a 4th field to the trap, with the given template file. You may add several fields using that flag several times.").PlaceHolder("4=extra-field-template.tpl").StringMap()
+		snmpTimeout                  = application.Flag("snmp.timeout", "SNMP timeout duration").Default("5s").Duration()
+		snmpSubObjectDefaultOID      = application.Flag("snmp.sub-object-default-oid", "OID to use as the base of the sub-objects of each trap.").PlaceHolder("1.3.6.1.4.1.123.456").String()
 
 		// V2c only
 		snmpCommunity = application.Flag("snmp.community", "SNMP community (V2c only). Passing secrets to the command line is not recommended, consider using the SNMP_NOTIFIER_COMMUNITY environment variable instead.").Envar(snmpCommunityEnvironmentVariable).Default("public").String()
@@ -120,34 +122,50 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, *slog.Logger
 		}
 	}
 
-	subOids := make([]int, 0, len(extraFieldTemplates))
-	for subOid := range extraFieldTemplates {
-		subOids = append(subOids, subOid)
+	subOIDs := make([]int, 0, len(extraFieldTemplates))
+	for subOID := range extraFieldTemplates {
+		subOIDs = append(subOIDs, subOID)
 	}
-	sort.Ints(subOids)
+	sort.Ints(subOIDs)
 
 	extraFields := make([]trapsender.ExtraField, len(extraFieldTemplates))
-	for index, subOid := range subOids {
-		contentTemplate := extraFieldTemplates[subOid]
+	for index, subOID := range subOIDs {
+		contentTemplate := extraFieldTemplates[subOID]
 		extraField := trapsender.ExtraField{
-			SubOid:          subOid,
+			SubOID:          subOID,
 			ContentTemplate: contentTemplate,
 		}
 		extraFields[index] = extraField
 	}
 
-	if !commons.IsOID(*snmpDefaultOid) {
-		return nil, logger, fmt.Errorf("invalid default OID provided: %s", *snmpDefaultOid)
+	if !commons.IsOID(*snmpDefaultFiringTrapOID) {
+		return nil, logger, fmt.Errorf("invalid default firing trap OID provided: %s", *snmpDefaultFiringTrapOID)
+	}
+
+	if *snmpSubObjectDefaultOID != "" && !commons.IsOID(*snmpSubObjectDefaultOID) {
+		return nil, logger, fmt.Errorf("invalid default sub-object OID provided: %s", *snmpSubObjectDefaultOID)
+	}
+
+	if *snmpDefaultResolvedTrapOID == "" {
+		snmpDefaultResolvedTrapOID = snmpDefaultFiringTrapOID
+	} else if !commons.IsOID(*snmpDefaultResolvedTrapOID) {
+		return nil, logger, fmt.Errorf("invalid default sub-object OID provided: %s", *snmpDefaultFiringTrapOID)
+	}
+
+	if *snmpTrapResolvedTrapOidLabel == "" {
+		snmpTrapResolvedTrapOidLabel = snmpFiringTrapOIDLabel
 	}
 
 	severities := strings.Split(*alertSeverities, ",")
 
 	alertParserConfiguration := alertparser.Configuration{
-		DefaultOID:      *snmpDefaultOid,
-		OIDLabel:        *snmpTrapOidLabel,
-		DefaultSeverity: *alertDefaultSeverity,
-		Severities:      severities,
-		SeverityLabel:   *alertSeverityLabel,
+		DefaultFiringTrapOID:   *snmpDefaultFiringTrapOID,
+		FiringTrapOIDLabel:     *snmpFiringTrapOIDLabel,
+		DefaultResolvedTrapOID: *snmpDefaultResolvedTrapOID,
+		ResolvedTrapOIDLabel:   *snmpTrapResolvedTrapOidLabel,
+		DefaultSeverity:        *alertDefaultSeverity,
+		Severities:             severities,
+		SeverityLabel:          *alertSeverityLabel,
 	}
 
 	isV2c := *snmpVersion == "V2c"
@@ -196,8 +214,8 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, *slog.Logger
 		trapSenderConfiguration.SNMPPrivatePassword = *snmpPrivatePassword
 	}
 
-	if *snmpSubObjectDefaultOid != "" {
-		trapSenderConfiguration.SNMPSubObjectDefaultOid = *snmpSubObjectDefaultOid
+	if *snmpSubObjectDefaultOID != "" {
+		trapSenderConfiguration.SNMPSubObjectDefaultOID = *snmpSubObjectDefaultOID
 	}
 
 	httpServerConfiguration := httpserver.Configuration{
