@@ -104,8 +104,8 @@ A tool to relay Prometheus alerts as SNMP traps
 Flags:
   -h, --[no-]help                Show context-sensitive help (also try --help-long and --help-man).
       --web.listen-address=:9464 ...  
-                                 Addresses on which to expose metrics and web interface. Repeatable for multiple addresses. Examples: `:9100` or `[::1]:9100`
-                                 for http, `vsock://:9100` for vsock
+                                 Addresses on which to expose metrics and web interface. Repeatable for multiple addresses. Examples: `:9100` or `[::1]:9100` for http,
+                                 `vsock://:9100` for vsock
       --web.config.file=""       Path to configuration file that can enable TLS or authentication. See:
                                  https://github.com/prometheus/exporter-toolkit/blob/master/docs/web-configuration.md
       --alert.severity-label="severity"  
@@ -118,37 +118,41 @@ Flags:
       --snmp.destination=127.0.0.1:162 ...  
                                  SNMP trap server destination.
       --snmp.retries=1           SNMP number of retries
-      --snmp.trap-oid-label="oid"  
-                                 Label where to find the trap OID.
       --snmp.trap-default-oid="1.3.6.1.4.1.98789"  
                                  Trap OID to send if none is found in the alert labels.
+      --snmp.trap-oid-label="oid"  
+                                 Label where to find the trap OID.
+      --snmp.trap-default-resolved-oid=1.3.6.1.4.1.444.555  
+                                 Resolution trap OID to send if none is found in the alert labels. Defaults to the same trap OID as the firing trap.
+      --snmp.trap-resolved-oid-label=resolution-oid  
+                                 Label where to find the resolution trap OID. Deafults to the same label as the firing OID label.
       --snmp.trap-description-template=description-template.tpl  
                                  SNMP description template.
       --snmp.extra-field-template=4=extra-field-template.tpl ...  
-                                 SNMP extra field templates, eg. --snmp.extra-field-templates=4=new-field.template.tpl to add a 4th field to the trap, with the
-                                 given template file. You may add several fields using that flag several times.
+                                 SNMP extra field templates, eg. --snmp.extra-field-templates=4=new-field.template.tpl to add a 4th field to the trap, with the given template file.
+                                 You may add several fields using that flag several times.
       --snmp.timeout=5s          SNMP timeout duration
       --snmp.sub-object-default-oid=1.3.6.1.4.1.123.456  
                                  OID to use as the base of the sub-objects of each trap.
-      --snmp.community="public"  SNMP community (V2c only). Passing secrets to the command line is not recommended, consider using the SNMP_NOTIFIER_COMMUNITY
-                                 environment variable instead. ($SNMP_NOTIFIER_COMMUNITY)
+      --snmp.community="public"  SNMP community (V2c only). Passing secrets to the command line is not recommended, consider using the SNMP_NOTIFIER_COMMUNITY environment variable
+                                 instead. ($SNMP_NOTIFIER_COMMUNITY)
       --[no-]snmp.authentication-enabled  
                                  Enable SNMP authentication (V3 only).
       --snmp.authentication-protocol=MD5  
                                  Protocol for password encryption (V3 only). MD5 and SHA are currently supported.
       --snmp.authentication-username=USERNAME  
-                                 SNMP authentication username (V3 only). Passing secrets to the command line is not recommended, consider using the
-                                 SNMP_NOTIFIER_AUTH_USERNAME environment variable instead. ($SNMP_NOTIFIER_AUTH_USERNAME)
+                                 SNMP authentication username (V3 only). Passing secrets to the command line is not recommended, consider using the SNMP_NOTIFIER_AUTH_USERNAME
+                                 environment variable instead. ($SNMP_NOTIFIER_AUTH_USERNAME)
       --snmp.authentication-password=PASSWORD  
-                                 SNMP authentication password (V3 only). Passing secrets to the command line is not recommended, consider using the
-                                 SNMP_NOTIFIER_AUTH_PASSWORD environment variable instead. ($SNMP_NOTIFIER_AUTH_PASSWORD)
+                                 SNMP authentication password (V3 only). Passing secrets to the command line is not recommended, consider using the SNMP_NOTIFIER_AUTH_PASSWORD
+                                 environment variable instead. ($SNMP_NOTIFIER_AUTH_PASSWORD)
       --[no-]snmp.private-enabled  
                                  Enable SNMP encryption (V3 only).
       --snmp.private-protocol=DES  
                                  Protocol for SNMP data transmission (V3 only). DES and AES are currently supported.
       --snmp.private-password=SECRET  
-                                 SNMP private password (V3 only). Passing secrets to the command line is not recommended, consider using the
-                                 SNMP_NOTIFIER_PRIV_PASSWORD environment variable instead. ($SNMP_NOTIFIER_PRIV_PASSWORD)
+                                 SNMP private password (V3 only). Passing secrets to the command line is not recommended, consider using the SNMP_NOTIFIER_PRIV_PASSWORD environment
+                                 variable instead. ($SNMP_NOTIFIER_PRIV_PASSWORD)
       --snmp.security-engine-id=SECURITY_ENGINE_ID  
                                  SNMP security engine ID (V3 only).
       --snmp.context-engine-id=CONTEXT_ENGINE_ID  

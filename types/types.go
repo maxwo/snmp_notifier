@@ -20,7 +20,7 @@ type AlertBucket struct {
 
 // AlertGroup type, with OID and group ID
 type AlertGroup struct {
-	OID               string
+	TrapOID           string
 	GroupID           string
 	GroupLabels       map[string]string
 	CommonLabels      map[string]string

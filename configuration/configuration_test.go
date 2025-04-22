@@ -14,6 +14,7 @@
 package configuration
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -31,28 +32,54 @@ import (
 	"github.com/go-test/deep"
 )
 
-type Test struct {
-	CommandLine          string
-	EnvironmentVariables map[string]string
-	Configuration        SNMPNotifierConfiguration
-	ExpectError          bool
-}
-
 var falseValue = false
 var emptyString = ""
 var testListenAddresses = []string{":1234"}
 
-var tests = []Test{
-	{
-		"--web.listen-address=:1234 --snmp.trap-description-template=../description-template.tpl --snmp.timeout=10s",
-		map[string]string{},
+func TestDefaultConfiguration(t *testing.T) {
+	expectConfigurationFromCommandLine(t,
+		"--web.listen-address=:1234 --snmp.trap-description-template=../description-template.tpl",
 		SNMPNotifierConfiguration{
 			alertparser.Configuration{
-				DefaultOID:      "1.3.6.1.4.1.98789",
-				OIDLabel:        "oid",
-				DefaultSeverity: "critical",
-				SeverityLabel:   "severity",
-				Severities:      []string{"critical", "warning", "info"},
+				DefaultFiringTrapOID:   "1.3.6.1.4.1.98789",
+				FiringTrapOIDLabel:     "oid",
+				DefaultResolvedTrapOID: "1.3.6.1.4.1.98789",
+				ResolvedTrapOIDLabel:   "oid",
+				DefaultSeverity:        "critical",
+				SeverityLabel:          "severity",
+				Severities:             []string{"critical", "warning", "info"},
+			},
+			trapsender.Configuration{
+				SNMPVersion:     "V2c",
+				SNMPDestination: []string{"127.0.0.1:162"},
+				SNMPRetries:     1,
+				SNMPTimeout:     5 * time.Second,
+				SNMPCommunity:   "public",
+				ExtraFields:     make([]trapsender.ExtraField, 0),
+			},
+			httpserver.Configuration{
+				ToolKitConfiguration: web.FlagConfig{
+					WebSystemdSocket:   &falseValue,
+					WebConfigFile:      &emptyString,
+					WebListenAddresses: &testListenAddresses,
+				},
+			},
+		},
+	)
+}
+
+func TestSimpleConfiguration(t *testing.T) {
+	expectConfigurationFromCommandLine(t,
+		"--web.listen-address=:1234 --snmp.trap-description-template=../description-template.tpl --snmp.timeout=10s",
+		SNMPNotifierConfiguration{
+			alertparser.Configuration{
+				DefaultFiringTrapOID:   "1.3.6.1.4.1.98789",
+				FiringTrapOIDLabel:     "oid",
+				DefaultResolvedTrapOID: "1.3.6.1.4.1.98789",
+				ResolvedTrapOIDLabel:   "oid",
+				DefaultSeverity:        "critical",
+				SeverityLabel:          "severity",
+				Severities:             []string{"critical", "warning", "info"},
 			},
 			trapsender.Configuration{
 				SNMPVersion:     "V2c",
@@ -70,20 +97,25 @@ var tests = []Test{
 				},
 			},
 		},
-		false,
-	},
-	{
+	)
+}
+
+func TestV2Configuration(t *testing.T) {
+	expectConfigurationFromCommandLineAndEnvironmentVariables(
+		t,
 		"--web.listen-address=:1234 --snmp.trap-description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=severity --alert.severities=critical,error,warning,info",
 		map[string]string{
 			"SNMP_NOTIFIER_COMMUNITY": "private",
 		},
 		SNMPNotifierConfiguration{
 			alertparser.Configuration{
-				DefaultOID:      "4.4.4",
-				OIDLabel:        "other-oid",
-				DefaultSeverity: "warning",
-				SeverityLabel:   "severity",
-				Severities:      []string{"critical", "error", "warning", "info"},
+				DefaultFiringTrapOID:   "4.4.4",
+				FiringTrapOIDLabel:     "other-oid",
+				DefaultResolvedTrapOID: "4.4.4",
+				ResolvedTrapOIDLabel:   "other-oid",
+				DefaultSeverity:        "warning",
+				SeverityLabel:          "severity",
+				Severities:             []string{"critical", "error", "warning", "info"},
 			},
 			trapsender.Configuration{
 				SNMPVersion:     "V2c",
@@ -101,20 +133,25 @@ var tests = []Test{
 				},
 			},
 		},
-		false,
-	},
-	{
+	)
+}
+
+func TestV3Configuration(t *testing.T) {
+	expectConfigurationFromCommandLineAndEnvironmentVariables(
+		t,
 		"--web.listen-address=:1234 --snmp.version=V3 --snmp.trap-description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=severity --alert.severities=critical,error,warning,info",
 		map[string]string{
 			"SNMP_NOTIFIER_COMMUNITY": "private",
 		},
 		SNMPNotifierConfiguration{
 			alertparser.Configuration{
-				DefaultOID:      "4.4.4",
-				OIDLabel:        "other-oid",
-				DefaultSeverity: "warning",
-				SeverityLabel:   "severity",
-				Severities:      []string{"critical", "error", "warning", "info"},
+				DefaultFiringTrapOID:   "4.4.4",
+				FiringTrapOIDLabel:     "other-oid",
+				DefaultResolvedTrapOID: "4.4.4",
+				ResolvedTrapOIDLabel:   "other-oid",
+				DefaultSeverity:        "warning",
+				SeverityLabel:          "severity",
+				Severities:             []string{"critical", "error", "warning", "info"},
 			},
 			trapsender.Configuration{
 				SNMPVersion:     "V3",
@@ -131,9 +168,12 @@ var tests = []Test{
 				},
 			},
 		},
-		false,
-	},
-	{
+	)
+}
+
+func TestV3AuthenticationConfiguration(t *testing.T) {
+	expectConfigurationFromCommandLineAndEnvironmentVariables(
+		t,
 		"--web.listen-address=:1234 --snmp.version=V3 --snmp.authentication-enabled --snmp.trap-description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=severity --alert.severities=critical,error,warning,info",
 		map[string]string{
 			"SNMP_NOTIFIER_AUTH_USERNAME": "username_v3",
@@ -141,11 +181,13 @@ var tests = []Test{
 		},
 		SNMPNotifierConfiguration{
 			alertparser.Configuration{
-				DefaultOID:      "4.4.4",
-				OIDLabel:        "other-oid",
-				DefaultSeverity: "warning",
-				SeverityLabel:   "severity",
-				Severities:      []string{"critical", "error", "warning", "info"},
+				DefaultFiringTrapOID:   "4.4.4",
+				FiringTrapOIDLabel:     "other-oid",
+				DefaultResolvedTrapOID: "4.4.4",
+				ResolvedTrapOIDLabel:   "other-oid",
+				DefaultSeverity:        "warning",
+				SeverityLabel:          "severity",
+				Severities:             []string{"critical", "error", "warning", "info"},
 			},
 			trapsender.Configuration{
 				SNMPVersion:                "V3",
@@ -166,42 +208,12 @@ var tests = []Test{
 				},
 			},
 		},
-		false,
-	},
-	{
-		"--web.listen-address=:1234 --snmp.version=V3 --snmp.trap-description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=severity --alert.severities=critical,error,warning,info",
-		map[string]string{
-			"SNMP_NOTIFIER_AUTH_USERNAME": "username_v3",
-			"SNMP_NOTIFIER_AUTH_PASSWORD": "password_v3",
-		},
-		SNMPNotifierConfiguration{
-			alertparser.Configuration{
-				DefaultOID:      "4.4.4",
-				OIDLabel:        "other-oid",
-				DefaultSeverity: "warning",
-				SeverityLabel:   "severity",
-				Severities:      []string{"critical", "error", "warning", "info"},
-			},
-			trapsender.Configuration{
-				SNMPVersion:                "V3",
-				SNMPDestination:            []string{"127.0.0.2:163"},
-				SNMPRetries:                4,
-				SNMPTimeout:                5 * time.Second,
-				SNMPAuthenticationUsername: "username_v3",
-				ExtraFields:                make([]trapsender.ExtraField, 0),
-			},
-			httpserver.Configuration{
-				ToolKitConfiguration: web.FlagConfig{
-					WebSystemdSocket:   &falseValue,
-					WebConfigFile:      &emptyString,
-					WebListenAddresses: &testListenAddresses,
-				},
-			},
-		},
-		false,
-	},
-	{
-		"--web.listen-address=:1234 --snmp.version=V3 --snmp.private-enabled --snmp.authentication-enabled --snmp.trap-description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=severity --alert.severities=critical,error,warning,info",
+	)
+}
+
+func TestV3AuthenticationAndPrivateConfiguration(t *testing.T) {
+	expectConfigurationFromCommandLineAndEnvironmentVariables(
+		t, "--web.listen-address=:1234 --snmp.version=V3 --snmp.private-enabled --snmp.authentication-enabled --snmp.trap-description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=severity --alert.severities=critical,error,warning,info",
 		map[string]string{
 			"SNMP_NOTIFIER_AUTH_USERNAME": "username_v3",
 			"SNMP_NOTIFIER_AUTH_PASSWORD": "password_v3",
@@ -209,11 +221,13 @@ var tests = []Test{
 		},
 		SNMPNotifierConfiguration{
 			alertparser.Configuration{
-				DefaultOID:      "4.4.4",
-				OIDLabel:        "other-oid",
-				DefaultSeverity: "warning",
-				SeverityLabel:   "severity",
-				Severities:      []string{"critical", "error", "warning", "info"},
+				DefaultFiringTrapOID:   "4.4.4",
+				FiringTrapOIDLabel:     "other-oid",
+				DefaultResolvedTrapOID: "4.4.4",
+				ResolvedTrapOIDLabel:   "other-oid",
+				DefaultSeverity:        "warning",
+				SeverityLabel:          "severity",
+				Severities:             []string{"critical", "error", "warning", "info"},
 			},
 			trapsender.Configuration{
 				SNMPVersion:                "V3",
@@ -237,69 +251,179 @@ var tests = []Test{
 				},
 			},
 		},
-		false,
-	},
-	{
-		"--web.listen-address=:1234 --snmp.version=V2c --snmp.private-enabled --snmp.authentication-enabled --snmp.trap-description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=severity --alert.severities=critical,error,warning,info",
-		map[string]string{
-			"SNMP_NOTIFIER_AUTH_USERNAME": "username_v3",
-			"SNMP_NOTIFIER_AUTH_PASSWORD": "password_v3",
-			"SNMP_NOTIFIER_PRIV_PASSWORD": "priv_password_v3",
-		},
-		SNMPNotifierConfiguration{},
-		true,
-	},
-	{
-		"--web.listen-address=:1234 --snmp.version=V3 --snmp.private-enabled --snmp.trap-description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=severity --alert.severities=critical,error,warning,info",
-		map[string]string{
-			"SNMP_NOTIFIER_AUTH_USERNAME": "username_v3",
-			"SNMP_NOTIFIER_AUTH_PASSWORD": "password_v3",
-			"SNMP_NOTIFIER_PRIV_PASSWORD": "priv_password_v3",
-		},
-		SNMPNotifierConfiguration{},
-		true,
-	},
-	{
-		"--snmp.trap-default-oid=A.1.1.1 --snmp.trap-description-template=../description-template.tpl",
-		map[string]string{},
-		SNMPNotifierConfiguration{},
-		true,
-	},
+	)
 }
 
-func TestParseConfiguration(t *testing.T) {
-	for _, test := range tests {
-		os.Clearenv()
-		for variable, value := range test.EnvironmentVariables {
-			os.Setenv(variable, value)
+func TestConfigurationWithDifferentResolvedTrapOIDConfiguration(t *testing.T) {
+	expectConfigurationFromCommandLine(t,
+		"--web.listen-address=:1234 --snmp.trap-default-resolved-oid=1.3.6.1.4.1.123456 --snmp.trap-description-template=../description-template.tpl",
+		SNMPNotifierConfiguration{
+			alertparser.Configuration{
+				DefaultFiringTrapOID:   "1.3.6.1.4.1.98789",
+				FiringTrapOIDLabel:     "oid",
+				DefaultResolvedTrapOID: "1.3.6.1.4.1.123456",
+				ResolvedTrapOIDLabel:   "oid",
+				DefaultSeverity:        "critical",
+				SeverityLabel:          "severity",
+				Severities:             []string{"critical", "warning", "info"},
+			},
+			trapsender.Configuration{
+				SNMPVersion:     "V2c",
+				SNMPDestination: []string{"127.0.0.1:162"},
+				SNMPRetries:     1,
+				SNMPTimeout:     5 * time.Second,
+				SNMPCommunity:   "public",
+				ExtraFields:     make([]trapsender.ExtraField, 0),
+			},
+			httpserver.Configuration{
+				ToolKitConfiguration: web.FlagConfig{
+					WebSystemdSocket:   &falseValue,
+					WebConfigFile:      &emptyString,
+					WebListenAddresses: &testListenAddresses,
+				},
+			},
+		},
+	)
+}
+
+func TestConfigurationWithDifferentResolvedTrapLabelOIDConfiguration(t *testing.T) {
+	expectConfigurationFromCommandLine(t,
+		"--web.listen-address=:1234 --snmp.trap-resolved-oid-label=oid-on-resolution --snmp.trap-description-template=../description-template.tpl",
+		SNMPNotifierConfiguration{
+			alertparser.Configuration{
+				DefaultFiringTrapOID:   "1.3.6.1.4.1.98789",
+				FiringTrapOIDLabel:     "oid",
+				DefaultResolvedTrapOID: "1.3.6.1.4.1.98789",
+				ResolvedTrapOIDLabel:   "oid-on-resolution",
+				DefaultSeverity:        "critical",
+				SeverityLabel:          "severity",
+				Severities:             []string{"critical", "warning", "info"},
+			},
+			trapsender.Configuration{
+				SNMPVersion:     "V2c",
+				SNMPDestination: []string{"127.0.0.1:162"},
+				SNMPRetries:     1,
+				SNMPTimeout:     5 * time.Second,
+				SNMPCommunity:   "public",
+				ExtraFields:     make([]trapsender.ExtraField, 0),
+			},
+			httpserver.Configuration{
+				ToolKitConfiguration: web.FlagConfig{
+					WebSystemdSocket:   &falseValue,
+					WebConfigFile:      &emptyString,
+					WebListenAddresses: &testListenAddresses,
+				},
+			},
+		},
+	)
+}
+
+func TestMalFormedTrapOID(t *testing.T) {
+	expectConfigurationFromCommandLineError(
+		t,
+		"--snmp.trap-default-oid=A.1.1.1 --snmp.trap-description-template=../description-template.tpl",
+	)
+}
+
+func TestMalFormedSubObjectOID(t *testing.T) {
+	expectConfigurationFromCommandLineError(
+		t,
+		"--snmp.sub-object-default-oid=A.1.1.1 --snmp.trap-description-template=../description-template.tpl",
+	)
+}
+
+func TestMalFormedResolutionTrapOID(t *testing.T) {
+	expectConfigurationFromCommandLineError(
+		t,
+		"--snmp.trap-default-resolved-oid=A.1.1.1 --snmp.trap-description-template=../description-template.tpl",
+	)
+}
+
+func TestConfigurationMixingV2AndV3Elements(t *testing.T) {
+	expectConfigurationFromCommandLineError(
+		t,
+		"--web.listen-address=:1234 --snmp.version=V3 --snmp.private-enabled --snmp.trap-description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=severity --alert.severities=critical,error,warning,info",
+	)
+}
+
+func TestConfigurationMixingV2AndV3AuthenticationAndPrivate(t *testing.T) {
+	expectConfigurationFromCommandLineError(
+		t,
+		"--web.listen-address=:1234 --snmp.version=V2c --snmp.private-enabled --snmp.authentication-enabled --snmp.trap-description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=severity --alert.severities=critical,error,warning,info",
+	)
+}
+
+func TestConfigurationMixingV2AndV3Authentication(t *testing.T) {
+	expectConfigurationFromCommandLineError(
+		t,
+		"--web.listen-address=:1234 --snmp.version=V2c --snmp.authentication-enabled --snmp.trap-description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=severity --alert.severities=critical,error,warning,info",
+	)
+}
+
+func TestConfigurationMixingV2AndV3Private(t *testing.T) {
+	expectConfigurationFromCommandLineError(
+		t,
+		"--web.listen-address=:1234 --snmp.version=V2c --snmp.private-enabled --snmp.trap-description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --snmp.trap-default-oid=4.4.4 --snmp.trap-oid-label=other-oid --alert.default-severity=warning --alert.severity-label=severity --alert.severities=critical,error,warning,info",
+	)
+}
+
+func expectConfigurationFromCommandLine(t *testing.T, commandLine string, configuration SNMPNotifierConfiguration) {
+	expectConfigurationFromCommandLineAndEnvironmentVariables(
+		t,
+		commandLine,
+		map[string]string{},
+		configuration,
+	)
+}
+
+func expectConfigurationFromCommandLineAndEnvironmentVariables(t *testing.T, commandLine string, environmentVariables map[string]string, configuration SNMPNotifierConfiguration) {
+	os.Clearenv()
+	for variable, value := range environmentVariables {
+		os.Setenv(variable, value)
+	}
+	elements := strings.Split(commandLine, " ")
+	log.Print(elements)
+	parsedConfiguration, _, err := ParseConfiguration(elements)
+
+	if err != nil {
+		t.Error("error occured and no expected error", "err", err)
+	}
+
+	if err == nil {
+		descriptionTemplate, err := template.New(filepath.Base("description-template.tpl")).Funcs(template.FuncMap{
+			"groupAlertsByLabel": commons.GroupAlertsByLabel,
+			"groupAlertsByName":  commons.GroupAlertsByName,
+		}).ParseFiles("../description-template.tpl")
+		if err != nil {
+			t.Fatal("Error while generating default description template")
 		}
-		elements := strings.Split(test.CommandLine, " ")
-		log.Print(elements)
-		configuration, _, err := ParseConfiguration(elements)
-		log.Print(elements)
 
-		if test.ExpectError && err == nil {
-			t.Error("An error was expected")
+		configuration.TrapSenderConfiguration.DescriptionTemplate = *descriptionTemplate
+
+		if diff := deep.Equal(*parsedConfiguration, configuration); diff != nil {
+			t.Error(diff)
 		}
+	}
+}
 
-		if !test.ExpectError && err != nil {
-			t.Error("An unexpected error occurred", err)
-		}
+func expectConfigurationFromCommandLineError(t *testing.T, commandLine string) {
+	expectConfigurationErrorFromCommandLineAndEnvironmentVariables(
+		t,
+		commandLine,
+		map[string]string{},
+	)
+}
 
-		if err == nil {
-			descriptionTemplate, err := template.New(filepath.Base("description-template.tpl")).Funcs(template.FuncMap{
-				"groupAlertsByLabel": commons.GroupAlertsByLabel,
-				"groupAlertsByName":  commons.GroupAlertsByName,
-			}).ParseFiles("../description-template.tpl")
-			if err != nil {
-				t.Fatal("Error while generating default description template")
-			}
-
-			test.Configuration.TrapSenderConfiguration.DescriptionTemplate = *descriptionTemplate
-
-			if diff := deep.Equal(*configuration, test.Configuration); diff != nil {
-				t.Error(diff)
-			}
-		}
+func expectConfigurationErrorFromCommandLineAndEnvironmentVariables(t *testing.T, commandLine string, environmentVariables map[string]string) {
+	os.Clearenv()
+	for variable, value := range environmentVariables {
+		os.Setenv(variable, value)
+	}
+	elements := strings.Split(commandLine, " ")
+	log.Print(elements)
+	_, _, err := ParseConfiguration(elements)
+	fmt.Printf("err: %s\n", err)
+	if err == nil {
+		t.Error("expected error, but none occured")
 	}
 }

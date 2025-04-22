@@ -1,0 +1,34 @@
+{
+  "GroupLabels": {
+    "label": "test",
+    "environment": "production"
+  },
+  "Alerts": [
+    {
+      "status": "resolved",
+      "labels": {
+        "environment": "production",
+        "label": "test",
+        "severity": "warning",
+        "alertname": "TestAlert1"
+      },
+      "annotations": {
+        "summary": "sample alert 1",
+        "description": "part of a group"
+      }
+    },
+    {
+      "status": "resolved",
+      "labels": {
+        "environment": "production",
+        "label": "test",
+        "severity": "critical",
+        "alertname": "TestAlert2"
+      },
+      "annotations": {
+        "summary": "sample alert 2",
+        "description": "part of a group"
+      }
+    }
+  ]
+}
