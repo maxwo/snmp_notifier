@@ -122,6 +122,7 @@ jobs:
       - uses: prometheus/promci@443c7fc2397e946bc9f5029e313a9c3441b9b86d # v0.4.7
       - uses: ./.github/promci/actions/publish_main
         with:
+          docker_hub_organization: maxwo
           docker_hub_login: ${{ secrets.DOCKER_HUB_LOGIN }}
           docker_hub_password: ${{ secrets.DOCKER_HUB_PASSWORD }}
 
@@ -138,6 +139,7 @@ jobs:
       - uses: prometheus/promci@443c7fc2397e946bc9f5029e313a9c3441b9b86d # v0.4.7
       - uses: ./.github/promci/actions/publish_release
         with:
+          docker_hub_organization: maxwo
           docker_hub_login: ${{ secrets.DOCKER_HUB_LOGIN }}
           docker_hub_password: ${{ secrets.DOCKER_HUB_PASSWORD }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
