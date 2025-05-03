@@ -108,7 +108,7 @@ jobs:
     if: github.event_name == 'pull_request'
 
   codeql:
-    uses: ./.github/workflows/codeql-analysis.yml
+    uses: ./.github/workflows/codeql.yml
 
   publish_main:
     name: Publish main branch artifacts
