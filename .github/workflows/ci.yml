@@ -57,7 +57,7 @@ jobs:
           thread: ${{ matrix.thread }}
 
   build_all:
-    name: Build Prometheus for all architectures
+    name: Build SNMP Notifier for all architectures
     runs-on: ubuntu-latest
     if: |
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v2.'))

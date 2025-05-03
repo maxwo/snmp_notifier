@@ -17,10 +17,12 @@ include Makefile.common
 
 STATICCHECK_IGNORE =
 
-DOCKER_REPO = maxwo
-DOCKER_IMAGE_NAME = snmp-notifier
+DOCKER_REPO        := maxwo
+DOCKER_IMAGE_NAME  := snmp-notifier
+DOCKER_ARCHS       := amd64 armv7 arm64 ppc64le s390x
 
-DOCKER_ARCHS = amd64 armv7 arm64 ppc64le s390x
+coucou:
+	echo $(DOCKER_REPO)
 
 ifdef DEBUG
 	bindata_flags = -debug
