@@ -19,9 +19,6 @@ STATICCHECK_IGNORE =
 
 DOCKER_IMAGE_NAME  := snmp-notifier
 
-coucou:
-	echo $(DOCKER_REPO)
-
 ifdef DEBUG
 	bindata_flags = -debug
 endif
