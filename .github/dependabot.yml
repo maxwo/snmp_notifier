@@ -1,5 +1,15 @@
 version: 2
 updates:
+- package-ecosystem: "docker"
+  directory: "/"
+  schedule:
+    interval: "monthly"
+- package-ecosystem: "github-actions"
+  directories:
+    - "/"
+    - "/scripts"
+  schedule:
+    interval: "monthly"
 - package-ecosystem: gomod
   directory: "/"
   schedule:
