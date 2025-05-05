@@ -14,7 +14,9 @@
 package test
 
 import (
+	"fmt"
 	"log"
+	"math/rand/v2"
 	"time"
 
 	"github.com/k-sone/snmpgo"
@@ -30,19 +32,21 @@ func (trapListener *testTrapListener) OnTRAP(trap *snmpgo.TrapRequest) {
 }
 
 // LaunchTrapReceiver provides a SNMP server for testing purposes
-func LaunchTrapReceiver(addr string) (*snmpgo.TrapServer, chan *snmpgo.TrapRequest, error) {
+func LaunchTrapReceiver() (*int32, *snmpgo.TrapServer, chan *snmpgo.TrapRequest, error) {
+	port := 10000 + rand.Int32()%10000
+	address := fmt.Sprintf("127.0.0.1:%d", port)
 	trapServer, err := snmpgo.NewTrapServer(snmpgo.ServerArguments{
-		LocalAddr: addr,
+		LocalAddr: address,
 	})
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	err = trapServer.AddSecurity(&snmpgo.SecurityEntry{
 		Version:   snmpgo.V2c,
 		Community: "public",
 	})
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	err = trapServer.AddSecurity(&snmpgo.SecurityEntry{
 		Version:          snmpgo.V3,
@@ -55,12 +59,12 @@ func LaunchTrapReceiver(addr string) (*snmpgo.TrapServer, chan *snmpgo.TrapReque
 		SecurityEngineId: "8000000004736e6d70676f",
 	})
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	traps := make(chan *snmpgo.TrapRequest)
 	go launchSNMPServer(trapServer, traps)
 	time.Sleep(200 * time.Millisecond)
-	return trapServer, traps, nil
+	return &port, trapServer, traps, nil
 }
 
 func launchSNMPServer(trapServer *snmpgo.TrapServer, traps chan *snmpgo.TrapRequest) {

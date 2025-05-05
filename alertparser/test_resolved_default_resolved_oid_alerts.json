@@ -3,6 +3,8 @@
     "1.1-2.2[environment=production,label=test]": {
       "TrapOID": "2.2",
       "GroupID": "environment=production,label=test",
+      "DefaultObjectsBaseOID": "4.4.4",
+      "UserObjectsBaseOID": "4.4.5",
       "GroupLabels": {
         "environment": "production",
         "label": "test"

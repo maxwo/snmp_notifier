@@ -3,19 +3,13 @@
     "1.2.3.2.1[environment=production,label=test]": {
       "TrapOID": "1.2.3.2.1",
       "GroupID": "environment=production,label=test",
-      "DefaultObjectsBaseOID": "4.4.4",
-      "UserObjectsBaseOID": "4.4.5",
-      "GroupLabels": {
-        "environment": "production",
-        "label": "test"
-      },
+      "DefaultObjectsBaseOID": "1.2.3.2.2",
+      "UserObjectsBaseOID": "1.2.3.7",
       "Severity": "critical",
       "Alerts": [
         {
           "status": "firing",
           "labels": {
-            "environment": "production",
-            "label": "test",
             "severity": "warning",
             "alertname": "TestAlert",
             "oid": "1.2.3.2.1"
@@ -28,8 +22,6 @@
         {
           "status": "firing",
           "labels": {
-            "environment": "production",
-            "label": "test",
             "severity": "critical",
             "alertname": "TestAlert",
             "oid": "1.2.3.2.1"
@@ -44,8 +36,6 @@
         {
           "status": "firing",
           "labels": {
-            "environment": "production",
-            "label": "test",
             "severity": "warning",
             "alertname": "TestAlert",
             "oid": "1.2.3.2.1"
@@ -58,8 +48,6 @@
         {
           "status": "firing",
           "labels": {
-            "environment": "production",
-            "label": "test",
             "severity": "critical",
             "alertname": "TestAlert",
             "oid": "1.2.3.2.1"
@@ -68,42 +56,13 @@
             "summary": "this is the summary",
             "description": "this is the description on job1"
           }
-        }
-      ]
-    },
-    "1.1[environment=production,label=test]": {
-      "TrapOID": "1.1",
-      "GroupID": "environment=production,label=test",
-      "DefaultObjectsBaseOID": "4.4.4",
-      "UserObjectsBaseOID": "4.4.5",
-      "GroupLabels": {
-        "environment": "production",
-        "label": "test"
-      },
-      "Severity": "critical",
-      "Alerts": [
+        },
         {
-          "status": "firing",
+          "status": "resolved",
           "labels": {
-            "environment": "production",
-            "label": "test",
             "severity": "critical",
-            "alertname": "TestAlertWithoutOID"
-          },
-          "annotations": {
-            "summary": "this is the summary",
-            "description": "this is the description on TestAlertWithoutOID"
-          }
-        }
-      ],
-      "DeclaredAlerts": [
-        {
-          "status": "firing",
-          "labels": {
-            "environment": "production",
-            "label": "test",
-            "severity": "critical",
-            "alertname": "TestAlertWithoutOID"
+            "alertname": "TestAlert",
+            "oid": "1.2.3.2.1"
           },
           "annotations": {
             "summary": "this is the summary",
@@ -115,12 +74,8 @@
     "1.2.3.1.1[environment=production,label=test]": {
       "TrapOID": "1.2.3.1.1",
       "GroupID": "environment=production,label=test",
-      "DefaultObjectsBaseOID": "4.4.4",
-      "UserObjectsBaseOID": "4.4.5",
-      "GroupLabels": {
-        "environment": "production",
-        "label": "test"
-      },
+      "DefaultObjectsBaseOID": "1.2.3.2.2",
+      "UserObjectsBaseOID": "1.2.3.7",
       "Severity": "info",
       "Alerts": [],
       "DeclaredAlerts": [
@@ -129,13 +84,12 @@
           "labels": {
             "environment": "production",
             "label": "test",
-            "severity": "warning",
-            "alertname": "TestAlert",
-            "oid": "1.2.3.1.1"
+            "severity": "critical",
+            "alertname": "TestAlertWithoutOID"
           },
           "annotations": {
-            "summary": "this is the random summary",
-            "description": "this is the description of the alert"
+            "summary": "this is the summary",
+            "description": "this is the description on TestAlertWithoutOID"
           }
         }
       ]

@@ -22,14 +22,14 @@ import (
 
 func TestReadV2Traps(t *testing.T) {
 
-	server, channel, err := LaunchTrapReceiver("127.0.0.1:1162")
+	port, server, channel, err := LaunchTrapReceiver()
 	if err != nil {
 		t.Fatal("Error while opening server", err)
 	}
 	defer server.Close()
 
-	sendTrapV2(t, 1162, "first trap")
-	sendTrapV3(t, 1162, "second trap")
+	sendTrapV2(t, *port, "first trap")
+	sendTrapV3(t, *port, "second trap")
 
 	traps := ReadTraps(channel)
 
@@ -43,14 +43,14 @@ func TestReadV2Traps(t *testing.T) {
 
 func TestFindTrap(t *testing.T) {
 
-	server, channel, err := LaunchTrapReceiver("127.0.0.1:1162")
+	port, server, channel, err := LaunchTrapReceiver()
 	if err != nil {
 		t.Fatal("Error while opening server", err)
 	}
 	defer server.Close()
 
-	sendTrapV2(t, 1162, "first trap")
-	sendTrapV2(t, 1162, "second trap")
+	sendTrapV2(t, *port, "first trap")
+	sendTrapV2(t, *port, "second trap")
 
 	traps := ReadTraps(channel)
 

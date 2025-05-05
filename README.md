@@ -118,22 +118,7 @@ Flags:
       --snmp.destination=127.0.0.1:162 ...  
                                  SNMP trap server destination.
       --snmp.retries=1           SNMP number of retries
-      --snmp.trap-default-oid="1.3.6.1.4.1.98789"  
-                                 Trap OID to send if none is found in the alert labels.
-      --snmp.trap-oid-label="oid"  
-                                 Label where to find the trap OID.
-      --snmp.trap-default-resolved-oid=1.3.6.1.4.1.444.555  
-                                 Resolution trap OID to send if none is found in the alert labels. Defaults to the same trap OID as the firing trap.
-      --snmp.trap-resolved-oid-label=resolution-oid  
-                                 Label where to find the resolution trap OID. Deafults to the same label as the firing OID label.
-      --snmp.trap-description-template=description-template.tpl  
-                                 SNMP description template.
-      --snmp.extra-field-template=4=extra-field-template.tpl ...  
-                                 SNMP extra field templates, eg. --snmp.extra-field-templates=4=new-field.template.tpl to add a 4th field to the trap, with the given template file.
-                                 You may add several fields using that flag several times.
       --snmp.timeout=5s          SNMP timeout duration
-      --snmp.sub-object-default-oid=1.3.6.1.4.1.123.456  
-                                 OID to use as the base of the sub-objects of each trap.
       --snmp.community="public"  SNMP community (V2c only). Passing secrets to the command line is not recommended, consider using the SNMP_NOTIFIER_COMMUNITY environment variable
                                  instead. ($SNMP_NOTIFIER_COMMUNITY)
       --[no-]snmp.authentication-enabled  
@@ -159,6 +144,22 @@ Flags:
                                  SNMP context engine ID (V3 only).
       --snmp.context-name=CONTEXT_ENGINE_NAME  
                                  SNMP context name (V3 only).
+      --trap.default-oid="1.3.6.1.4.1.98789.1"  
+                                 Default trap OID.
+      --trap.oid-label="oid"     Label containing a custom trap OID.
+      --trap.resolution-default-oid=TRAP.RESOLUTION-DEFAULT-OID  
+                                 Resolution trap OID, if different from the firing trap OID.
+      --trap.resolution-oid-label=TRAP.RESOLUTION-OID-LABEL  
+                                 Label containing a custom resolution trap OID, if different from the firing trap OID.
+      --trap.default-objects-base-oid="1.3.6.1.4.1.98789.2"  
+                                 Base OID for default trap objects.
+      --trap.description-template=description-template.tpl  
+                                 Trap description template.
+      --trap.user-objects-base-oid="1.3.6.1.4.1.98789.3"  
+                                 Base OID for user-defined trap objects.
+      --trap.user-object=4=user-object-template.tpl ...  
+                                 User object sub-OID and template, e.g. --trap.user-object=4=new-object.template.tpl to add a sub-object to the trap, with the given template file.
+                                 You may add several user objects using that flag several times.
       --log.level=info           Only log messages with the given severity or above. One of: [debug, info, warn, error]
       --log.format=logfmt        Output format of log messages. One of: [logfmt, json]
       --[no-]version             Show application version.
@@ -173,7 +174,7 @@ Also, it is recommended to use the following environment variables to set the SN
 | SNMP_NOTIFIER_AUTH_PASSWORD | SNMP authentication password for SNMP v3      |         |
 | SNMP_NOTIFIER_PRIV_PASSWORD | SNMP private (or server) password for SNMP v3 |         |
 
-Any Go template directive may be used in the `snmp.trap-description-template` file.
+Any Go template directive may be used in the `trap.description-template` file.
 
 ## Examples
 
@@ -217,11 +218,11 @@ Status: warning
  --------------
 ```
 
-### With extra fields
+### With User Objects
 
-You may add additional fields thanks to the `--snmp.extra-field-template` arguments.
+You may add additional fields thanks to the `--trap.user-object` arguments.
 
-For instance, the template `{{ len .Alerts }} alerts are firing.` given in the `--snmp.extra-field-template=4=alert-count.tpl` argument will produce:
+For instance, the template `{{ len .Alerts }} alerts are firing.` given in the `--trap.user-object=4=alert-count.tpl` argument will produce:
 
 ```console
 $ snmptrapd -m ALL -m +SNMP-NOTIFIER-MIB -f -Of -Lo -c scripts/snmptrapd.conf

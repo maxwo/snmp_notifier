@@ -15,6 +15,7 @@ package alertparser
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/maxwo/snmp_notifier/commons"
@@ -23,23 +24,26 @@ import (
 
 // AlertParser parses alerts from the Prometheus Alert Manager
 type AlertParser struct {
+	logger        *slog.Logger
 	configuration Configuration
 }
 
 // Configuration stores configuration of an AlertParser
 type Configuration struct {
-	DefaultFiringTrapOID   string
-	FiringTrapOIDLabel     string
-	DefaultResolvedTrapOID string
-	ResolvedTrapOIDLabel   string
-	DefaultSeverity        string
-	Severities             []string
-	SeverityLabel          string
+	Severities                []string
+	SeverityLabel             string
+	DefaultSeverity           string
+	TrapDefaultOID            string
+	TrapOIDLabel              string
+	TrapResolutionDefaultOID  *string
+	TrapResolutionOIDLabel    *string
+	TrapDefaultObjectsBaseOID string
+	TrapUserObjectsBaseOID    string
 }
 
 // New creates an AlertParser instance
-func New(configuration Configuration) AlertParser {
-	return AlertParser{configuration}
+func New(configuration Configuration, logger *slog.Logger) AlertParser {
+	return AlertParser{logger, configuration}
 }
 
 // Parse parses alerts coming from the Prometheus Alert Manager to group them by traps
@@ -58,17 +62,21 @@ func (alertParser AlertParser) Parse(alertsData types.AlertsData) (*types.AlertB
 		if err != nil {
 			return nil, err
 		}
+		alertParser.logger.Debug("add to a new group", "group", *alertIDForGrouping, "alert", alert)
+
 		key := strings.Join([]string{*alertIDForGrouping, "[", groupID, "]"}, "")
 		if _, found := alertGroups[key]; !found {
 			alertGroups[key] = &types.AlertGroup{
-				TrapOID:           *trapOID,
-				GroupID:           groupID,
-				GroupLabels:       alertsData.GroupLabels,
-				CommonLabels:      alertsData.CommonLabels,
-				CommonAnnotations: alertsData.CommonAnnotations,
-				Severity:          alertParser.getLowestSeverity(),
-				Alerts:            []types.Alert{},
-				DeclaredAlerts:    []types.Alert{},
+				TrapOID:               *trapOID,
+				GroupID:               groupID,
+				GroupLabels:           alertsData.GroupLabels,
+				CommonLabels:          alertsData.CommonLabels,
+				CommonAnnotations:     alertsData.CommonAnnotations,
+				Severity:              alertParser.getLowestSeverity(),
+				Alerts:                []types.Alert{},
+				DeclaredAlerts:        []types.Alert{},
+				DefaultObjectsBaseOID: alertParser.configuration.TrapDefaultObjectsBaseOID,
+				UserObjectsBaseOID:    alertParser.configuration.TrapUserObjectsBaseOID,
 			}
 		}
 		alertGroups[key].DeclaredAlerts = append(alertGroups[key].DeclaredAlerts, alert)
@@ -121,6 +129,7 @@ func (alertParser AlertParser) getFiringAndResolvedTrapsOID(alert types.Alert) (
 		return nil, err
 	}
 
+	alertParser.logger.Debug("trap firing and resolution OID", "firingTrapOID", *firingTrapOID, "resolvedTrapOID", *resolvedTrapOID)
 	if *firingTrapOID == *resolvedTrapOID {
 		return firingTrapOID, nil
 	} else {
@@ -130,28 +139,41 @@ func (alertParser AlertParser) getFiringAndResolvedTrapsOID(alert types.Alert) (
 }
 
 func (alertParser AlertParser) getFiringAlertOID(alert types.Alert) (*string, error) {
-	return alertParser.getOIDFromAlert(alert, alertParser.configuration.FiringTrapOIDLabel, alertParser.configuration.DefaultFiringTrapOID)
+	firingTrapOID := alertParser.configuration.TrapDefaultOID
+
+	if value, found := alert.Labels[alertParser.configuration.TrapOIDLabel]; found {
+		firingTrapOID = value
+	}
+
+	if !commons.IsOID(firingTrapOID) {
+		return nil, fmt.Errorf("invalid OID provided: \"%s\"", firingTrapOID)
+	}
+
+	return &firingTrapOID, nil
 }
 
 func (alertParser AlertParser) getResolvedAlertOID(alert types.Alert) (*string, error) {
-	return alertParser.getOIDFromAlert(alert, alertParser.configuration.ResolvedTrapOIDLabel, alertParser.configuration.DefaultResolvedTrapOID)
-}
+	resolvedTrapOID := alertParser.configuration.TrapDefaultOID
 
-func (alertParser AlertParser) getOIDFromAlert(alert types.Alert, label string, defaultOID string) (*string, error) {
-	var (
-		oid string
-	)
-	if _, found := alert.Labels[label]; found {
-		oid = alert.Labels[label]
-	} else {
-		oid = defaultOID
+	if alertParser.configuration.TrapResolutionDefaultOID != nil {
+		resolvedTrapOID = *alertParser.configuration.TrapResolutionDefaultOID
 	}
 
-	if !commons.IsOID(oid) {
-		return nil, fmt.Errorf("invalid OID provided: \"%s\"", oid)
+	if value, found := alert.Labels[alertParser.configuration.TrapOIDLabel]; found {
+		resolvedTrapOID = value
 	}
 
-	return &oid, nil
+	if alertParser.configuration.TrapResolutionOIDLabel != nil {
+		if value, found := alert.Labels[*alertParser.configuration.TrapResolutionOIDLabel]; found {
+			resolvedTrapOID = value
+		}
+	}
+
+	if !commons.IsOID(resolvedTrapOID) {
+		return nil, fmt.Errorf("invalid OID provided: \"%s\"", resolvedTrapOID)
+	}
+
+	return &resolvedTrapOID, nil
 }
 
 func (alertParser AlertParser) getLowestSeverity() string {

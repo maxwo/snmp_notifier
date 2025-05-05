@@ -35,7 +35,8 @@
       "labels": {
         "severity": "critical",
         "alertname": "TestAlert",
-        "oid": "1.2.3.2.1"
+        "oid": "1.2.3.2.1",
+        "res-oid": "1.9.9.9.9.9"
       },
       "annotations": {
         "summary": "this is the summary",
