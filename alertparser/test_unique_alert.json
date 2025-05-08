@@ -1,0 +1,23 @@
+{
+  "GroupLabels": {
+    "label": "test",
+    "environment": "production"
+  },
+  "Alerts": [
+    {
+      "status": "firing",
+      "labels": {
+        "environment": "production",
+        "label": "test",
+        "severity": "warning",
+        "alertname": "TestAlert",
+        "firing-oid": "1.2.3",
+        "resolution-oid": "1.2.4"
+      },
+      "annotations": {
+        "summary": "this is a random summary",
+        "description": "this a description"
+      }
+    }
+  ]
+}

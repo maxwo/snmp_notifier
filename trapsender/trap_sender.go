@@ -57,14 +57,13 @@ type Configuration struct {
 	SNMPSecurityEngineID       string
 	SNMPContextEngineID        string
 	SNMPContextName            string
-	SNMPSubObjectDefaultOID    string
 
 	DescriptionTemplate template.Template
-	ExtraFields         []ExtraField
+	UserObjects         []UserObject
 }
 
-// ExtraField describes a custom field sent via SNMP
-type ExtraField struct {
+// UserObject describes a custom field sent via SNMP
+type UserObject struct {
 	SubOID          int
 	ContentTemplate template.Template
 }
@@ -88,7 +87,8 @@ func (trapSender TrapSender) SendAlertTraps(alertBucket types.AlertBucket) error
 	hasError := false
 
 	for _, connection := range trapSender.snmpConnectionArguments {
-		if trapSender.sendTraps(connection, traps) != nil {
+		err := trapSender.sendTraps(connection, traps)
+		if err != nil {
 			hasError = true
 		}
 	}
@@ -146,8 +146,8 @@ func (trapSender TrapSender) generateTraps(alertBucket types.AlertBucket) ([]snm
 	var (
 		traps []snmpgo.VarBinds
 	)
-	for _, alertGroup := range alertBucket.AlertGroups {
-		varBinds, err := trapSender.generateVarBinds(*alertGroup)
+	for uniqueTrapID, alertGroup := range alertBucket.AlertGroups {
+		varBinds, err := trapSender.generateVarBinds(uniqueTrapID, *alertGroup)
 		if err != nil {
 			return nil, err
 		}
@@ -157,37 +157,32 @@ func (trapSender TrapSender) generateTraps(alertBucket types.AlertBucket) ([]snm
 	return traps, nil
 }
 
-func (trapSender TrapSender) generateVarBinds(alertGroup types.AlertGroup) (snmpgo.VarBinds, error) {
+func (trapSender TrapSender) generateVarBinds(uniqueTrapID string, alertGroup types.AlertGroup) (snmpgo.VarBinds, error) {
 	var (
 		varBinds snmpgo.VarBinds
 	)
-
-	trapUniqueID := strings.Join([]string{alertGroup.TrapOID, "[", alertGroup.GroupID, "]"}, "")
 
 	description, err := commons.FillTemplate(alertGroup, trapSender.configuration.DescriptionTemplate)
 	if err != nil {
 		return nil, err
 	}
 
-	baseOid := strings.Join([]string{alertGroup.TrapOID, "2"}, ".")
-	trapOid, _ := snmpgo.NewOid(strings.Join([]string{alertGroup.TrapOID, "1"}, "."))
-	if trapSender.configuration.SNMPSubObjectDefaultOID != "" {
-		baseOid = trapSender.configuration.SNMPSubObjectDefaultOID
-		trapOid, _ = snmpgo.NewOid(alertGroup.TrapOID)
-	}
+	baseOid := alertGroup.DefaultObjectsBaseOID
+	userObjectsBaseOID := alertGroup.UserObjectsBaseOID
+	trapOid, _ := snmpgo.NewOid(alertGroup.TrapOID)
 
 	varBinds = addUpTime(varBinds)
 	varBinds = append(varBinds, snmpgo.NewVarBind(snmpgo.OidSnmpTrap, trapOid))
-	varBinds = addTrapSubObject(varBinds, baseOid, 1, trapUniqueID)
+	varBinds = addTrapSubObject(varBinds, baseOid, 1, uniqueTrapID)
 	varBinds = addTrapSubObject(varBinds, baseOid, 2, alertGroup.Severity)
 	varBinds = addTrapSubObject(varBinds, baseOid, 3, *description)
 
-	for _, extraField := range trapSender.configuration.ExtraFields {
-		value, err := commons.FillTemplate(alertGroup, extraField.ContentTemplate)
+	for _, userObject := range trapSender.configuration.UserObjects {
+		value, err := commons.FillTemplate(alertGroup, userObject.ContentTemplate)
 		if err != nil {
 			return nil, err
 		}
-		varBinds = addTrapSubObject(varBinds, baseOid, extraField.SubOID, *value)
+		varBinds = addTrapSubObject(varBinds, userObjectsBaseOID, userObject.SubOID, *value)
 	}
 
 	return varBinds, nil

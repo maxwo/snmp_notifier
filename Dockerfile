@@ -18,4 +18,4 @@ COPY --from=builder rootdir /
 
 EXPOSE      9464
 ENTRYPOINT  [ "/bin/snmp_notifier" ]
-CMD ["--snmp.trap-description-template=/etc/snmp_notifier/description-template.tpl"]
+CMD ["--trap.description-template=/etc/snmp_notifier/description-template.tpl"]

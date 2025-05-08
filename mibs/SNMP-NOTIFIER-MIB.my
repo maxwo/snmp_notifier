@@ -31,6 +31,8 @@ snmpNotifier MODULE-IDENTITY
 
 snmpNotifierAlertsObjects OBJECT IDENTIFIER ::= { snmpNotifier 2 }
 
+snmpNotifierAlertsUserObjects OBJECT IDENTIFIER ::= { snmpNotifier 3 }
+
 snmpNotifierAlertId OBJECT-TYPE
    SYNTAX      DisplayString
    MAX-ACCESS  accessible-for-notify

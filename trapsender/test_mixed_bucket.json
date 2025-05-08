@@ -3,6 +3,8 @@
     "1.2.3.2.1[environment=production,label=test]": {
       "TrapOID": "1.2.3.2.1",
       "GroupID": "environment=production,label=test",
+      "DefaultObjectsBaseOID": "1.2.3.2.2",
+      "UserObjectsBaseOID": "1.2.3.2.2",
       "Severity": "critical",
       "Alerts": [
         {
@@ -72,6 +74,8 @@
     "1.2.3.1.1[environment=production,label=test]": {
       "TrapOID": "1.2.3.1.1",
       "GroupID": "environment=production,label=test",
+      "DefaultObjectsBaseOID": "1.2.3.2.2",
+      "UserObjectsBaseOID": "1.2.3.2.2",
       "Severity": "info",
       "Alerts": [],
       "DeclaredAlerts": [

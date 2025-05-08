@@ -38,7 +38,7 @@ func main() {
 	logger.Debug("debugging configuration", "configuration", configuration)
 
 	trapSender := trapsender.New(configuration.TrapSenderConfiguration, logger)
-	alertParser := alertparser.New(configuration.AlertParserConfiguration)
+	alertParser := alertparser.New(configuration.AlertParserConfiguration, logger)
 	httpServer := httpserver.New(configuration.HTTPServerConfiguration, alertParser, trapSender, logger)
 
 	telemetry.Init()
