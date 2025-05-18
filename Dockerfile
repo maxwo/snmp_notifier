@@ -1,6 +1,3 @@
-ARG ARCH="amd64"
-ARG OS="linux"
-
 FROM debian AS builder
 
 ARG ARCH="amd64"

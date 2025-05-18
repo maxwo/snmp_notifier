@@ -43,4 +43,29 @@ install-github-release:
 	apt-get install --yes bzip2
 	mkdir -v -p ${HOME}/bin
 	curl -L 'https://github.com/github-release/github-release/releases/download/v0.7.2/linux-amd64-github-release.tar.bz2' | tar xvjf - --strip-components 3 -C ${HOME}/bin
-	
+
+k8s-install: k8s-snmp-server-install k8s-snmp-notifier-install
+
+k8s-helm-update:
+	helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+	helm repo update
+
+k8s-prometheus-install: k8s-helm-update
+	helm install prometheus prometheus-community/kube-prometheus-stack
+
+k8s-snmp-server-install:
+	kubectl create configmap snmp-notifier-mib --from-file=mibs/SNMP-NOTIFIER-MIB.my
+	kubectl apply -f scripts/kubernetes/snmp-server.yaml
+
+k8s-snmp-notifier-install: k8s-prometheus-install
+	kubectl apply -f scripts/kubernetes/secrets.yaml
+	helm install snmp-notifier prometheus-community/alertmanager-snmp-notifier --values scripts/kubernetes/chart-values.yaml
+	kubectl apply -f scripts/kubernetes/alertmanager-webhook-configuration.yaml
+
+k8s-cleanup:
+	kubectl delete -f scripts/kubernetes/alertmanager-webhook-configuration.yaml
+	helm uninstall snmp-notifier || true
+	kubectl delete -f scripts/kubernetes/secrets.yaml || true
+	helm uninstall prometheus || true
+	kubectl delete -f scripts/kubernetes/snmp-server.yaml || true
+	kubectl delete configmap snmp-notifier-mib || true
