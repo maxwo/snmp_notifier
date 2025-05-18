@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: snmp-notifier-webhook
+  labels:
+    alertmanagerConfig: snmp-notifier-webhook
+    release: prometheus
+spec:
+  route:
+    groupBy: ['alertname']
+    groupWait: 15s
+    groupInterval: 15s
+    repeatInterval: 15s
+    receiver: 'snmp-notifier'
+  receivers:
+  - name: 'snmp-notifier'
+    webhookConfigs:
+    - sendResolved: true
+      url: 'http://snmp-notifier-alertmanager-snmp-notifier:9464/alerts'
