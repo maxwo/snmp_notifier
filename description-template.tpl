@@ -1,5 +1,9 @@
 {{- if .Alerts -}}
-{{ len .Alerts }}/{{ len .DeclaredAlerts }} alerts are firing:
+{{- if (gt (len .Alerts) 1) -}}
+{{ len .Alerts }} alerts are firing:
+{{- else -}}
+1 alert is firing:
+{{- end }}
 
 {{ range $severity, $alerts := (groupAlertsByLabel .Alerts "severity") -}}
 Status: {{ $severity }}
