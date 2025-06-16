@@ -1,7 +1,5 @@
-verbose: false
 go:
-  version: 1.23
-  cgo: false
+  version: 1.24
 repository:
   path: github.com/maxwo/snmp_notifier
 build:
@@ -20,26 +18,25 @@ tarball:
     - LICENSE
     - NOTICE
 crossbuild:
-  platforms:
-    # - darwin/386
-    - darwin/amd64
-    - dragonfly/amd64
-    - freebsd/amd64
-    - freebsd/386
-    - freebsd/arm
-    - linux/386
-    - linux/amd64
-    - linux/arm
-    - linux/arm64
-    - linux/mips64
-    - linux/mips64le
-    # - linux/ppc64
-    - linux/ppc64le
-    - linux/s390x
-    - netbsd/amd64
-    - netbsd/386
-    - netbsd/arm
-    - openbsd/amd64
-    - openbsd/386
-    - windows/amd64
-    - windows/386
+    platforms:
+        - aix
+        - darwin
+        - dragonfly
+        - freebsd
+        - illumos
+        - linux/386
+        - linux/amd64
+        - linux/arm
+        - linux/arm64
+        - linux/mips
+        - linux/mips64
+        - linux/mips64le
+        - linux/mipsle
+        - linux/ppc64le
+        - linux/riscv64
+        - linux/s390x
+        - netbsd
+        - openbsd/386
+        - openbsd/amd64
+        - openbsd/arm64
+        - windows

@@ -17,10 +17,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
+	"log/slog"
 	"math/rand"
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -33,7 +35,6 @@ import (
 
 	"text/template"
 
-	"github.com/prometheus/common/promlog"
 	"github.com/prometheus/exporter-toolkit/web"
 )
 
@@ -53,85 +54,78 @@ type Test struct {
 	ExpectStatus        int
 }
 
-var tests = []Test{
-	{
-		"test_mixed_alerts.json",
-		"test_mixed_traps.json",
-		1164,
-		"/alerts",
-		"POST",
-		200,
-	},
-	{
-		"test_unprocessable_alerts.json",
-		"test_no_trap.json",
-		1164,
-		"/alerts",
-		"POST",
-		422,
-	},
-	{
-		"test_mixed_alerts.json",
-		"test_no_trap.json",
-		1166,
-		"/alerts",
-		"POST",
-		502,
-	},
-	{
-		"test_wrong_oid_alerts.json",
-		"test_no_trap.json",
-		1164,
-		"/alerts",
-		"POST",
-		400,
-	},
-	{
-		"test_mixed_alerts.json",
-		"test_no_trap.json",
-		1164,
-		"/",
-		"GET",
-		200,
-	},
-	{
-		"test_mixed_alerts.json",
-		"test_no_trap.json",
-		1164,
-		"/health",
-		"GET",
-		200,
-	},
-}
-
-func TestPostAlerts(t *testing.T) {
-
-	server, trapChannel, err := testutils.LaunchTrapReceiver("127.0.0.1:1164")
+func TestAlertNotification(t *testing.T) {
+	port, server, trapChannel, err := testutils.LaunchTrapReceiver()
 	if err != nil {
 		t.Fatal("msg", "Error while starting SNMP server:", "err", err)
 	}
 	defer server.Close()
 
-	for _, test := range tests {
-		launchSingleTest(t, test, trapChannel)
-	}
+	expectHTTPStatus(t, *port, "POST", "/alerts", "test_mixed_alerts.json", 200)
+	expectSNMPTraps(t, "test_mixed_traps.json", trapChannel)
 }
 
-func launchSingleTest(t *testing.T, test Test, trapChannel chan *snmpgo.TrapRequest) {
+func TestBadAlertNotification(t *testing.T) {
+	port, server, trapChannel, err := testutils.LaunchTrapReceiver()
+	if err != nil {
+		t.Fatal("msg", "Error while starting SNMP server:", "err", err)
+	}
+	defer server.Close()
 
-	httpserver, notifierPort := launchHTTPServer(t, test)
+	expectHTTPStatus(t, *port, "POST", "/alerts", "test_unprocessable_alerts.json", 422)
+	expectNoSNMPTrap(t, trapChannel)
+}
 
+func TestBadSNMPDestination(t *testing.T) {
+	expectHTTPStatus(t, 123, "POST", "/alerts", "test_mixed_alerts.json", 502)
+}
+
+func TestMalformedOIDLabel(t *testing.T) {
+	port, server, trapChannel, err := testutils.LaunchTrapReceiver()
+	if err != nil {
+		t.Fatal("msg", "Error while starting SNMP server:", "err", err)
+	}
+	defer server.Close()
+
+	expectHTTPStatus(t, *port, "POST", "/alerts", "test_wrong_oid_alerts.json", 400)
+	expectNoSNMPTrap(t, trapChannel)
+}
+
+func TestCallRootURI(t *testing.T) {
+	port, server, trapChannel, err := testutils.LaunchTrapReceiver()
+	if err != nil {
+		t.Fatal("msg", "Error while starting SNMP server:", "err", err)
+	}
+	defer server.Close()
+
+	expectHTTPStatus(t, *port, "GET", "/", "test_mixed_alerts.json", 200)
+	expectNoSNMPTrap(t, trapChannel)
+}
+
+func TestCallHealthURI(t *testing.T) {
+	port, server, trapChannel, err := testutils.LaunchTrapReceiver()
+	if err != nil {
+		t.Fatal("msg", "Error while starting SNMP server:", "err", err)
+	}
+	defer server.Close()
+
+	expectHTTPStatus(t, *port, "GET", "/health", "test_mixed_alerts.json", 200)
+	expectNoSNMPTrap(t, trapChannel)
+}
+
+func expectHTTPStatus(t *testing.T, snmpDestinationPort int32, verb string, uri string, body string, status int) {
+	httpserver, notifierPort := launchHTTPServer(t, snmpDestinationPort)
 	defer httpserver.Stop()
 
-	t.Log("Testing with file", test.AlertsFileName)
-	alertsByteData, err := ioutil.ReadFile(test.AlertsFileName)
+	t.Log("Testing with file", body)
+	alertsByteData, err := os.ReadFile(body)
 	if err != nil {
 		t.Fatal("Error while reading alert file:", err)
 	}
 	alertsReader := bytes.NewReader(alertsByteData)
 
-	url := fmt.Sprintf("http://127.0.0.1:%d%s", notifierPort, test.URI)
-	req, err := http.NewRequest(test.Verb, url, alertsReader)
+	url := fmt.Sprintf("http://127.0.0.1:%d%s", notifierPort, uri)
+	req, err := http.NewRequest(verb, url, alertsReader)
 	if err != nil {
 		t.Fatal("Error while building request:", err)
 	}
@@ -146,53 +140,30 @@ func launchSingleTest(t *testing.T, test Test, trapChannel chan *snmpgo.TrapRequ
 
 	t.Log("response Status:", resp.Status)
 	t.Log("response Headers:", resp.Header)
-	body, _ := ioutil.ReadAll(resp.Body)
-	t.Log("response Body:", string(body))
+	response, _ := io.ReadAll(resp.Body)
+	t.Log("response Body:", string(response))
 
-	if resp.StatusCode != test.ExpectStatus {
-		t.Fatal(test.ExpectStatus, "status expected, but got:", resp.StatusCode)
-	} else {
-		receivedTraps := testutils.ReadTraps(trapChannel)
-
-		log.Print("Traps received:", receivedTraps)
-
-		expectedTrapsByteData, err := ioutil.ReadFile(test.TrapsFileName)
-		if err != nil {
-			t.Fatal("Error while reading traps file:", err)
-		}
-		expectedTrapsReader := bytes.NewReader(expectedTrapsByteData)
-		expectedTrapsData := []map[string]string{}
-		err = json.NewDecoder(expectedTrapsReader).Decode(&expectedTrapsData)
-		if err != nil {
-			t.Fatal("Error while parsing traps file:", err)
-		}
-
-		if len(receivedTraps) != len(expectedTrapsData) {
-			t.Fatal(len(expectedTrapsData), "traps expected, but received", receivedTraps)
-		}
-
-		for _, expectedTrap := range expectedTrapsData {
-			if !testutils.FindTrap(receivedTraps, expectedTrap) {
-				t.Fatal("Expected trap not found:", expectedTrap)
-			}
-		}
+	if resp.StatusCode != status {
+		t.Fatal(status, "status expected, but got:", resp.StatusCode)
 	}
 }
 
-func launchHTTPServer(t *testing.T, test Test) (*HTTPServer, int) {
-	notfierRandomPort := 10000 + rand.Intn(1000)
+func launchHTTPServer(t *testing.T, port int32) (*HTTPServer, int) {
+	notfierRandomPort := 10000 + rand.Intn(10000)
 
-	snmpDestination := fmt.Sprintf("127.0.0.1:%d", test.SNMPDestinationPort)
+	snmpDestination := fmt.Sprintf("127.0.0.1:%d", port)
 	notifierAddress := fmt.Sprintf(":%d", notfierRandomPort)
 
 	alertParserConfiguration := alertparser.Configuration{
-		DefaultOID:      "1",
-		OIDLabel:        "oid",
-		DefaultSeverity: "critical",
-		Severities:      strings.Split("critical,warning,info", ","),
-		SeverityLabel:   "severity",
+		TrapDefaultOID:            "1.2.3",
+		TrapOIDLabel:              "oid",
+		DefaultSeverity:           "critical",
+		Severities:                strings.Split("critical,warning,info", ","),
+		SeverityLabel:             "severity",
+		TrapDefaultObjectsBaseOID: "1.7.8",
+		TrapUserObjectsBaseOID:    "1.7.9",
 	}
-	alertParser := alertparser.New(alertParserConfiguration)
+	alertParser := alertparser.New(alertParserConfiguration, slog.New(slog.NewTextHandler(os.Stdout, nil)))
 
 	descriptionTemplate, err := template.New("description").Parse(dummyDescriptionTemplate)
 	if err != nil {
@@ -219,13 +190,12 @@ func launchHTTPServer(t *testing.T, test Test) (*HTTPServer, int) {
 		SNMPContextEngineID:        "",
 		SNMPContextName:            "",
 		DescriptionTemplate:        *descriptionTemplate,
-		ExtraFieldTemplates:        make(map[string]template.Template),
+		UserObjects:                make([]trapsender.UserObject, 0),
 	}
 
-	promlogConfig := promlog.Config{}
-	logger := promlog.New(&promlogConfig)
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
-	trapSender := trapsender.New(trapSenderConfiguration, &logger)
+	trapSender := trapsender.New(trapSenderConfiguration, logger)
 
 	httpServerConfiguration := Configuration{
 		web.FlagConfig{
@@ -234,7 +204,7 @@ func launchHTTPServer(t *testing.T, test Test) (*HTTPServer, int) {
 			WebConfigFile:      &emptyString,
 		},
 	}
-	httpServer := New(httpServerConfiguration, alertParser, trapSender, &logger)
+	httpServer := New(httpServerConfiguration, alertParser, trapSender, logger)
 	go func() {
 		if err := httpServer.Start(); err != nil {
 			t.Error("err", err)
@@ -243,4 +213,41 @@ func launchHTTPServer(t *testing.T, test Test) (*HTTPServer, int) {
 	time.Sleep(200 * time.Millisecond)
 
 	return httpServer, notfierRandomPort
+}
+
+func expectNoSNMPTrap(t *testing.T, trapChannel chan *snmpgo.TrapRequest) {
+	receivedTraps := testutils.ReadTraps(trapChannel)
+
+	log.Print("Traps received:", receivedTraps)
+
+	if len(receivedTraps) != 0 {
+		t.Fatal("no traps expected, but received", receivedTraps)
+	}
+}
+
+func expectSNMPTraps(t *testing.T, trapsFileName string, trapChannel chan *snmpgo.TrapRequest) {
+	receivedTraps := testutils.ReadTraps(trapChannel)
+
+	log.Print("Traps received:", receivedTraps)
+
+	expectedTrapsByteData, err := os.ReadFile(trapsFileName)
+	if err != nil {
+		t.Fatal("Error while reading traps file:", err)
+	}
+	expectedTrapsReader := bytes.NewReader(expectedTrapsByteData)
+	expectedTrapsData := []map[string]string{}
+	err = json.NewDecoder(expectedTrapsReader).Decode(&expectedTrapsData)
+	if err != nil {
+		t.Fatal("Error while parsing traps file:", err)
+	}
+
+	if len(receivedTraps) != len(expectedTrapsData) {
+		t.Fatal(len(expectedTrapsData), "traps expected, but received", receivedTraps)
+	}
+
+	for _, expectedTrap := range expectedTrapsData {
+		if !testutils.FindTrap(receivedTraps, expectedTrap) {
+			t.Fatal("Expected trap not found:", expectedTrap)
+		}
+	}
 }

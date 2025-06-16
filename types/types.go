@@ -20,14 +20,16 @@ type AlertBucket struct {
 
 // AlertGroup type, with OID and group ID
 type AlertGroup struct {
-	OID               string
-	GroupID           string
-	GroupLabels       map[string]string
-	CommonLabels      map[string]string
-	CommonAnnotations map[string]string
-	Severity          string
-	Alerts            []Alert
-	DeclaredAlerts    []Alert
+	TrapOID               string
+	GroupID               string
+	DefaultObjectsBaseOID string
+	UserObjectsBaseOID    string
+	GroupLabels           map[string]string
+	CommonLabels          map[string]string
+	CommonAnnotations     map[string]string
+	Severity              string
+	Alerts                []Alert
+	DeclaredAlerts        []Alert
 }
 
 // GetAlertGroupName allows to retrieve a group name from a given alert

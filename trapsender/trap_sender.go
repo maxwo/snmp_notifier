@@ -15,7 +15,9 @@ package trapsender
 
 import (
 	"errors"
+	"log/slog"
 	"math"
+	"strconv"
 	"strings"
 	"time"
 
@@ -25,16 +27,13 @@ import (
 
 	"text/template"
 
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
-
 	"github.com/k-sone/snmpgo"
 	"github.com/shirou/gopsutil/host"
 )
 
 // TrapSender sends traps according to given alerts
 type TrapSender struct {
-	logger                  *log.Logger
+	logger                  *slog.Logger
 	configuration           Configuration
 	snmpConnectionArguments []snmpgo.SNMPArguments
 }
@@ -58,14 +57,19 @@ type Configuration struct {
 	SNMPSecurityEngineID       string
 	SNMPContextEngineID        string
 	SNMPContextName            string
-	SNMPSubObjectDefaultOid    string
 
 	DescriptionTemplate template.Template
-	ExtraFieldTemplates map[string]template.Template
+	UserObjects         []UserObject
+}
+
+// UserObject describes a custom field sent via SNMP
+type UserObject struct {
+	SubOID          int
+	ContentTemplate template.Template
 }
 
 // New creates a new TrapSender
-func New(configuration Configuration, logger *log.Logger) TrapSender {
+func New(configuration Configuration, logger *slog.Logger) TrapSender {
 	snmpConnectionArguments := generationConnectionArguments(configuration)
 	return TrapSender{logger, configuration, snmpConnectionArguments}
 }
@@ -83,7 +87,8 @@ func (trapSender TrapSender) SendAlertTraps(alertBucket types.AlertBucket) error
 	hasError := false
 
 	for _, connection := range trapSender.snmpConnectionArguments {
-		if trapSender.sendTraps(connection, traps) != nil {
+		err := trapSender.sendTraps(connection, traps)
+		if err != nil {
 			hasError = true
 		}
 	}
@@ -99,14 +104,14 @@ func (trapSender TrapSender) sendTraps(connectionArguments snmpgo.SNMPArguments,
 
 	snmp, err := snmpgo.NewSNMP(connectionArguments)
 	if err != nil {
-		level.Error(*trapSender.logger).Log("msg", "error while creating SNMP connection", "err", err)
+		trapSender.logger.Error("error while creating SNMP connection", "err", err.Error())
 		telemetry.SNMPTrapTotal.WithLabelValues(distinationForMetrics, "failure").Add(float64(len(traps)))
 		return err
 	}
 
 	err = snmp.Open()
 	if err != nil {
-		level.Error(*trapSender.logger).Log("msg", "error while opening SNMP connection", "err", err)
+		trapSender.logger.Error("error while opening SNMP connection", "err", err.Error())
 		telemetry.SNMPTrapTotal.WithLabelValues(distinationForMetrics, "failure").Add(float64(len(traps)))
 		return err
 	}
@@ -125,13 +130,13 @@ func (trapSender TrapSender) sendTraps(connectionArguments snmpgo.SNMPArguments,
 		err = snmp.V2TrapWithBootsTime(trap, 0, int(uptime))
 		if err != nil {
 			telemetry.SNMPTrapTotal.WithLabelValues(distinationForMetrics, "failure").Inc()
-			level.Error(*trapSender.logger).Log("msg", "error while generating trap", "destination", distinationForMetrics, "err", err)
+			trapSender.logger.Error("error while generating trap", "destination", distinationForMetrics, "err", err.Error())
 			hasError = true
 		}
 		telemetry.SNMPTrapTotal.WithLabelValues(distinationForMetrics, "success").Inc()
 	}
 
-	if hasError == true {
+	if hasError {
 		return errors.New("error while sending one or more traps")
 	}
 	return nil
@@ -141,8 +146,8 @@ func (trapSender TrapSender) generateTraps(alertBucket types.AlertBucket) ([]snm
 	var (
 		traps []snmpgo.VarBinds
 	)
-	for _, alertGroup := range alertBucket.AlertGroups {
-		varBinds, err := trapSender.generateVarBinds(*alertGroup)
+	for uniqueTrapID, alertGroup := range alertBucket.AlertGroups {
+		varBinds, err := trapSender.generateVarBinds(uniqueTrapID, *alertGroup)
 		if err != nil {
 			return nil, err
 		}
@@ -152,36 +157,32 @@ func (trapSender TrapSender) generateTraps(alertBucket types.AlertBucket) ([]snm
 	return traps, nil
 }
 
-func (trapSender TrapSender) generateVarBinds(alertGroup types.AlertGroup) (snmpgo.VarBinds, error) {
+func (trapSender TrapSender) generateVarBinds(uniqueTrapID string, alertGroup types.AlertGroup) (snmpgo.VarBinds, error) {
 	var (
 		varBinds snmpgo.VarBinds
 	)
-
-	trapUniqueID := strings.Join([]string{alertGroup.OID, "[", alertGroup.GroupID, "]"}, "")
 
 	description, err := commons.FillTemplate(alertGroup, trapSender.configuration.DescriptionTemplate)
 	if err != nil {
 		return nil, err
 	}
 
-	baseOid := strings.Join([]string{alertGroup.OID, "2"}, ".")
-	trapOid, _ := snmpgo.NewOid(strings.Join([]string{alertGroup.OID, "1"}, "."))
-	if trapSender.configuration.SNMPSubObjectDefaultOid != "" {
-		baseOid = trapSender.configuration.SNMPSubObjectDefaultOid
-		trapOid, _ = snmpgo.NewOid(alertGroup.OID)
-	}
+	baseOid := alertGroup.DefaultObjectsBaseOID
+	userObjectsBaseOID := alertGroup.UserObjectsBaseOID
+	trapOid, _ := snmpgo.NewOid(alertGroup.TrapOID)
 
 	varBinds = addUpTime(varBinds)
 	varBinds = append(varBinds, snmpgo.NewVarBind(snmpgo.OidSnmpTrap, trapOid))
-	varBinds = addTrapSubObject(varBinds, baseOid, "1", trapUniqueID)
-	varBinds = addTrapSubObject(varBinds, baseOid, "2", alertGroup.Severity)
-	varBinds = addTrapSubObject(varBinds, baseOid, "3", *description)
-	for subOid, template := range trapSender.configuration.ExtraFieldTemplates {
-		value, err := commons.FillTemplate(alertGroup, template)
+	varBinds = addTrapSubObject(varBinds, baseOid, 1, uniqueTrapID)
+	varBinds = addTrapSubObject(varBinds, baseOid, 2, alertGroup.Severity)
+	varBinds = addTrapSubObject(varBinds, baseOid, 3, *description)
+
+	for _, userObject := range trapSender.configuration.UserObjects {
+		value, err := commons.FillTemplate(alertGroup, userObject.ContentTemplate)
 		if err != nil {
 			return nil, err
 		}
-		varBinds = addTrapSubObject(varBinds, baseOid, subOid, *value)
+		varBinds = addTrapSubObject(varBinds, userObjectsBaseOID, userObject.SubOID, *value)
 	}
 
 	return varBinds, nil
@@ -192,8 +193,8 @@ func addUpTime(varBinds snmpgo.VarBinds) snmpgo.VarBinds {
 	return append(varBinds, snmpgo.NewVarBind(snmpgo.OidSysUpTime, snmpgo.NewTimeTicks(uint32(uptime*100))))
 }
 
-func addTrapSubObject(varBinds snmpgo.VarBinds, baseOid string, subOid string, value string) snmpgo.VarBinds {
-	oidString := strings.Join([]string{baseOid, subOid}, ".")
+func addTrapSubObject(varBinds snmpgo.VarBinds, baseOid string, subOid int, value string) snmpgo.VarBinds {
+	oidString := strings.Join([]string{baseOid, strconv.Itoa(subOid)}, ".")
 	oid, _ := snmpgo.NewOid(oidString)
 	return append(varBinds, snmpgo.NewVarBind(oid, snmpgo.NewOctetString([]byte(strings.TrimSpace(value)))))
 }

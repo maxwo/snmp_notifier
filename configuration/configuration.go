@@ -1,16 +1,29 @@
+// Copyright 2018 Maxime Wojtczak
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package configuration
 
 import (
 	"fmt"
 	"path/filepath"
+	"sort"
 	"strings"
 	"text/template"
 
-	"github.com/go-kit/log"
+	"log/slog"
 
-	"github.com/prometheus/common/promlog"
-	promlogflag "github.com/prometheus/common/promlog/flag"
-
+	"github.com/prometheus/common/promslog"
+	"github.com/prometheus/common/promslog/flag"
 	"github.com/prometheus/exporter-toolkit/web/kingpinflag"
 
 	"github.com/maxwo/snmp_notifier/alertparser"
@@ -39,7 +52,7 @@ var (
 )
 
 // ParseConfiguration parses the command line for configurations
-func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, log.Logger, error) {
+func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, *slog.Logger, error) {
 	var (
 		application          = kingpin.New("snmp_notifier", "A tool to relay Prometheus alerts as SNMP traps")
 		toolKitConfiguration = kingpinflag.AddFlags(application, ":9464")
@@ -48,15 +61,11 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, log.Logger, 
 		alertSeverities      = application.Flag("alert.severities", "The ordered list of alert severities, from more priority to less priority.").Default("critical,warning,info").String()
 		alertDefaultSeverity = application.Flag("alert.default-severity", "The alert severity if none is provided via labels.").Default("critical").String()
 
-		snmpVersion                 = application.Flag("snmp.version", "SNMP version. V2c and V3 are currently supported.").Default("V2c").HintOptions("V2c", "V3").Enum("V2c", "V3")
-		snmpDestination             = application.Flag("snmp.destination", "SNMP trap server destination.").Default("127.0.0.1:162").TCPList()
-		snmpRetries                 = application.Flag("snmp.retries", "SNMP number of retries").Default("1").Uint()
-		snmpTrapOidLabel            = application.Flag("snmp.trap-oid-label", "Label where to find the trap OID.").Default("oid").String()
-		snmpDefaultOid              = application.Flag("snmp.trap-default-oid", "Trap OID to send if none is found in the alert labels.").Default("1.3.6.1.4.1.98789").String()
-		snmpTrapDescriptionTemplate = application.Flag("snmp.trap-description-template", "SNMP description template.").Default("description-template.tpl").ExistingFile()
-		snmpExtraFieldTemplate      = application.Flag("snmp.extra-field-template", "SNMP extra field templates, eg. --snmp.extra-field-templates=4=new-field.template.tpl to add a 4th field to the trap, with the given template file. You may add several fields using that flag several times.").PlaceHolder("4=extra-field-template.tpl").StringMap()
-		snmpTimeout                 = application.Flag("snmp.timeout", "SNMP timeout duration").Default("5s").Duration()
-		snmpSubObjectDefaultOid     = application.Flag("snmp.sub-object-default-oid", "OID to use as the base of the sub-objects of each trap.").PlaceHolder("1.3.6.1.4.1.123.456").String()
+		// SNMP configuration
+		snmpVersion     = application.Flag("snmp.version", "SNMP version. V2c and V3 are currently supported.").Default("V2c").HintOptions("V2c", "V3").Enum("V2c", "V3")
+		snmpDestination = application.Flag("snmp.destination", "SNMP trap server destination.").Default("127.0.0.1:162").TCPList()
+		snmpRetries     = application.Flag("snmp.retries", "SNMP number of retries").Default("1").Uint()
+		snmpTimeout     = application.Flag("snmp.timeout", "SNMP timeout duration").Default("5s").Duration()
 
 		// V2c only
 		snmpCommunity = application.Flag("snmp.community", "SNMP community (V2c only). Passing secrets to the command line is not recommended, consider using the SNMP_NOTIFIER_COMMUNITY environment variable instead.").Envar(snmpCommunityEnvironmentVariable).Default("public").String()
@@ -72,57 +81,120 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, log.Logger, 
 		snmpSecurityEngineID       = application.Flag("snmp.security-engine-id", "SNMP security engine ID (V3 only).").PlaceHolder("SECURITY_ENGINE_ID").String()
 		snmpContextEngineID        = application.Flag("snmp.context-engine-id", "SNMP context engine ID (V3 only).").PlaceHolder("CONTEXT_ENGINE_ID").String()
 		snmpContextName            = application.Flag("snmp.context-name", "SNMP context name (V3 only).").PlaceHolder("CONTEXT_ENGINE_NAME").String()
+
+		// Trap configurations
+		trapDefaultOID            = application.Flag("trap.default-oid", "Default trap OID.").Default("1.3.6.1.4.1.98789.1").String()
+		trapOIDLabel              = application.Flag("trap.oid-label", "Label containing a custom trap OID.").Default("oid").String()
+		trapResolutionDefaultOID  = application.Flag("trap.resolution-default-oid", "Resolution trap OID, if different from the firing trap OID.").String()
+		trapResolutionOIDLabel    = application.Flag("trap.resolution-oid-label", "Label containing a custom resolution trap OID, if different from the firing trap OID.").String()
+		trapDefaultObjectsBaseOID = application.Flag("trap.default-objects-base-oid", "Base OID for default trap objects.").Default("1.3.6.1.4.1.98789.2").String()
+		trapDescriptionTemplate   = application.Flag("trap.description-template", "Trap description template.").Default("description-template.tpl").ExistingFile()
+		trapUserObjectsBaseOID    = application.Flag("trap.user-objects-base-oid", "Base OID for user-defined trap objects.").Default("1.3.6.1.4.1.98789.3").String()
+		trapUserObject            = application.Flag("trap.user-object", "User object sub-OID and template, e.g. --trap.user-object=4=new-object.template.tpl to add a sub-object to the trap, with the given template file. You may add several user objects using that flag several times.").PlaceHolder("4=user-object-template.tpl").StringMap()
 	)
 
-	promlogConfig := promlog.Config{}
-	promlogflag.AddFlags(application, &promlogConfig)
+	promslogConfig := &promslog.Config{}
+	flag.AddFlags(application, promslogConfig)
 
 	application.Version(version.Print("snmp_notifier"))
 	application.HelpFlag.Short('h')
 	kingpin.MustParse(application.Parse(args))
 
-	logger := promlog.New(&promlogConfig)
+	logger := promslog.New(promslogConfig)
+	logger.Info("Starting snmp_notifier", "version", version.Info())
+	logger.Info("Build context", "build_context", version.BuildContext())
 
-	descriptionTemplate, err := template.New(filepath.Base(*snmpTrapDescriptionTemplate)).Funcs(template.FuncMap{
+	descriptionTemplate, err := template.New(filepath.Base(*trapDescriptionTemplate)).Funcs(template.FuncMap{
 		"groupAlertsByLabel":  commons.GroupAlertsByLabel,
 		"groupAlertsByName":   commons.GroupAlertsByName,
 		"groupAlertsByStatus": commons.GroupAlertsByStatus,
-	}).ParseFiles(*snmpTrapDescriptionTemplate)
+	}).ParseFiles(*trapDescriptionTemplate)
 	if err != nil {
 		return nil, logger, err
 	}
 
-	extraFieldTemplates := make(map[string]template.Template)
-	if snmpExtraFieldTemplate != nil {
-		for k, v := range *snmpExtraFieldTemplate {
-			i, err := strconv.Atoi(k)
-			if err != nil || i < 4 {
-				return nil, logger, fmt.Errorf("Invalid field ID: %s. Field ID must be a number superior to 3", k)
+	minimumUserObjectSubOID := 0
+	if *trapDefaultObjectsBaseOID == *trapUserObjectsBaseOID {
+		logger.Warn("using the same OID for default objects and user objects is deprecated, and will be removed in future versions. Please consider using different OID")
+		minimumUserObjectSubOID = 4
+	}
+
+	userObjectsTemplates := make(map[int]template.Template)
+	if trapUserObject != nil {
+		for subOid, templatePath := range *trapUserObject {
+			oidValue, err := strconv.Atoi(subOid)
+			if err != nil || oidValue < minimumUserObjectSubOID {
+				return nil, logger, fmt.Errorf("invalid object ID: %s. Object ID must be a number greater or equal to 4", subOid)
 			}
-			currentTemplate, err := template.New(filepath.Base(v)).Funcs(template.FuncMap{
+
+			_, defined := userObjectsTemplates[oidValue]
+			if defined {
+				return nil, logger, fmt.Errorf("invalid object ID: %d defined twice", oidValue)
+			}
+
+			currentTemplate, err := template.New(filepath.Base(templatePath)).Funcs(template.FuncMap{
 				"groupAlertsByLabel":  commons.GroupAlertsByLabel,
 				"groupAlertsByName":   commons.GroupAlertsByName,
 				"groupAlertsByStatus": commons.GroupAlertsByStatus,
-			}).ParseFiles(v)
+			}).ParseFiles(templatePath)
 			if err != nil {
 				return nil, logger, err
 			}
-			extraFieldTemplates[k] = *currentTemplate
+
+			userObjectsTemplates[oidValue] = *currentTemplate
 		}
 	}
 
-	if !commons.IsOID(*snmpDefaultOid) {
-		return nil, logger, fmt.Errorf("Invalid default OID provided: %s", *snmpDefaultOid)
+	subOIDs := make([]int, 0, len(userObjectsTemplates))
+	for subOID := range userObjectsTemplates {
+		subOIDs = append(subOIDs, subOID)
+	}
+	sort.Ints(subOIDs)
+
+	userObjects := make([]trapsender.UserObject, len(userObjectsTemplates))
+	for index, subOID := range subOIDs {
+		contentTemplate := userObjectsTemplates[subOID]
+		userObject := trapsender.UserObject{
+			SubOID:          subOID,
+			ContentTemplate: contentTemplate,
+		}
+		userObjects[index] = userObject
+	}
+
+	if !commons.IsOID(*trapDefaultOID) {
+		return nil, logger, fmt.Errorf("invalid default trap OID provided: %s", *trapDefaultOID)
+	}
+
+	if *trapResolutionDefaultOID != "" && !commons.IsOID(*trapResolutionDefaultOID) {
+		return nil, logger, fmt.Errorf("invalid resolution trap OID provided: %s", *trapResolutionDefaultOID)
+	} else if *trapResolutionDefaultOID == "" {
+		trapResolutionDefaultOID = nil
+	}
+
+	if *trapResolutionOIDLabel == "" {
+		trapResolutionOIDLabel = nil
+	}
+
+	if !commons.IsOID(*trapDefaultObjectsBaseOID) {
+		return nil, logger, fmt.Errorf("invalid default objects base OID provided: %s", *trapDefaultObjectsBaseOID)
+	}
+
+	if !commons.IsOID(*trapUserObjectsBaseOID) {
+		return nil, logger, fmt.Errorf("invalid user objects base OID provided: %s", *trapUserObjectsBaseOID)
 	}
 
 	severities := strings.Split(*alertSeverities, ",")
 
 	alertParserConfiguration := alertparser.Configuration{
-		DefaultOID:      *snmpDefaultOid,
-		OIDLabel:        *snmpTrapOidLabel,
-		DefaultSeverity: *alertDefaultSeverity,
-		Severities:      severities,
-		SeverityLabel:   *alertSeverityLabel,
+		TrapDefaultOID:            *trapDefaultOID,
+		TrapOIDLabel:              *trapOIDLabel,
+		TrapResolutionDefaultOID:  trapResolutionDefaultOID,
+		TrapResolutionOIDLabel:    trapResolutionOIDLabel,
+		DefaultSeverity:           *alertDefaultSeverity,
+		Severities:                severities,
+		SeverityLabel:             *alertSeverityLabel,
+		TrapDefaultObjectsBaseOID: *trapDefaultObjectsBaseOID,
+		TrapUserObjectsBaseOID:    *trapUserObjectsBaseOID,
 	}
 
 	isV2c := *snmpVersion == "V2c"
@@ -137,7 +209,7 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, log.Logger, 
 		SNMPDestination:     snmpDestinations,
 		SNMPRetries:         *snmpRetries,
 		DescriptionTemplate: *descriptionTemplate,
-		ExtraFieldTemplates: extraFieldTemplates,
+		UserObjects:         userObjects,
 		SNMPTimeout:         *snmpTimeout,
 	}
 
@@ -157,7 +229,7 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, log.Logger, 
 	}
 
 	if !*snmpAuthenticationEnabled && *snmpPrivateEnabled {
-		return nil, logger, fmt.Errorf("SNMP private encryption requires authentication enabled.")
+		return nil, logger, fmt.Errorf("SNMP private encryption requires authentication enabled")
 	}
 
 	if *snmpAuthenticationEnabled {
@@ -169,10 +241,6 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, log.Logger, 
 		trapSenderConfiguration.SNMPPrivateEnabled = *snmpPrivateEnabled
 		trapSenderConfiguration.SNMPPrivateProtocol = *snmpPrivateProtocol
 		trapSenderConfiguration.SNMPPrivatePassword = *snmpPrivatePassword
-	}
-
-	if *snmpSubObjectDefaultOid != "" {
-		trapSenderConfiguration.SNMPSubObjectDefaultOid = *snmpSubObjectDefaultOid
 	}
 
 	httpServerConfiguration := httpserver.Configuration{

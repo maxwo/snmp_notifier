@@ -1,0 +1,58 @@
+{
+  "AlertGroups": {
+    "1.1-2.2[environment=production,label=test]": {
+      "TrapOID": "1.1",
+      "GroupID": "environment=production,label=test",
+      "DefaultObjectsBaseOID": "4.4.4",
+      "UserObjectsBaseOID": "4.4.5",
+      "GroupLabels": {
+        "environment": "production",
+        "label": "test"
+      },
+      "Severity": "warning",
+      "Alerts": [
+        {
+          "status": "firing",
+          "labels": {
+            "environment": "production",
+            "label": "test",
+            "severity": "warning",
+            "alertname": "TestAlert1"
+          },
+          "annotations": {
+            "summary": "sample alert 1",
+            "description": "part of a group"
+          }
+        }
+      ],
+      "DeclaredAlerts": [
+        {
+          "status": "firing",
+          "labels": {
+            "environment": "production",
+            "label": "test",
+            "severity": "warning",
+            "alertname": "TestAlert1"
+          },
+          "annotations": {
+            "summary": "sample alert 1",
+            "description": "part of a group"
+          }
+        },
+        {
+          "status": "resolved",
+          "labels": {
+            "environment": "production",
+            "label": "test",
+            "severity": "critical",
+            "alertname": "TestAlert2"
+          },
+          "annotations": {
+            "summary": "sample alert 2",
+            "description": "part of a group"
+          }
+        }
+      ]
+    }
+  }
+}

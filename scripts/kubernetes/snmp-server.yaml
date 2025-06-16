@@ -1,94 +1,19 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: snmp-notifier-mib
-data:
-  # file-like keys
-  SNMP-NOTIFIER-MIB.my: |
-    SNMP-NOTIFIER-MIB DEFINITIONS ::= BEGIN
-
-    IMPORTS
-      MODULE-IDENTITY, enterprises FROM SNMPv2-SMI;
-
-    snmpNotifier MODULE-IDENTITY
-      LAST-UPDATED "202201070000Z"
-      ORGANIZATION "SNMP Notifier"
-      CONTACT-INFO
-          "SNMP Notifier
-
-          https://github.com/maxwo/snmp_notifier/
-
-          "
-
-      DESCRIPTION
-          "This MIB contains definition of the SNMP Traps
-          associated to alerts sent by the SNMP Notifier"
-
-      REVISION
-          "201912260000Z"
-
-      DESCRIPTION
-          "First revision that includes only the alerts subtree"
-    ::= { enterprises 98789 }
-
-    snmpNotifierAlertsObjects OBJECT IDENTIFIER ::= { snmpNotifier 2 }
-
-    snmpNotifierAlertId OBJECT-TYPE
-      SYNTAX      DisplayString
-      MAX-ACCESS  accessible-for-notify
-      STATUS      current
-      DESCRIPTION "The ID of the SNMP notifier alert."
-    ::= { snmpNotifierAlertsObjects 1 }
-
-    snmpNotifierAlertSeverity OBJECT-TYPE
-      SYNTAX      DisplayString
-      MAX-ACCESS  accessible-for-notify
-      STATUS      current
-      DESCRIPTION "The severity of the SNMP notifier alert."
-    ::= { snmpNotifierAlertsObjects 2 }
-
-    snmpNotifierAlertDescription OBJECT-TYPE
-      SYNTAX      DisplayString
-      MAX-ACCESS  accessible-for-notify
-      STATUS      current
-      DESCRIPTION "The description of the SNMP notifier alert."
-    ::= { snmpNotifierAlertsObjects 3 }
-
-    snmpNotifierDefaultTrap NOTIFICATION-TYPE
-      OBJECTS {
-          snmpNotifierAlertId,
-          snmpNotifierAlertSeverity,
-          snmpNotifierAlertDescription
-      }
-      STATUS current
-      DESCRIPTION "The default SNMP notifier notification"
-      ::= { snmpNotifier 1 }
-    END
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: snmptrapd-configuration
 data:
-  # file-like keys
   snmptrapd.conf: |
     # A list of listening addresses, on which to receive incoming SNMP notifications
     snmpTrapdAddr udp:1162
     snmpTrapdAddr udp6:1162
 
-    # Do not fork from the calling shell
-    doNotFork yes
-    # File in which to store the process ID of the notification receiver
-    pidFile /tmp/snmptrapd.pid
-    # Disables support for the NOTIFICATION-LOG-MIB
-    doNotRetainNotificationLogs yes
+    format2 %V\n% Agent Hostname: %B \n Community/Infosec Context: %P \n Description: %W \n PDU Attribute/Value Pair Array:\n%v \n -------------- \n
 
-    format2 %V\n% Agent Address: %A \n Agent Hostname: %B \n Date: %H - %J - %K - %L - %M - %Y \n Enterprise OID: %N \n Trap Type: %W \n Trap Sub-Type: %q \n Community/Infosec Context: %P \n Uptime: %T \n Description: %W \n PDU Attribute/Value Pair Array:\n%v \n -------------- \n
+    disableAuthorization yes
 
-    createUser -e 0x8000000001020304 snmp_user_v3 SHA auth_password_v3 AES encrypt_password_v3
-
-    authUser log,execute,net snmp_user_v3
-    authCommunity log,execute,net public
+    authCommunity log public
 
 ---
 kind: Service

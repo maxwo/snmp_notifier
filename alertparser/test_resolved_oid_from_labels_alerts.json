@@ -1,0 +1,46 @@
+{
+  "AlertGroups": {
+    "1.1-7.7.7[environment=production,label=test]": {
+      "TrapOID": "7.7.7",
+      "GroupID": "environment=production,label=test",
+      "DefaultObjectsBaseOID": "4.4.4",
+      "UserObjectsBaseOID": "4.4.5",
+      "GroupLabels": {
+        "environment": "production",
+        "label": "test"
+      },
+      "Severity": "info",
+      "Alerts": [],
+      "DeclaredAlerts": [
+        {
+          "status": "resolved",
+          "labels": {
+            "environment": "production",
+            "label": "test",
+            "severity": "warning",
+            "alertname": "TestAlert1",
+            "resolution-oid": "7.7.7"
+          },
+          "annotations": {
+            "summary": "sample alert 1",
+            "description": "part of a group"
+          }
+        },
+        {
+          "status": "resolved",
+          "labels": {
+            "environment": "production",
+            "label": "test",
+            "severity": "critical",
+            "alertname": "TestAlert2",
+            "resolution-oid": "7.7.7"
+          },
+          "annotations": {
+            "summary": "sample alert 2",
+            "description": "part of a group"
+          }
+        }
+      ]
+    }
+  }
+}
