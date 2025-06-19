@@ -139,7 +139,7 @@ func TestV2Configuration(t *testing.T) {
 func TestV3Configuration(t *testing.T) {
 	expectConfigurationFromCommandLineAndEnvironmentVariables(
 		t,
-		"--web.listen-address=:1234 --snmp.version=V3 --trap.description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --trap.default-oid=4.4.4 --trap.oid-label=other-oid --alert.default-severity=warning --alert.severity-label=severity --alert.severities=critical,error,warning,info",
+		"--web.listen-address=:1234 --snmp.version=V3 --trap.description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --trap.default-oid=4.4.4 --trap.oid-label=other-oid --alert.default-severity=warning --alert.severity-label=severity --alert.severities=critical,error,warning,info --trap.engine-unix-start-time=1750334785",
 		map[string]string{
 			"SNMP_NOTIFIER_COMMUNITY": "private",
 		},
@@ -154,11 +154,12 @@ func TestV3Configuration(t *testing.T) {
 				TrapUserObjectsBaseOID:    "1.3.6.1.4.1.98789.3",
 			},
 			trapsender.Configuration{
-				SNMPVersion:     "V3",
-				SNMPDestination: []string{"127.0.0.2:163"},
-				SNMPRetries:     4,
-				SNMPTimeout:     5 * time.Second,
-				UserObjects:     make([]trapsender.UserObject, 0),
+				SNMPVersion:         "V3",
+				SNMPDestination:     []string{"127.0.0.2:163"},
+				SNMPRetries:         4,
+				SNMPTimeout:         5 * time.Second,
+				UserObjects:         make([]trapsender.UserObject, 0),
+				SNMPEngineStartTime: "1750334785",
 			},
 			httpserver.Configuration{
 				ToolKitConfiguration: web.FlagConfig{

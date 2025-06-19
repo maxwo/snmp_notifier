@@ -91,6 +91,7 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, *slog.Logger
 		trapDescriptionTemplate   = application.Flag("trap.description-template", "Trap description template.").Default("description-template.tpl").ExistingFile()
 		trapUserObjectsBaseOID    = application.Flag("trap.user-objects-base-oid", "Base OID for user-defined trap objects.").Default("1.3.6.1.4.1.98789.3").String()
 		trapUserObject            = application.Flag("trap.user-object", "User object sub-OID and template, e.g. --trap.user-object=4=new-object.template.tpl to add a sub-object to the trap, with the given template file. You may add several user objects using that flag several times.").PlaceHolder("4=user-object-template.tpl").StringMap()
+		trapEngineStartTime       = application.Flag("trap.engine-unix-start-time", "UNIX timestamp specifying the engine start time. When empty, the start time is the uptime of the host.").Default("").String()
 	)
 
 	promslogConfig := &promslog.Config{}
@@ -211,6 +212,7 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, *slog.Logger
 		DescriptionTemplate: *descriptionTemplate,
 		UserObjects:         userObjects,
 		SNMPTimeout:         *snmpTimeout,
+		SNMPEngineStartTime: *trapEngineStartTime,
 	}
 
 	if isV2c {
