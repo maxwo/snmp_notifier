@@ -157,11 +157,11 @@ Flags:
                                  Trap description template.
       --trap.user-objects-base-oid="1.3.6.1.4.1.98789.3"  
                                  Base OID for user-defined trap objects.
-      --trap.user-object=3=user-object-template.tpl ...  
+      --trap.user-object=4=user-object-template.tpl ...  
                                  User object sub-OID and template, e.g. --trap.user-object=4=new-object.template.tpl to add a sub-object to the trap, with the given template file.
                                  You may add several user objects using that flag several times.
       --trap.engine-unix-start-time=""  
-                                 UNIX timestamp specifying the engine start time. When empty, the start time is the uptime of the host.
+                                 UNIX timestamp specifying the engine start time in seconds. When empty, the start time is the uptime of the host.
       --log.level=info           Only log messages with the given severity or above. One of: [debug, info, warn, error]
       --log.format=logfmt        Output format of log messages. One of: [logfmt, json]
       --[no-]version             Show application version.
