@@ -144,6 +144,8 @@ Flags:
                                  SNMP context engine ID (V3 only).
       --snmp.context-name=CONTEXT_ENGINE_NAME  
                                  SNMP context name (V3 only).
+      --snmp.engine-start-time=""  
+                                 UNIX timestamp specifying the engine start time in seconds. Defaults to the host boot time.
       --trap.default-oid="1.3.6.1.4.1.98789.1"  
                                  Default trap OID.
       --trap.oid-label="oid"     Label containing a custom trap OID.
@@ -160,8 +162,6 @@ Flags:
       --trap.user-object=4=user-object-template.tpl ...  
                                  User object sub-OID and template, e.g. --trap.user-object=4=new-object.template.tpl to add a sub-object to the trap, with the given template file.
                                  You may add several user objects using that flag several times.
-      --trap.engine-unix-start-time=""  
-                                 UNIX timestamp specifying the engine start time in seconds. When empty, the start time is the uptime of the host.
       --log.level=info           Only log messages with the given severity or above. One of: [debug, info, warn, error]
       --log.format=logfmt        Output format of log messages. One of: [logfmt, json]
       --[no-]version             Show application version.

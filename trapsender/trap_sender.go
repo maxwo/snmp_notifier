@@ -16,7 +16,6 @@ package trapsender
 import (
 	"errors"
 	"log/slog"
-	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -40,11 +39,11 @@ type TrapSender struct {
 
 // Configuration describes the configuration for sending traps
 type Configuration struct {
-	SNMPDestination     []string
-	SNMPRetries         uint
-	SNMPVersion         string
-	SNMPTimeout         time.Duration
-	SNMPEngineStartTime string
+	SNMPDestination         []string
+	SNMPRetries             uint
+	SNMPVersion             string
+	SNMPTimeout             time.Duration
+	SNMPEngineStartTimeUnix int
 
 	SNMPCommunity string
 
@@ -121,30 +120,9 @@ func (trapSender TrapSender) sendTraps(connectionArguments snmpgo.SNMPArguments,
 		snmp.Close()
 	}()
 
-	var uptime uint64
-	if trapSender.configuration.SNMPEngineStartTime == "" {
-		uptime, err = host.Uptime()
-		if err != nil {
-			trapSender.logger.Error("error while getting host uptime", "err", err.Error())
-			telemetry.SNMPTrapTotal.WithLabelValues(distinationForMetrics, "failure").Add(float64(len(traps)))
-			return err
-		}
-		if uptime > math.MaxInt32 {
-			uptime = 0
-		}
-	} else {
-		timestamp, err := strconv.Atoi(trapSender.configuration.SNMPEngineStartTime)
-		if err != nil {
-			trapSender.logger.Error("error while reading the SNMP Engine Start Time", "err", err.Error())
-			telemetry.SNMPTrapTotal.WithLabelValues(distinationForMetrics, "failure").Add(float64(len(traps)))
-			return err
-		}
-		uptime = uint64(time.Now().Unix() - int64(timestamp))
-	}
-
 	hasError := false
 	for _, trap := range traps {
-		err = snmp.V2TrapWithBootsTime(trap, 0, int(uptime))
+		err = snmp.V2TrapWithBootsTime(trap, 0, int(time.Now().Unix())-trapSender.configuration.SNMPEngineStartTimeUnix)
 		if err != nil {
 			telemetry.SNMPTrapTotal.WithLabelValues(distinationForMetrics, "failure").Inc()
 			trapSender.logger.Error("error while generating trap", "destination", distinationForMetrics, "err", err.Error())

@@ -15,6 +15,7 @@ package configuration
 
 import (
 	"fmt"
+	"math"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -25,6 +26,7 @@ import (
 	"github.com/prometheus/common/promslog"
 	"github.com/prometheus/common/promslog/flag"
 	"github.com/prometheus/exporter-toolkit/web/kingpinflag"
+	"github.com/shirou/gopsutil/host"
 
 	"github.com/maxwo/snmp_notifier/alertparser"
 	"github.com/maxwo/snmp_notifier/commons"
@@ -205,14 +207,31 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, *slog.Logger
 		snmpDestinations = append(snmpDestinations, destination.String())
 	}
 
+	var engineStartTime int
+	if *trapEngineStartTime == "" {
+		bootTime, err := host.BootTime()
+		if err != nil {
+			return nil, logger, fmt.Errorf("unable to get the host boot time: %w", err)
+		}
+		if bootTime > math.MaxInt {
+			bootTime = 0
+		}
+		engineStartTime = int(bootTime)
+	} else {
+		engineStartTime, err = strconv.Atoi(*trapEngineStartTime)
+		if err != nil {
+			return nil, logger, fmt.Errorf("unable to parse snmp engine start time: %w", err)
+		}
+	}
+
 	trapSenderConfiguration := trapsender.Configuration{
-		SNMPVersion:         *snmpVersion,
-		SNMPDestination:     snmpDestinations,
-		SNMPRetries:         *snmpRetries,
-		DescriptionTemplate: *descriptionTemplate,
-		UserObjects:         userObjects,
-		SNMPTimeout:         *snmpTimeout,
-		SNMPEngineStartTime: *trapEngineStartTime,
+		SNMPVersion:             *snmpVersion,
+		SNMPDestination:         snmpDestinations,
+		SNMPRetries:             *snmpRetries,
+		DescriptionTemplate:     *descriptionTemplate,
+		UserObjects:             userObjects,
+		SNMPTimeout:             *snmpTimeout,
+		SNMPEngineStartTimeUnix: engineStartTime,
 	}
 
 	if isV2c {

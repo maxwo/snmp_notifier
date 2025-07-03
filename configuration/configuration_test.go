@@ -154,12 +154,12 @@ func TestV3Configuration(t *testing.T) {
 				TrapUserObjectsBaseOID:    "1.3.6.1.4.1.98789.3",
 			},
 			trapsender.Configuration{
-				SNMPVersion:         "V3",
-				SNMPDestination:     []string{"127.0.0.2:163"},
-				SNMPRetries:         4,
-				SNMPTimeout:         5 * time.Second,
-				UserObjects:         make([]trapsender.UserObject, 0),
-				SNMPEngineStartTime: "1750334785",
+				SNMPVersion:             "V3",
+				SNMPDestination:         []string{"127.0.0.2:163"},
+				SNMPRetries:             4,
+				SNMPTimeout:             5 * time.Second,
+				UserObjects:             make([]trapsender.UserObject, 0),
+				SNMPEngineStartTimeUnix: 1750334785,
 			},
 			httpserver.Configuration{
 				ToolKitConfiguration: web.FlagConfig{
