@@ -139,7 +139,7 @@ func TestV2Configuration(t *testing.T) {
 func TestV3Configuration(t *testing.T) {
 	expectConfigurationFromCommandLineAndEnvironmentVariables(
 		t,
-		"--web.listen-address=:1234 --snmp.version=V3 --trap.description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --trap.default-oid=4.4.4 --trap.oid-label=other-oid --alert.default-severity=warning --alert.severity-label=severity --alert.severities=critical,error,warning,info --trap.engine-unix-start-time=1750334785",
+		"--web.listen-address=:1234 --snmp.version=V3 --trap.description-template=../description-template.tpl --snmp.destination=127.0.0.2:163 --snmp.retries=4 --trap.default-oid=4.4.4 --trap.oid-label=other-oid --alert.default-severity=warning --alert.severity-label=severity --alert.severities=critical,error,warning,info --snmp.engine-start-time=1750334785",
 		map[string]string{
 			"SNMP_NOTIFIER_COMMUNITY": "private",
 		},
