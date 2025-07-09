@@ -144,6 +144,8 @@ Flags:
                                  SNMP context engine ID (V3 only).
       --snmp.context-name=CONTEXT_ENGINE_NAME  
                                  SNMP context name (V3 only).
+      --snmp.engine-start-time=""  
+                                 UNIX timestamp specifying the engine start time in seconds. Defaults to the host boot time.
       --trap.default-oid="1.3.6.1.4.1.98789.1"  
                                  Default trap OID.
       --trap.oid-label="oid"     Label containing a custom trap OID.

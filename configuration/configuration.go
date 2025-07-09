@@ -15,6 +15,7 @@ package configuration
 
 import (
 	"fmt"
+	"math"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -25,6 +26,7 @@ import (
 	"github.com/prometheus/common/promslog"
 	"github.com/prometheus/common/promslog/flag"
 	"github.com/prometheus/exporter-toolkit/web/kingpinflag"
+	"github.com/shirou/gopsutil/host"
 
 	"github.com/maxwo/snmp_notifier/alertparser"
 	"github.com/maxwo/snmp_notifier/commons"
@@ -81,6 +83,7 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, *slog.Logger
 		snmpSecurityEngineID       = application.Flag("snmp.security-engine-id", "SNMP security engine ID (V3 only).").PlaceHolder("SECURITY_ENGINE_ID").String()
 		snmpContextEngineID        = application.Flag("snmp.context-engine-id", "SNMP context engine ID (V3 only).").PlaceHolder("CONTEXT_ENGINE_ID").String()
 		snmpContextName            = application.Flag("snmp.context-name", "SNMP context name (V3 only).").PlaceHolder("CONTEXT_ENGINE_NAME").String()
+		snmpEngineStartTime        = application.Flag("snmp.engine-start-time", "UNIX timestamp specifying the engine start time in seconds. Defaults to the host boot time.").Default("").String()
 
 		// Trap configurations
 		trapDefaultOID            = application.Flag("trap.default-oid", "Default trap OID.").Default("1.3.6.1.4.1.98789.1").String()
@@ -204,13 +207,31 @@ func ParseConfiguration(args []string) (*SNMPNotifierConfiguration, *slog.Logger
 		snmpDestinations = append(snmpDestinations, destination.String())
 	}
 
+	var engineStartTime int
+	if *snmpEngineStartTime == "" {
+		bootTime, err := host.BootTime()
+		if err != nil {
+			return nil, logger, fmt.Errorf("unable to get the host boot time: %w", err)
+		}
+		if bootTime > math.MaxInt {
+			bootTime = 0
+		}
+		engineStartTime = int(bootTime)
+	} else {
+		engineStartTime, err = strconv.Atoi(*snmpEngineStartTime)
+		if err != nil {
+			return nil, logger, fmt.Errorf("unable to parse snmp engine start time: %w", err)
+		}
+	}
+
 	trapSenderConfiguration := trapsender.Configuration{
-		SNMPVersion:         *snmpVersion,
-		SNMPDestination:     snmpDestinations,
-		SNMPRetries:         *snmpRetries,
-		DescriptionTemplate: *descriptionTemplate,
-		UserObjects:         userObjects,
-		SNMPTimeout:         *snmpTimeout,
+		SNMPVersion:             *snmpVersion,
+		SNMPDestination:         snmpDestinations,
+		SNMPRetries:             *snmpRetries,
+		DescriptionTemplate:     *descriptionTemplate,
+		UserObjects:             userObjects,
+		SNMPTimeout:             *snmpTimeout,
+		SNMPEngineStartTimeUnix: engineStartTime,
 	}
 
 	if isV2c {

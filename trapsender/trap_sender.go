@@ -16,7 +16,6 @@ package trapsender
 import (
 	"errors"
 	"log/slog"
-	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -40,10 +39,11 @@ type TrapSender struct {
 
 // Configuration describes the configuration for sending traps
 type Configuration struct {
-	SNMPDestination []string
-	SNMPRetries     uint
-	SNMPVersion     string
-	SNMPTimeout     time.Duration
+	SNMPDestination         []string
+	SNMPRetries             uint
+	SNMPVersion             string
+	SNMPTimeout             time.Duration
+	SNMPEngineStartTimeUnix int
 
 	SNMPCommunity string
 
@@ -120,14 +120,9 @@ func (trapSender TrapSender) sendTraps(connectionArguments snmpgo.SNMPArguments,
 		snmp.Close()
 	}()
 
-	uptime, _ := host.Uptime()
-	if uptime > math.MaxInt32 {
-		uptime = 0
-	}
-
 	hasError := false
 	for _, trap := range traps {
-		err = snmp.V2TrapWithBootsTime(trap, 0, int(uptime))
+		err = snmp.V2TrapWithBootsTime(trap, 0, int(time.Now().Unix())-trapSender.configuration.SNMPEngineStartTimeUnix)
 		if err != nil {
 			telemetry.SNMPTrapTotal.WithLabelValues(distinationForMetrics, "failure").Inc()
 			trapSender.logger.Error("error while generating trap", "destination", distinationForMetrics, "err", err.Error())
