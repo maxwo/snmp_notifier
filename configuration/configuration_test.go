@@ -65,6 +65,7 @@ func TestDefaultConfiguration(t *testing.T) {
 				},
 			},
 		},
+		true,
 	)
 }
 
@@ -97,6 +98,7 @@ func TestSimpleConfiguration(t *testing.T) {
 				},
 			},
 		},
+		true,
 	)
 }
 
@@ -133,6 +135,7 @@ func TestV2Configuration(t *testing.T) {
 				},
 			},
 		},
+		true,
 	)
 }
 
@@ -169,6 +172,7 @@ func TestV3Configuration(t *testing.T) {
 				},
 			},
 		},
+		false,
 	)
 }
 
@@ -209,6 +213,7 @@ func TestV3AuthenticationConfiguration(t *testing.T) {
 				},
 			},
 		},
+		true,
 	)
 }
 
@@ -252,6 +257,7 @@ func TestV3AuthenticationAndPrivateConfiguration(t *testing.T) {
 				},
 			},
 		},
+		true,
 	)
 }
 
@@ -286,6 +292,7 @@ func TestConfigurationWithDifferentResolvedTrapOIDConfiguration(t *testing.T) {
 				},
 			},
 		},
+		true,
 	)
 }
 
@@ -321,6 +328,7 @@ func TestConfigurationWithDifferentResolvedTrapLabelOIDConfiguration(t *testing.
 				},
 			},
 		},
+		true,
 	)
 }
 
@@ -380,16 +388,17 @@ func TestConfigurationMixingV2AndV3Private(t *testing.T) {
 	)
 }
 
-func expectConfigurationFromCommandLine(t *testing.T, commandLine string, configuration SNMPNotifierConfiguration) {
+func expectConfigurationFromCommandLine(t *testing.T, commandLine string, configuration SNMPNotifierConfiguration, ignoreStartUpTime bool) {
 	expectConfigurationFromCommandLineAndEnvironmentVariables(
 		t,
 		commandLine,
 		map[string]string{},
 		configuration,
+		ignoreStartUpTime,
 	)
 }
 
-func expectConfigurationFromCommandLineAndEnvironmentVariables(t *testing.T, commandLine string, environmentVariables map[string]string, configuration SNMPNotifierConfiguration) {
+func expectConfigurationFromCommandLineAndEnvironmentVariables(t *testing.T, commandLine string, environmentVariables map[string]string, configuration SNMPNotifierConfiguration, ignoreStartUpTime bool) {
 	os.Clearenv()
 	for variable, value := range environmentVariables {
 		os.Setenv(variable, value)
@@ -412,6 +421,9 @@ func expectConfigurationFromCommandLineAndEnvironmentVariables(t *testing.T, com
 		}
 
 		configuration.TrapSenderConfiguration.DescriptionTemplate = *descriptionTemplate
+		if ignoreStartUpTime {
+			parsedConfiguration.TrapSenderConfiguration.SNMPEngineStartTimeUnix = 0 // Reset the SNMPEngineStartTimeUnix to avoid issues with tests
+		}
 
 		if diff := deep.Equal(*parsedConfiguration, configuration); diff != nil {
 			t.Error(diff)
