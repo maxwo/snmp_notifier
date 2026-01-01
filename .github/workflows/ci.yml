@@ -12,7 +12,7 @@ jobs:
   #   runs-on: ubuntu-latest
   #   steps:
   #     - name: Checkout repository
-  #       uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+  #       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
   #     - name: Install Go
   #       uses: actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b # v5.4.0
   #       with:
@@ -35,7 +35,7 @@ jobs:
     container:
       image: quay.io/prometheus/golang-builder:1.24-base
     steps:
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - uses: prometheus/promci@443c7fc2397e946bc9f5029e313a9c3441b9b86d # v0.4.7
       - uses: ./.github/promci/actions/setup_environment
       - run: make
@@ -57,7 +57,7 @@ jobs:
       matrix:
         thread: [0, 1, 2]
     steps:
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - uses: prometheus/promci@443c7fc2397e946bc9f5029e313a9c3441b9b86d # v0.4.7
       - uses: ./.github/promci/actions/build
         with:
@@ -83,7 +83,7 @@ jobs:
     # Whenever the Go version is updated here, .promu.yml
     # should also be updated.
     steps:
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - uses: prometheus/promci@443c7fc2397e946bc9f5029e313a9c3441b9b86d # v0.4.7
       - uses: ./.github/promci/actions/build
         with:
@@ -127,7 +127,7 @@ jobs:
     needs: [test, codeql, build_all]
     if: github.event_name == 'push' && github.event.ref == 'refs/heads/main'
     steps:
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - uses: prometheus/promci@443c7fc2397e946bc9f5029e313a9c3441b9b86d # v0.4.7
       - uses: ./.github/promci/actions/publish_main
         with:
@@ -144,7 +144,7 @@ jobs:
       ||
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v3.'))
     steps:
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - uses: prometheus/promci@443c7fc2397e946bc9f5029e313a9c3441b9b86d # v0.4.7
       - uses: ./.github/promci/actions/publish_release
         with:
