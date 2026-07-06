@@ -4,7 +4,7 @@ require (
 	github.com/alecthomas/kingpin/v2 v2.4.0
 	github.com/go-test/deep v1.1.1
 	github.com/k-sone/snmpgo v3.2.0+incompatible
-	github.com/prometheus/alertmanager v0.31.1
+	github.com/prometheus/alertmanager v0.33.1
 	github.com/prometheus/client_golang v1.23.2
 	github.com/prometheus/common v0.69.0
 	github.com/prometheus/exporter-toolkit v0.16.0
@@ -28,8 +28,6 @@ require (
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/procfs v0.16.1 // indirect
-	github.com/shurcooL/httpfs v0.0.0-20230704072500-f1e31cf0ba5c // indirect
-	github.com/shurcooL/vfsgen v0.0.0-20230704071429-0000e147ea92 // indirect
 	github.com/tklauser/go-sysconf v0.3.11 // indirect
 	github.com/tklauser/numcpus v0.6.0 // indirect
 	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
