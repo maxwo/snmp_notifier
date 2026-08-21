@@ -68,9 +68,10 @@ jobs:
       - uses: prometheus/promci/publish_main@370e8c15dcec50043cbe66f2f34633d9efc0a190 # v0.9.0
         with:
           docker_hub_organization: maxwo
+          docker_hub_login: maxwo
           docker_hub_password: ${{ secrets.docker_hub_password }}
-          ghcr_io_password: ${{ github.token }}
-          quay_io_password: ${{ secrets.quay_io_password }}
+          ghcr_io_password: ''
+          quay_io_password: ''
 
   publish_release:
     name: Publish release artifacts
@@ -84,7 +85,8 @@ jobs:
       - uses: prometheus/promci/publish_release@370e8c15dcec50043cbe66f2f34633d9efc0a190 # v0.9.0
         with:
           docker_hub_organization: maxwo
+          docker_hub_login: maxwo
           docker_hub_password: ${{ secrets.docker_hub_password }}
-          ghcr_io_password: ${{ github.token }}
-          quay_io_password: ${{ secrets.quay_io_password }}
+          ghcr_io_password: ''
+          quay_io_password: ''
           github_token: ${{ github.token }}
