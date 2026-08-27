@@ -7,7 +7,7 @@ require (
 	github.com/prometheus/alertmanager v0.34.0
 	github.com/prometheus/client_golang v1.24.1
 	github.com/prometheus/common v0.70.1
-	github.com/prometheus/exporter-toolkit v0.17.1
+	github.com/prometheus/exporter-toolkit v0.18.0
 	github.com/shirou/gopsutil v3.21.11+incompatible
 )
 
