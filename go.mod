@@ -2,7 +2,7 @@ module github.com/maxwo/snmp_notifier
 
 require (
 	github.com/alecthomas/kingpin/v2 v2.4.0
-	github.com/go-test/deep v1.1.1
+	github.com/go-test/deep v1.1.2
 	github.com/k-sone/snmpgo v3.2.0+incompatible
 	github.com/prometheus/alertmanager v0.34.1
 	github.com/prometheus/client_golang v1.25.0
