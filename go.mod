@@ -4,7 +4,7 @@ require (
 	github.com/alecthomas/kingpin/v2 v2.4.0
 	github.com/go-test/deep v1.1.1
 	github.com/k-sone/snmpgo v3.2.0+incompatible
-	github.com/prometheus/alertmanager v0.34.1
+	github.com/prometheus/alertmanager v0.34.2
 	github.com/prometheus/client_golang v1.25.0
 	github.com/prometheus/common v0.72.0
 	github.com/prometheus/exporter-toolkit v0.20.0
@@ -33,7 +33,7 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	golang.org/x/crypto v0.57.0 // indirect
-	golang.org/x/net v0.59.0 // indirect
+	golang.org/x/net v0.60.0 // indirect
 	golang.org/x/oauth2 v0.37.0 // indirect
 	golang.org/x/sync v0.23.0 // indirect
 	golang.org/x/sys v0.48.0 // indirect
